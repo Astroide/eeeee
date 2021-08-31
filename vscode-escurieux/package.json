@@ -1,0 +1,25 @@
+{
+    "name": "vscode-escurieux",
+    "displayName": "vscode-escurieux",
+    "description": "Syntax highlighter & completion for the Escurieux programming language",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.59.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "escurieux",
+            "aliases": ["Escurieux", "escurieux"],
+            "extensions": [".esc",".es"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "escurieux",
+            "scopeName": "source.escurieux",
+            "path": "./syntaxes/escurieux.tmLanguage.json"
+        }]
+    }
+}

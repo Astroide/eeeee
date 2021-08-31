@@ -11,3 +11,12 @@ void setSource(char* sourceText) {
     currentCharacterInSource = source;
     currentLine = 0;
 }
+
+Token getToken() {
+    Token token = {.start = currentCharacterInSource,
+                   .length = 0,
+                   .line = currentLine,
+                   .type = TOKEN_NONE};
+
+    return token;
+}

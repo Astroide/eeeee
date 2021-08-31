@@ -2,7 +2,12 @@
 #define _ESCURIEUX_PARSER_H_
 #include <stdbool.h>
 
-typedef enum { STRING_LITERAL, NUMBER_LITERAL, IDENTIFIER } TokenType;
+typedef enum {
+    TOKEN_NONE,
+    TOKEN_STRING_LITERAL,
+    TOKEN_NUMBER_LITERAL,
+    TOKEN_IDENTIFIER
+} TokenType;
 typedef struct {
     TokenType type;
     char* start;

@@ -1,7 +1,4 @@
 {
     "editor.formatOnSave": true,
-    "files.associations": {
-        "*.h": "c"
-    },
     "editor.suggest.preview": true
 }
