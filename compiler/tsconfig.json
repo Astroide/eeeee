@@ -1,0 +1,11 @@
+{
+    "files": [
+        "src/compiler.ts"
+    ],
+    "include": [
+        "src/*.ts"
+    ],
+    "compilerOptions": {
+        "outDir": "out"
+    }
+}
