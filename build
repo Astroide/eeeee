@@ -1,1 +1,0 @@
-gcc *.c -Wall -o /tmp/exe
