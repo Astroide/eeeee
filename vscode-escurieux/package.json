@@ -10,16 +10,36 @@
         "Programming Languages"
     ],
     "contributes": {
-        "languages": [{
-            "id": "escurieux",
-            "aliases": ["Escurieux", "escurieux"],
-            "extensions": [".esc",".es"],
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "escurieux",
-            "scopeName": "source.escurieux",
-            "path": "./syntaxes/escurieux.tmLanguage.json"
-        }]
+        "languages": [
+            {
+                "id": "escurieux",
+                "aliases": [
+                    "Escurieux",
+                    "escurieux"
+                ],
+                "extensions": [
+                    ".esc",
+                    ".es"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "escurieux",
+                "scopeName": "source.escurieux",
+                "path": "./syntaxes/escurieux.tmLanguage.json"
+            }
+        ]
+    },
+    "activationEvents": [
+        "*"
+    ],
+    "main": "out/extension.js",
+    "dependencies": {
+        "@types/vscode": "^1.59.0"
+    },
+    "scripts": {
+        "compile-ts": "tsc"
     }
 }

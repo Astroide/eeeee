@@ -6,17 +6,32 @@
 			"include": "#keywords"
 		},
 		{
-			"include": "#strings"
+			"include": "#double_quoted_strings"
+		},
+		{
+			"include": "#hexadecimal_numbers"
+		},
+		{
+			"include": "#octal_numbers"
+		},
+		{
+			"include": "#decimal_numbers"
 		}
 	],
 	"repository": {
 		"keywords": {
-			"patterns": [{
-				"name": "keyword.control.escurieux",
-				"match": "\\b(if|while|for|return)\\b"
-			}]
+			"patterns": [
+				{
+					"name": "keyword.control.escurieux",
+					"match": "\\b(if|while|for|return)\\b"
+				},
+				{
+					"name": "keyword.declaration.escurieux",
+					"match": "\\b(fn|let|const)\\b"
+				}
+			]
 		},
-		"strings": {
+		"double_quoted_strings": {
 			"name": "string.quoted.double.escurieux",
 			"begin": "\"",
 			"end": "\"",
@@ -26,6 +41,29 @@
 					"match": "\\\\."
 				}
 			]
+		},
+		"single_quoted_strings": {
+			"name": "string.quoted.single.escurieux",
+			"begin": "'",
+			"end": "'",
+			"patterns": [
+				{
+					"name": "constant.character.escape.escurieux",
+					"match": "\\\\."
+				}
+			]
+		},
+		"hexadecimal_numbers": {
+			"name": "constant.numeric.hexadecimal",
+			"match": "\\b0x([0123456789ABCDEFabcdef])*(\\.([0123456789ABCDEFabcdef])*)?\\b"
+		},
+		"octal_numbers": {
+			"name": "constant.numeric.octal",
+			"match": "\\b0o([01234567])*(\\.([01234567])*)?\\b"
+		},
+		"decimal_numbers": {
+			"name": "constant.numeric.decimal",
+			"match": "\\b([0123456789])*(\\.([0123456789])*)?\\b"
 		}
 	},
 	"scopeName": "source.escurieux"
