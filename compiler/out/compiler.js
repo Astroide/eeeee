@@ -1,1 +1,2 @@
-console.log("meow");
+"use strict";
+exports.__esModule = true;
