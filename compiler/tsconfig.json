@@ -1,6 +1,6 @@
 {
     "files": [
-        "src/compiler.ts"
+        "src/main.ts"
     ],
     "include": [
         "src/*.ts"
