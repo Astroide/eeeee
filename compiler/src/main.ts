@@ -77,9 +77,14 @@ Options:
 * -h, --help : Show this message. When this option is specified, a filename is not required.
 * -o=filename, --out=filename : Specify where should bytecode be output.
 * -b, --bytecode : Run from bytecode instead of source.
-* -c, --compile-only : Compile to bytecode without running that bytecode.`);
+* -c, --compile-only : Compile to bytecode without running that bytecode.
+
+Report any errors / bugs / whatever to this page : https://github.com/Astroide/escurieux/issues .`);
     exit(0);
 }
 if (getOption('bytecode') && getOption('compileOnly')) {
     panic('--bytecode / -b and --compile-only / -c cannot be used together.');
+}
+if (getOption('bytecode')) {
+    panic('The VM has not been implemented yet.');
 }

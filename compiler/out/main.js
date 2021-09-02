@@ -78,9 +78,12 @@ if (filename == '' && !getOption('help')) {
     utilities_1.panic('Unless -h or --help is specified, a filename is required.');
 }
 if (getOption('help')) {
-    utilities_1.print("Usage:\nescurieux [options] [filename]\n(filename is required unless -h or --help is specified)\nOptions:\n* -v, --verbose : Verbose mode. Print extra informations about what the compiler is doing.\n* -h, --help : Show this message. When this option is specified, a filename is not required.\n* -o=filename, --out=filename : Specify where should bytecode be output.\n* -b, --bytecode : Run from bytecode instead of source.\n* -c, --compile-only : Compile to bytecode without running that bytecode.");
+    utilities_1.print("Usage:\nescurieux [options] [filename]\n(filename is required unless -h or --help is specified)\nOptions:\n* -v, --verbose : Verbose mode. Print extra informations about what the compiler is doing.\n* -h, --help : Show this message. When this option is specified, a filename is not required.\n* -o=filename, --out=filename : Specify where should bytecode be output.\n* -b, --bytecode : Run from bytecode instead of source.\n* -c, --compile-only : Compile to bytecode without running that bytecode.\n\nReport any errors / bugs / whatever to this page : https://github.com/Astroide/escurieux/issues .");
     process_1.exit(0);
 }
 if (getOption('bytecode') && getOption('compileOnly')) {
     utilities_1.panic('--bytecode / -b and --compile-only / -c cannot be used together.');
+}
+if (getOption('bytecode')) {
+    utilities_1.panic('The VM has not been implemented yet.');
 }
