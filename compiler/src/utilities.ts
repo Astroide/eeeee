@@ -1,25 +1,26 @@
 import { exit } from "process";
 import { readFile as fsReadFile } from "fs/promises";
 export function panic(message: string): never {
-    console.error('\u001b[31mFatal error: ' + message + '\nRun escurieux -h or escurieux --help for help.\u001b[0m');
+    console.error('\u001b[31mFatal error\u001b[0m: ' + message + '\nRun escurieux -h or escurieux --help for help.');
     exit(1);
 }
 export function print(message: string) {
     console.error(message);
 }
 export function warn(message: string) {
-    console.error(`\u001b[33mWarning: ${message}\u001b[0m`);
+    console.error(`\u001b[33mWarning\u001b[0m: ${message}`);
 }
 function doSomethingAt(fn: (message: string) => any, source: StringReader, message: string, line: number, char: number, text: string) {
     let lineCount = source.lineCount();
     let lineText = source.getLine(line).slice(0, char) + '\u001b[7m' + text + '\u001b[0m' + source.getLine(line).slice(char + text.length);
-    fn(`${message}
-On line ${line} at character ${char}:
- ${(line - 2).toString().padEnd(9, ' ')}  | ${line - 2 >= 0 ? source.getLine(line - 2) : ''}
- ${(line - 1).toString().padEnd(9, ' ')} || ${line - 1 >= 0 ? source.getLine(line - 1) : ''}
- ${(line).toString().padEnd(9, ' ')}||| ${lineText}
- ${(line + 1).toString().padEnd(9, ' ')} ||| ${line + 1 < lineCount ? source.getLine(line + 1) : ''}
- ${(line + 2).toString().padEnd(9, ' ')}  | ${line + 2 < lineCount ? source.getLine(line + 2) : ''}`);
+    let currentLine = '';
+    fn(`\n${message}
+On line ${line + 1} at character ${char + 1}:
+ ${(line - 1).toString().padEnd(6, ' ')}      | ${line - 2 >= 0 ? (currentLine = source.getLine(line - 2)).slice(0, currentLine.length - 1) : ''}
+ ${(line).toString().padEnd(6, ' ')}      | ${line - 1 >= 0 ? (currentLine = source.getLine(line - 1)).slice(0, currentLine.length - 1) : ''}
+ ${(line + 1).toString().padEnd(6, ' ')} here > ${lineText.slice(0, lineText.length - 1)}
+ ${(line + 2).toString().padEnd(6, ' ')}      | ${line + 1 < lineCount ? (currentLine = source.getLine(line + 1)).slice(0, currentLine.length - 1) : '<EOF>'}
+ ${(line + 3).toString().padEnd(6, ' ')}      | ${line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : '<EOF>'}\n`);
 }
 
 export let panicAt = (source: StringReader, message: string, line: number, char: number, text: string) => doSomethingAt(panic, source, message, line, char, text);
