@@ -9,9 +9,22 @@ export function print(message: string) {
 export function warn(message: string) {
     console.error(`\u001b[33mWarning: ${message}\u001b[0m`);
 }
-function doSomethingAt(fn: (message: string) => any, source: string, message: string, line: number, char: number) {
-
+function doSomethingAt(fn: (message: string) => any, source: StringReader, message: string, line: number, char: number, text: string) {
+    let lineCount = source.lineCount();
+    let lineText = source.getLine(line).slice(0, char) + '\u001b[7m' + text + '\u001b[0m' + source.getLine(line).slice(char + text.length);
+    fn(`${message}
+On line ${line} at character ${char}:
+ ${(line - 2).toString().padEnd(9, ' ')}  | ${line - 2 >= 0 ? source.getLine(line - 2) : ''}
+ ${(line - 1).toString().padEnd(9, ' ')} || ${line - 1 >= 0 ? source.getLine(line - 1) : ''}
+ ${(line).toString().padEnd(9, ' ')}||| ${lineText}
+ ${(line + 1).toString().padEnd(9, ' ')} ||| ${line + 1 < lineCount ? source.getLine(line + 1) : ''}
+ ${(line + 2).toString().padEnd(9, ' ')}  | ${line + 2 < lineCount ? source.getLine(line + 2) : ''}`);
 }
+
+export let panicAt = (source: StringReader, message: string, line: number, char: number, text: string) => doSomethingAt(panic, source, message, line, char, text);
+
+export let warnAt = (source: StringReader, message: string, line: number, char: number, text: string) => doSomethingAt(warn, source, message, line, char, text)
+
 
 export class StringReader {
     source: string;
@@ -61,5 +74,10 @@ export class StringReader {
             line += StringReader.lineReader.next();
         }
         return line;
+    }
+    lineCount(): number {
+        StringReader.lineReader.update(this.source);
+        while (!StringReader.lineReader.done()) StringReader.lineReader.next();
+        return StringReader.lineReader.currentLine;
     }
 }
