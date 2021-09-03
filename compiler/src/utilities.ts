@@ -16,11 +16,24 @@ function doSomethingAt(fn: (message: string) => any, source: string, message: st
 export class StringReader {
     source: string;
     current: number;
+    currentCharacter: number;
+    currentLine: number;
+    private static lineReader: StringReader;
+    static {
+        this.lineReader = new StringReader('');
+    }
     constructor(source: string) {
         this.source = source;
         this.current = 0;
+        this.currentCharacter = 0;
+        this.currentLine = 0;
     }
     next(): string {
+        this.currentCharacter++;
+        if (this.source[this.current] == '\n') {
+            this.currentLine++;
+            this.currentCharacter = 0;
+        }
         return this.source[this.current++];
     }
     peek(): string {
@@ -31,5 +44,22 @@ export class StringReader {
     }
     done(): boolean {
         return this.current == this.source.length;
+    }
+    update(source: string) {
+        this.source = source;
+        this.current = 0;
+        this.currentCharacter = 0;
+        this.currentLine = 0;
+    }
+    getLine(lineNumber: number): string {
+        StringReader.lineReader.update(this.source);
+        while (StringReader.lineReader.currentLine != lineNumber) {
+            StringReader.lineReader.next();
+        }
+        let line: string = '';
+        while (StringReader.lineReader.currentLine != lineNumber + 1 && !StringReader.lineReader.done()) {
+            line += StringReader.lineReader.next();
+        }
+        return line;
     }
 }
