@@ -40,11 +40,15 @@ class Token {
     start: number;
     length: number;
     source: string;
-    constructor(source: string, type: TokenType, start: number, length: number) {
+    line: number;
+    char: number;
+    constructor(line: number, char: number, source: string, type: TokenType, start: number, length: number) {
         this.source = source;
         this.type = type;
         this.start = start;
         this.length = length;
+        this.line = line;
+        this.char = char;
     }
 
     getSource(): string {
@@ -54,32 +58,32 @@ class Token {
 
 class StringLiteral extends Token {
     content: string;
-    constructor(source: string, type: TokenType, start: number, length: number, content: string) {
-        super(source, type, start, length);
+    constructor(line: number, char: number, source: string, type: TokenType, start: number, length: number, content: string) {
+        super(line, char, source, type, start, length);
         this.content = content;
     }
 }
 
 class NumberLiteral extends Token {
     content: number;
-    constructor(source: string, type: TokenType, start: number, length: number, content: number) {
-        super(source, type, start, length);
+    constructor(line: number, char: number, source: string, type: TokenType, start: number, length: number, content: number) {
+        super(line, char, source, type, start, length);
         this.content = content;
     }
 }
 
 class BooleanLiteral extends Token {
     content: boolean;
-    constructor(source: string, type: TokenType, start: number, length: number, content: boolean) {
-        super(source, type, start, length);
+    constructor(line: number, char: number, source: string, type: TokenType, start: number, length: number, content: boolean) {
+        super(line, char, source, type, start, length);
         this.content = content;
     }
 }
 
 class Identifier extends Token {
     identifier: string;
-    constructor(source: string, type: TokenType, start: number, length: number, identifier: string) {
-        super(source, type, start, length);
+    constructor(line: number, char: number, source: string, type: TokenType, start: number, length: number, identifier: string) {
+        super(line, char, source, type, start, length);
         this.identifier = identifier;
     }
 }
