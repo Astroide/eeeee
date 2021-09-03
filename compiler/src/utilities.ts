@@ -1,4 +1,5 @@
 import { exit } from "process";
+import { readFile as fsReadFile } from "fs/promises";
 export function panic(message: string): never {
     console.error('\u001b[31mFatal error: ' + message + '\nRun escurieux -h or escurieux --help for help.\u001b[0m');
     exit(1);
@@ -80,4 +81,9 @@ export class StringReader {
         while (!StringReader.lineReader.done()) StringReader.lineReader.next();
         return StringReader.lineReader.currentLine;
     }
+}
+
+export async function readFile(filename: string) {
+    let contents = await fsReadFile(filename, { encoding: 'utf-8', flag: 'r' });
+    return contents;
 }
