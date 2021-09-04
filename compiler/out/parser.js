@@ -14,10 +14,11 @@ var Parser = /** @class */ (function () {
             if (tokenText)
                 if (tokenText == '/') {
                     if (this.reader.peek() == '/') {
-                        while (this.reader.peek() != '\n')
+                        while (this.reader.peek() != '\n' && !this.reader.done())
                             this.reader.next();
-                        this.reader.next();
-                        continue;
+                        if (!this.reader.done())
+                            this.reader.next();
+                        continue parsing;
                     }
                     else if (this.reader.peek() == '*') {
                         var depth = 1;
@@ -35,6 +36,7 @@ var Parser = /** @class */ (function () {
                         if (this.reader.done() && depth != 0) {
                             (0, utilities_1.panicAt)(this.reader, "[ESCE00001] Comments opened with /* must be closed before EOF.\nNote: there " + (depth == 1 ? 'was' : 'were') + " " + depth + " level" + (depth == 1 ? '' : 's') + " of comment nesting when EOF was reached.", this.reader.lineCount() - 1, 0, this.reader.getLine(this.reader.lineCount() - 1).slice(0, -1));
                         }
+                        continue parsing;
                     }
                 }
                 else {

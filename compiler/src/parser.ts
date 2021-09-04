@@ -13,9 +13,9 @@ export class Parser {
             if (tokenText)
                 if (tokenText == '/') {
                     if (this.reader.peek() == '/') {
-                        while (this.reader.peek() != '\n') this.reader.next();
-                        this.reader.next();
-                        continue;
+                        while (this.reader.peek() != '\n' && !this.reader.done()) this.reader.next();
+                        if (!this.reader.done()) this.reader.next();
+                        continue parsing;
                     } else if (this.reader.peek() == '*') {
                         let depth = 1;
                         while (depth > 0 && !this.reader.done()) {
@@ -31,6 +31,7 @@ export class Parser {
                         if (this.reader.done() && depth != 0) {
                             panicAt(this.reader, `[ESCE00001] Comments opened with /* must be closed before EOF.\nNote: there ${depth == 1 ? 'was' : 'were'} ${depth} level${depth == 1 ? '' : 's'} of comment nesting when EOF was reached.`, this.reader.lineCount() - 1, 0, this.reader.getLine(this.reader.lineCount() - 1).slice(0, -1));
                         }
+                        continue parsing;
                     }
                 } else {
                     if (tokenText == '0') {
