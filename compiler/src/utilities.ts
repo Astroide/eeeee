@@ -17,11 +17,11 @@ function doSomethingAt(fn: (message: string) => any, source: StringReader, messa
     let errorOrWarningId = message.match(/\[ESC(W|E)\d\d\d\d\d\]/)[0].slice(1, -1);
     fn(`\n${message}
 On line ${line + 1} at character ${char + 1}:
- ${(line - 1).toString().padEnd(6, ' ')}      | ${line - 2 >= 0 ? (currentLine = source.getLine(line - 2)).slice(0, currentLine.length - 1) : ''}
- ${(line).toString().padEnd(6, ' ')}      | ${line - 1 >= 0 ? (currentLine = source.getLine(line - 1)).slice(0, currentLine.length - 1) : ''}
- ${(line + 1).toString().padEnd(6, ' ')} here > ${lineText.slice(0, lineText.length - 1)}
- ${(line + 2).toString().padEnd(6, ' ')}      | ${line + 1 < lineCount ? (currentLine = source.getLine(line + 1)).slice(0, currentLine.length - 1) : '<EOF>'}
- ${(line + 3).toString().padEnd(6, ' ')}      | ${line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : '<EOF>'}
+ \u001b[34m${(line - 1).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 2 >= 0 ? (currentLine = source.getLine(line - 2)).slice(0, currentLine.length - 1) : ''}
+ \u001b[34m${(line).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 1 >= 0 ? (currentLine = source.getLine(line - 1)).slice(0, currentLine.length - 1) : ''}
+ \u001b[34m${(line + 1).toString().padEnd(6, ' ')} here >\u001b[0m ${lineText.slice(0, lineText.length - 1)}
+ \u001b[34m${(line + 2).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 1 < lineCount ? (currentLine = source.getLine(line + 1)).slice(0, currentLine.length - 1) : '<EOF>'}
+ \u001b[34m${(line + 3).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : '<EOF>'}
 Run escurieux -e ${errorOrWarningId} or escurieux --explain ${errorOrWarningId} for more informations about this error.\n`);
 }
 
