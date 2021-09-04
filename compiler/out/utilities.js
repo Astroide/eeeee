@@ -78,7 +78,12 @@ var StringReader = /** @class */ (function () {
             this.currentLine++;
             this.currentCharacter = 0;
         }
-        return this.source[this.current++];
+        var char = this.source[this.current++];
+        if (char === undefined) {
+            (0, exports.panicAt)(this, "[ESCE00005] Trying to access a character past EOF", this.currentLine + (this.currentCharacter == 0 ? -1 : 0), this.currentCharacter - 1, this.last);
+        }
+        this.last = char;
+        return char;
     };
     StringReader.prototype.peek = function () {
         return this.source[this.current];

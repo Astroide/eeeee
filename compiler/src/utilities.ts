@@ -35,6 +35,7 @@ export class StringReader {
     current: number;
     currentCharacter: number;
     currentLine: number;
+    last: string;
     private static lineReader: StringReader;
     static {
         this.lineReader = new StringReader('');
@@ -51,7 +52,12 @@ export class StringReader {
             this.currentLine++;
             this.currentCharacter = 0;
         }
-        return this.source[this.current++];
+        let char = this.source[this.current++];
+        if (char === undefined) {
+            panicAt(this, "[ESCE00005] Trying to access a character past EOF", this.currentLine + (this.currentCharacter == 0 ? -1 : 0), this.currentCharacter - 1, this.last);
+        }
+        this.last = char;
+        return char;
     }
     peek(): string {
         return this.source[this.current];
