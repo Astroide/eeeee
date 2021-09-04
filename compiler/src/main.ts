@@ -1,6 +1,7 @@
 import { argv, exit } from "process";
+import { errorAndWarningExplanations } from "./explanations";
 import { Parser } from "./parser";
-import { panic, print, readFile } from "./utilities";
+import { panic, print, readFile, Result } from "./utilities";
 async function main() {
     const commandLineArguments = argv.slice(2).sort((a: string, _) => a.startsWith('-') ? -1 : 1);
     const commandLineOptions: { [x: string]: { short: string, long: string } } = {
@@ -23,6 +24,10 @@ async function main() {
         compileOnly: {
             short: 'c',
             long: 'compile-only'
+        },
+        explain: {
+            short: 'e',
+            long: 'explain'
         }
     };
     let filename = '';
@@ -66,22 +71,38 @@ async function main() {
         }
         return null;
     }
-    if (filename == '' && !getOption('help')) {
+    if (filename == '' && !getOption('help') && !getOption('explain')) {
         panic('Unless -h or --help is specified, a filename is required.');
     }
     if (getOption('help')) {
         print(
             `Usage:
 escurieux [options] [filename]
-(filename is required unless -h or --help is specified)
+(filename is required unless -h, --help, -e or --explain is specified)
 Options:
 * -v, --verbose : Verbose mode. Print extra informations about what the compiler is doing.
-* -h, --help : Show this message. When this option is specified, a filename is not required.
+* -h, --help : Show this message.
+* -e errorid, --explain errorid : Show the explanation for the error or warning 'errorid'.
 * -o=filename, --out=filename : Specify where should bytecode be output.
 * -b, --bytecode : Run from bytecode instead of source.
 * -c, --compile-only : Compile to bytecode without running that bytecode.
 
 Report any errors / bugs / whatever to this page : https://github.com/Astroide/escurieux/issues .`);
+        exit(0);
+    }
+    if (getOption('explain')) {
+        let errorID = filename;
+        let hasFoundAnything = false;
+        for (const id in errorAndWarningExplanations) {
+            if (Object.prototype.hasOwnProperty.call(errorAndWarningExplanations, id) && ('ESC' + id) == errorID) {
+                const explanation = errorAndWarningExplanations[id];
+                hasFoundAnything = true;
+                print((id.startsWith('W') ? 'Warning' : 'Error') + ' ' + errorID + ': ' + explanation);
+            }
+        }
+        if (!hasFoundAnything) {
+            panic(`Error id ${errorID} is invalid.`);
+        }
         exit(0);
     }
     if (getOption('bytecode') && getOption('compileOnly')) {
@@ -90,7 +111,11 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
     if (getOption('bytecode')) {
         panic('The VM has not been implemented yet.');
     } else {
-        let contentsOfSourceFile = await readFile(filename);
+        let result = await readFile(filename);
+        if (result.err()) {
+            panic(`The file ${filename} does not exist. Node.js error:\n${result.errorMessage}`)
+        }
+        let contentsOfSourceFile = result.value;
         let parser = new Parser(contentsOfSourceFile);
         let tokens = parser.parse();
     }

@@ -14,13 +14,15 @@ function doSomethingAt(fn: (message: string) => any, source: StringReader, messa
     let lineCount = source.lineCount();
     let lineText = source.getLine(line).slice(0, char) + '\u001b[7m' + text + '\u001b[0m' + source.getLine(line).slice(char + text.length);
     let currentLine = '';
+    let errorOrWarningId = message.match(/\[ESC(W|E)\d\d\d\d\d\]/)[0].slice(1, -1);
     fn(`\n${message}
 On line ${line + 1} at character ${char + 1}:
  ${(line - 1).toString().padEnd(6, ' ')}      | ${line - 2 >= 0 ? (currentLine = source.getLine(line - 2)).slice(0, currentLine.length - 1) : ''}
  ${(line).toString().padEnd(6, ' ')}      | ${line - 1 >= 0 ? (currentLine = source.getLine(line - 1)).slice(0, currentLine.length - 1) : ''}
  ${(line + 1).toString().padEnd(6, ' ')} here > ${lineText.slice(0, lineText.length - 1)}
  ${(line + 2).toString().padEnd(6, ' ')}      | ${line + 1 < lineCount ? (currentLine = source.getLine(line + 1)).slice(0, currentLine.length - 1) : '<EOF>'}
- ${(line + 3).toString().padEnd(6, ' ')}      | ${line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : '<EOF>'}\n`);
+ ${(line + 3).toString().padEnd(6, ' ')}      | ${line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : '<EOF>'}
+Run escurieux -e ${errorOrWarningId} or escurieux --explain ${errorOrWarningId} for more informations about this error.\n`);
 }
 
 export let panicAt = (source: StringReader, message: string, line: number, char: number, text: string) => doSomethingAt(panic, source, message, line, char, text);
@@ -84,7 +86,36 @@ export class StringReader {
     }
 }
 
-export async function readFile(filename: string) {
-    let contents = await fsReadFile(filename, { encoding: 'utf-8', flag: 'r' });
-    return contents;
+export class Result<T> {
+    variant: "Ok" | "Err";
+    value?: T;
+    errorMessage?: string;
+    constructor() { }
+    static Ok<T>(value: T): Result<T> {
+        let result = new Result<T>();
+        result.variant = "Ok";
+        result.value = value;
+        return result;
+    }
+    static Err<T>(errorMessage: string): Result<T> {
+        let result = new Result<T>();
+        result.variant = "Err";
+        result.errorMessage = errorMessage;
+        return result;
+    }
+    ok(): boolean {
+        return this.variant == "Ok";
+    }
+    err(): boolean {
+        return this.variant == "Err";
+    }
+}
+
+export async function readFile(filename: string): Promise<Result<string>> {
+    let contents = await new Promise((resolve) => {
+        fsReadFile(filename, { encoding: 'utf-8', flag: 'r' })
+            .then((fileContents) => resolve(Result.Ok(fileContents)))
+            .catch((errorMessage) => resolve(Result.Err("" + errorMessage)));
+    });
+    return <Result<string>>contents;
 }

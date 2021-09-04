@@ -6,6 +6,7 @@
         "src/*.ts"
     ],
     "compilerOptions": {
-        "outDir": "out"
+        "outDir": "out",
+        "sourceMap": true
     }
 }

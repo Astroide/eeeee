@@ -37,6 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 var process_1 = require("process");
+var explanations_1 = require("./explanations");
 var parser_1 = require("./parser");
 var utilities_1 = require("./utilities");
 function main() {
@@ -64,7 +65,7 @@ function main() {
             }
             return null;
         }
-        var commandLineArguments, commandLineOptions, filename, _i, commandLineArguments_1, argument, originalArgument, foundMatch, optionName, option, contentsOfSourceFile, parser, tokens;
+        var commandLineArguments, commandLineOptions, filename, _i, commandLineArguments_1, argument, originalArgument, foundMatch, optionName, option, errorID, hasFoundAnything, id, explanation, result, contentsOfSourceFile, parser, tokens;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -89,6 +90,10 @@ function main() {
                         compileOnly: {
                             short: 'c',
                             long: 'compile-only'
+                        },
+                        explain: {
+                            short: 'e',
+                            long: 'explain'
                         }
                     };
                     filename = '';
@@ -117,11 +122,26 @@ function main() {
                         else
                             filename = argument;
                     }
-                    if (filename == '' && !getOption('help')) {
+                    if (filename == '' && !getOption('help') && !getOption('explain')) {
                         (0, utilities_1.panic)('Unless -h or --help is specified, a filename is required.');
                     }
                     if (getOption('help')) {
-                        (0, utilities_1.print)("Usage:\nescurieux [options] [filename]\n(filename is required unless -h or --help is specified)\nOptions:\n* -v, --verbose : Verbose mode. Print extra informations about what the compiler is doing.\n* -h, --help : Show this message. When this option is specified, a filename is not required.\n* -o=filename, --out=filename : Specify where should bytecode be output.\n* -b, --bytecode : Run from bytecode instead of source.\n* -c, --compile-only : Compile to bytecode without running that bytecode.\n\nReport any errors / bugs / whatever to this page : https://github.com/Astroide/escurieux/issues .");
+                        (0, utilities_1.print)("Usage:\nescurieux [options] [filename]\n(filename is required unless -h, --help, -e or --explain is specified)\nOptions:\n* -v, --verbose : Verbose mode. Print extra informations about what the compiler is doing.\n* -h, --help : Show this message.\n* -e errorid, --explain errorid : Show the explanation for the error or warning 'errorid'.\n* -o=filename, --out=filename : Specify where should bytecode be output.\n* -b, --bytecode : Run from bytecode instead of source.\n* -c, --compile-only : Compile to bytecode without running that bytecode.\n\nReport any errors / bugs / whatever to this page : https://github.com/Astroide/escurieux/issues .");
+                        (0, process_1.exit)(0);
+                    }
+                    if (getOption('explain')) {
+                        errorID = filename;
+                        hasFoundAnything = false;
+                        for (id in explanations_1.errorAndWarningExplanations) {
+                            if (Object.prototype.hasOwnProperty.call(explanations_1.errorAndWarningExplanations, id) && ('ESC' + id) == errorID) {
+                                explanation = explanations_1.errorAndWarningExplanations[id];
+                                hasFoundAnything = true;
+                                (0, utilities_1.print)((id.startsWith('W') ? 'Warning' : 'Error') + ' ' + errorID + ': ' + explanation);
+                            }
+                        }
+                        if (!hasFoundAnything) {
+                            (0, utilities_1.panic)("Error id " + errorID + " is invalid.");
+                        }
                         (0, process_1.exit)(0);
                     }
                     if (getOption('bytecode') && getOption('compileOnly')) {
@@ -132,7 +152,11 @@ function main() {
                     return [3 /*break*/, 3];
                 case 1: return [4 /*yield*/, (0, utilities_1.readFile)(filename)];
                 case 2:
-                    contentsOfSourceFile = _a.sent();
+                    result = _a.sent();
+                    if (result.err()) {
+                        (0, utilities_1.panic)("The file " + filename + " does not exist. Node.js error:\n" + result.errorMessage);
+                    }
+                    contentsOfSourceFile = result.value;
                     parser = new parser_1.Parser(contentsOfSourceFile);
                     tokens = parser.parse();
                     _a.label = 3;
@@ -142,3 +166,4 @@ function main() {
     });
 }
 main();
+//# sourceMappingURL=main.js.map

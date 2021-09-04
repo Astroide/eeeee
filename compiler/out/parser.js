@@ -32,7 +32,7 @@ var Parser = /** @class */ (function () {
                             }
                         }
                         if (this.reader.done() && depth != 0) {
-                            (0, utilities_1.panicAt)(this.reader, "Comments opened with /* must be closed before EOF.\nNote: there " + (depth == 1 ? 'was' : 'were') + " " + depth + " level" + (depth == 1 ? '' : 's') + " of comment nesting when EOF was reached.", this.reader.lineCount() - 1, 0, this.reader.getLine(this.reader.lineCount() - 1).slice(0, -1));
+                            (0, utilities_1.panicAt)(this.reader, "[ESCE00001] Comments opened with /* must be closed before EOF.\nNote: there " + (depth == 1 ? 'was' : 'were') + " " + depth + " level" + (depth == 1 ? '' : 's') + " of comment nesting when EOF was reached.", this.reader.lineCount() - 1, 0, this.reader.getLine(this.reader.lineCount() - 1).slice(0, -1));
                         }
                     }
                 }
@@ -40,10 +40,19 @@ var Parser = /** @class */ (function () {
                     if (tokenText == '0') {
                         if (/[0-9]/.test(this.reader.peek())) {
                             // Decimal, warn because of leading zero
-                            (0, utilities_1.warnAt)(this.reader, 'Leading zero in number literal', this.reader.currentLine, this.reader.currentCharacter - 1, '0');
+                            (0, utilities_1.warnAt)(this.reader, '[ESCW00001] Leading zero in number literal', this.reader.currentLine, this.reader.currentCharacter - 1, '0');
                         }
                         else if (this.reader.peek() == 'x') {
                             // Hexadecimal
+                            this.reader.next();
+                            if (!/[0-9\.A-Fa-f]/.test(this.reader.peek())) {
+                                var invalidCharacted = this.reader.next();
+                                (0, utilities_1.panicAt)(this.reader, '[ESCE00002] Hexadecimal numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
+                            }
+                            tokenText = '';
+                            while (this.reader.peek() != '.' && /[0-9A-Fa-f]/.test(this.reader.peek())) {
+                                tokenText += this.reader.next();
+                            }
                         }
                     }
                 }
@@ -53,3 +62,4 @@ var Parser = /** @class */ (function () {
     return Parser;
 }());
 exports.Parser = Parser;
+//# sourceMappingURL=parser.js.map

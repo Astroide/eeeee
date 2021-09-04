@@ -38,7 +38,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 var _a;
 var _this = this;
 exports.__esModule = true;
-exports.readFile = exports.StringReader = exports.warnAt = exports.panicAt = exports.warn = exports.print = exports.panic = void 0;
+exports.readFile = exports.Result = exports.StringReader = exports.warnAt = exports.panicAt = exports.warn = exports.print = exports.panic = void 0;
 var process_1 = require("process");
 var promises_1 = require("fs/promises");
 function panic(message) {
@@ -58,7 +58,8 @@ function doSomethingAt(fn, source, message, line, char, text) {
     var lineCount = source.lineCount();
     var lineText = source.getLine(line).slice(0, char) + '\u001b[7m' + text + '\u001b[0m' + source.getLine(line).slice(char + text.length);
     var currentLine = '';
-    fn("\n" + message + "\nOn line " + (line + 1) + " at character " + (char + 1) + ":\n " + (line - 1).toString().padEnd(6, ' ') + "      | " + (line - 2 >= 0 ? (currentLine = source.getLine(line - 2)).slice(0, currentLine.length - 1) : '') + "\n " + (line).toString().padEnd(6, ' ') + "      | " + (line - 1 >= 0 ? (currentLine = source.getLine(line - 1)).slice(0, currentLine.length - 1) : '') + "\n " + (line + 1).toString().padEnd(6, ' ') + " here > " + lineText.slice(0, lineText.length - 1) + "\n " + (line + 2).toString().padEnd(6, ' ') + "      | " + (line + 1 < lineCount ? (currentLine = source.getLine(line + 1)).slice(0, currentLine.length - 1) : '<EOF>') + "\n " + (line + 3).toString().padEnd(6, ' ') + "      | " + (line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : '<EOF>') + "\n");
+    var errorOrWarningId = message.match(/\[ESC(W|E)\d\d\d\d\d\]/)[0].slice(1, -1);
+    fn("\n" + message + "\nOn line " + (line + 1) + " at character " + (char + 1) + ":\n " + (line - 1).toString().padEnd(6, ' ') + "      | " + (line - 2 >= 0 ? (currentLine = source.getLine(line - 2)).slice(0, currentLine.length - 1) : '') + "\n " + (line).toString().padEnd(6, ' ') + "      | " + (line - 1 >= 0 ? (currentLine = source.getLine(line - 1)).slice(0, currentLine.length - 1) : '') + "\n " + (line + 1).toString().padEnd(6, ' ') + " here > " + lineText.slice(0, lineText.length - 1) + "\n " + (line + 2).toString().padEnd(6, ' ') + "      | " + (line + 1 < lineCount ? (currentLine = source.getLine(line + 1)).slice(0, currentLine.length - 1) : '<EOF>') + "\n " + (line + 3).toString().padEnd(6, ' ') + "      | " + (line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : '<EOF>') + "\nRun escurieux -e " + errorOrWarningId + " or escurieux --explain " + errorOrWarningId + " for more informations about this error.\n");
 }
 var panicAt = function (source, message, line, char, text) { return doSomethingAt(panic, source, message, line, char, text); };
 exports.panicAt = panicAt;
@@ -118,12 +119,39 @@ _a = StringReader;
 (function () {
     _a.lineReader = new StringReader('');
 })();
+var Result = /** @class */ (function () {
+    function Result() {
+    }
+    Result.Ok = function (value) {
+        var result = new Result();
+        result.variant = "Ok";
+        result.value = value;
+        return result;
+    };
+    Result.Err = function (errorMessage) {
+        var result = new Result();
+        result.variant = "Err";
+        result.errorMessage = errorMessage;
+        return result;
+    };
+    Result.prototype.ok = function () {
+        return this.variant == "Ok";
+    };
+    Result.prototype.err = function () {
+        return this.variant == "Err";
+    };
+    return Result;
+}());
+exports.Result = Result;
 function readFile(filename) {
     return __awaiter(this, void 0, void 0, function () {
         var contents;
         return __generator(this, function (_b) {
             switch (_b.label) {
-                case 0: return [4 /*yield*/, (0, promises_1.readFile)(filename, { encoding: 'utf-8', flag: 'r' })];
+                case 0: return [4 /*yield*/, new Promise(function (resolve) {
+                        (0, promises_1.readFile)(filename, { encoding: 'utf-8', flag: 'r' })
+                            .then(function (fileContents) { return resolve(Result.Ok(fileContents)); })["catch"](function (errorMessage) { return resolve(Result.Err("" + errorMessage)); });
+                    })];
                 case 1:
                     contents = _b.sent();
                     return [2 /*return*/, contents];
@@ -132,3 +160,4 @@ function readFile(filename) {
     });
 }
 exports.readFile = readFile;
+//# sourceMappingURL=utilities.js.map
