@@ -39,6 +39,7 @@ exports.__esModule = true;
 var process_1 = require("process");
 var explanations_1 = require("./explanations");
 var parser_1 = require("./parser");
+var tokens_1 = require("./tokens");
 var utilities_1 = require("./utilities");
 function main() {
     return __awaiter(this, void 0, void 0, function () {
@@ -65,7 +66,7 @@ function main() {
             }
             return null;
         }
-        var commandLineArguments, commandLineOptions, filename, _i, commandLineArguments_1, argument, originalArgument, foundMatch, optionName, option, errorID, hasFoundAnything, id, explanation, result, contentsOfSourceFile, parser, tokens;
+        var commandLineArguments, commandLineOptions, filename, _i, commandLineArguments_1, argument, originalArgument, foundMatch, optionName, option, errorID, hasFoundAnything, id, explanation, verbose, result, contentsOfSourceFile, parser, tokens;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -150,7 +151,9 @@ function main() {
                     if (!getOption('bytecode')) return [3 /*break*/, 1];
                     (0, utilities_1.panic)('The VM has not been implemented yet.');
                     return [3 /*break*/, 3];
-                case 1: return [4 /*yield*/, (0, utilities_1.readFile)(filename)];
+                case 1:
+                    verbose = !!getOption('verbose');
+                    return [4 /*yield*/, (0, utilities_1.readFile)(filename)];
                 case 2:
                     result = _a.sent();
                     if (result.err()) {
@@ -159,6 +162,14 @@ function main() {
                     contentsOfSourceFile = result.value;
                     parser = new parser_1.Parser(contentsOfSourceFile);
                     tokens = parser.parse();
+                    if (verbose) {
+                        tokens.forEach(function (token) {
+                            if (token instanceof tokens_1.NumberLiteral) {
+                                var num = token.content;
+                                (0, utilities_1.print)("Token NumberLiteral <" + num + ">");
+                            }
+                        });
+                    }
                     _a.label = 3;
                 case 3: return [2 /*return*/];
             }

@@ -71,8 +71,8 @@ var Token = /** @class */ (function () {
 exports.Token = Token;
 var StringLiteral = /** @class */ (function (_super) {
     __extends(StringLiteral, _super);
-    function StringLiteral(line, char, source, type, start, length, content) {
-        var _this = _super.call(this, line, char, source, type, start, length) || this;
+    function StringLiteral(line, char, source, start, length, content) {
+        var _this = _super.call(this, line, char, source, TokenType.StringLiteral, start, length) || this;
         _this.content = content;
         return _this;
     }
@@ -81,8 +81,8 @@ var StringLiteral = /** @class */ (function (_super) {
 exports.StringLiteral = StringLiteral;
 var NumberLiteral = /** @class */ (function (_super) {
     __extends(NumberLiteral, _super);
-    function NumberLiteral(line, char, source, type, start, length, content) {
-        var _this = _super.call(this, line, char, source, type, start, length) || this;
+    function NumberLiteral(line, char, source, start, length, content) {
+        var _this = _super.call(this, line, char, source, TokenType.NumericLiteral, start, length) || this;
         _this.content = content;
         return _this;
     }
@@ -91,8 +91,8 @@ var NumberLiteral = /** @class */ (function (_super) {
 exports.NumberLiteral = NumberLiteral;
 var BooleanLiteral = /** @class */ (function (_super) {
     __extends(BooleanLiteral, _super);
-    function BooleanLiteral(line, char, source, type, start, length, content) {
-        var _this = _super.call(this, line, char, source, type, start, length) || this;
+    function BooleanLiteral(line, char, source, start, length, content) {
+        var _this = _super.call(this, line, char, source, TokenType.BooleanLiteral, start, length) || this;
         _this.content = content;
         return _this;
     }
@@ -101,8 +101,8 @@ var BooleanLiteral = /** @class */ (function (_super) {
 exports.BooleanLiteral = BooleanLiteral;
 var Identifier = /** @class */ (function (_super) {
     __extends(Identifier, _super);
-    function Identifier(line, char, source, type, start, length, identifier) {
-        var _this = _super.call(this, line, char, source, type, start, length) || this;
+    function Identifier(line, char, source, start, length, identifier) {
+        var _this = _super.call(this, line, char, source, TokenType.Identifier, start, length) || this;
         _this.identifier = identifier;
         return _this;
     }

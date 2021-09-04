@@ -38,8 +38,10 @@ export class Parser {
                             // Decimal, warn because of leading zero
                             warnAt(this.reader, '[ESCW00001] Leading zero in number literal', this.reader.currentLine, this.reader.currentCharacter - 1, '0');
                         } else if (this.reader.peek() == 'x') {
+                            let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
                             // Hexadecimal
                             this.reader.next();
+                            tokenText = '';
                             if (!/[0-9\.A-Fa-f]/.test(this.reader.peek())) {
                                 let invalidCharacted: string = this.reader.next();
                                 panicAt(this.reader, '[ESCE00002] Hexadecimal numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
@@ -48,6 +50,23 @@ export class Parser {
                             while (this.reader.peek() != '.' && /[0-9A-Fa-f]/.test(this.reader.peek())) {
                                 tokenText += this.reader.next();
                             }
+                            if (this.reader.peek() == '.') {
+                                tokenText += '.';
+                                this.reader.next();
+                                while (/[0-9A-Fa-f]/.test(this.reader.peek())) {
+                                    tokenText += this.reader.next();
+                                }
+                            }
+                            let value: number = 0;
+                            value += parseInt(tokenText.split('.')[0], 16);
+                            if (tokenText.includes('.')) {
+                                let decimalPart = tokenText.split('.')[1];
+                                for (let i = 0; i < decimalPart.length; i++) {
+                                    const digit = parseInt(decimalPart[i], 16);
+                                    value += digit / Math.pow(16, i + 1);
+                                }
+                            }
+                            tokens.push(new NumberLiteral(line, char, '0x' + tokenText, start, tokenText.length + 2, value))
                         }
                     }
                 }

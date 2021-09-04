@@ -1,6 +1,7 @@
 import { argv, exit } from "process";
 import { errorAndWarningExplanations } from "./explanations";
 import { Parser } from "./parser";
+import { NumberLiteral } from "./tokens";
 import { panic, print, readFile, Result } from "./utilities";
 async function main() {
     const commandLineArguments = argv.slice(2).sort((a: string, _) => a.startsWith('-') ? -1 : 1);
@@ -111,6 +112,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
     if (getOption('bytecode')) {
         panic('The VM has not been implemented yet.');
     } else {
+        let verbose: boolean = !!getOption('verbose');
         let result = await readFile(filename);
         if (result.err()) {
             panic(`The file ${filename} does not exist. Node.js error:\n${result.errorMessage}`)
@@ -118,6 +120,14 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
         let contentsOfSourceFile = result.value;
         let parser = new Parser(contentsOfSourceFile);
         let tokens = parser.parse();
+        if (verbose) {
+            tokens.forEach(token => {
+                if (token instanceof NumberLiteral) {
+                    let num = (<NumberLiteral>token).content;
+                    print(`Token NumberLiteral <${num}>`);
+                }
+            });
+        }
     }
 }
 main();
