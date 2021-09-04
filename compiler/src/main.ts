@@ -1,7 +1,7 @@
 import { argv, exit } from "process";
 import { errorAndWarningExplanations } from "./explanations";
 import { Parser } from "./parser";
-import { NumberLiteral } from "./tokens";
+import { NumberLiteral, StringLiteral } from "./tokens";
 import { panic, print, readFile, Result } from "./utilities";
 async function main() {
     const commandLineArguments = argv.slice(2).sort((a: string, _) => a.startsWith('-') ? -1 : 1);
@@ -125,6 +125,9 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
                 if (token instanceof NumberLiteral) {
                     let num = (<NumberLiteral>token).content;
                     print(`Token NumberLiteral <${num}>`);
+                } else if (token instanceof StringLiteral) {
+                    let num = (<StringLiteral>token).content;
+                    print(`Token StringLiteral <${num}>`);
                 }
             });
         }

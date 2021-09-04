@@ -133,6 +133,44 @@ var Parser = /** @class */ (function () {
                         tokens.push(new tokens_1.NumberLiteral(line, char, tokenText, start, tokenText.length, value));
                         continue parsing;
                     }
+                    if (/('|")/.test(tokenText)) {
+                        var delimiter = tokenText;
+                        var line = this.reader.currentLine, character = this.reader.currentCharacter - 1, position = this.reader.current - 1;
+                        var stringContents = '';
+                        while (this.reader.peek() != delimiter && !this.reader.done()) {
+                            var char = this.reader.next();
+                            if (char != '\\') {
+                                stringContents += char;
+                            }
+                            else {
+                                var next = this.reader.next();
+                                if (next == '\\') {
+                                    stringContents += '\\';
+                                }
+                                else if (next == '\n') {
+                                    // Nothing here
+                                }
+                                else if (next == 'n') {
+                                    stringContents += '\n';
+                                }
+                                else if (next == "'") {
+                                    stringContents += "'";
+                                }
+                                else if (next == '"') {
+                                    stringContents += '"';
+                                }
+                                else {
+                                    (0, utilities_1.panicAt)(this.reader, "[ESCE00006] Invalid escape sequence: \\" + next, this.reader.currentLine, this.reader.currentCharacter - 2, '\\' + next);
+                                }
+                            }
+                        }
+                        if (this.reader.done() && this.reader.peek() != delimiter) {
+                            (0, utilities_1.panicAt)(this.reader, "[ESCE00004] Endless string\nString was started here:", line, character, delimiter);
+                        }
+                        this.reader.next();
+                        tokens.push(new tokens_1.StringLiteral(line, character, this.reader.source.slice(position, this.reader.current), position, this.reader.current - position, stringContents));
+                        continue parsing;
+                    }
                 }
         }
         return tokens;

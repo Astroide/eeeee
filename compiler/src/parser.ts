@@ -126,6 +126,38 @@ export class Parser {
                         tokens.push(new NumberLiteral(line, char, tokenText, start, tokenText.length, value));
                         continue parsing;
                     }
+                    if (/('|")/.test(tokenText)) {
+                        let delimiter = tokenText;
+                        let line = this.reader.currentLine, character = this.reader.currentCharacter - 1, position = this.reader.current - 1;
+                        let stringContents = '';
+                        while (this.reader.peek() != delimiter && !this.reader.done()) {
+                            let char = this.reader.next();
+                            if (char != '\\') {
+                                stringContents += char;
+                            } else {
+                                let next = this.reader.next();
+                                if (next == '\\') {
+                                    stringContents += '\\';
+                                } else if (next == '\n') {
+                                    // Nothing here
+                                } else if (next == 'n') {
+                                    stringContents += '\n';
+                                } else if (next == "'") {
+                                    stringContents += "'";
+                                } else if (next == '"') {
+                                    stringContents += '"';
+                                } else {
+                                    panicAt(this.reader, `[ESCE00006] Invalid escape sequence: \\${next}`, this.reader.currentLine, this.reader.currentCharacter - 2, '\\' + next);
+                                }
+                            }
+                        }
+                        if (this.reader.done() && this.reader.peek() != delimiter) {
+                            panicAt(this.reader, "[ESCE00004] Endless string\nString was started here:", line, character, delimiter);
+                        }
+                        this.reader.next();
+                        tokens.push(new StringLiteral(line, character, this.reader.source.slice(position, this.reader.current), position, this.reader.current - position, stringContents));
+                        continue parsing;
+                    }
                 }
         }
         return tokens;

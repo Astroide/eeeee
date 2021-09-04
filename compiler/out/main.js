@@ -168,6 +168,10 @@ function main() {
                                 var num = token.content;
                                 (0, utilities_1.print)("Token NumberLiteral <" + num + ">");
                             }
+                            else if (token instanceof tokens_1.StringLiteral) {
+                                var num = token.content;
+                                (0, utilities_1.print)("Token StringLiteral <" + num + ">");
+                            }
                         });
                     }
                     _a.label = 3;
