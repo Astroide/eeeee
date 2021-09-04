@@ -9,7 +9,7 @@ var Parser = /** @class */ (function () {
     }
     Parser.prototype.parse = function () {
         var tokens = [];
-        while (!this.reader.done()) {
+        parsing: while (!this.reader.done()) {
             var tokenText = this.reader.next();
             if (tokenText)
                 if (tokenText == '/') {
@@ -73,7 +73,65 @@ var Parser = /** @class */ (function () {
                                 }
                             }
                             tokens.push(new tokens_1.NumberLiteral(line, char, '0x' + tokenText, start, tokenText.length + 2, value));
+                            continue parsing;
                         }
+                        else if (this.reader.peek() == 'o') {
+                            var line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
+                            // Octal
+                            this.reader.next();
+                            tokenText = '';
+                            if (!/[0-7\.]/.test(this.reader.peek())) {
+                                var invalidCharacted = this.reader.next();
+                                (0, utilities_1.panicAt)(this.reader, '[ESCE00003] Octal numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
+                            }
+                            tokenText = '';
+                            while (this.reader.peek() != '.' && /[0-7]/.test(this.reader.peek())) {
+                                tokenText += this.reader.next();
+                            }
+                            if (this.reader.peek() == '.') {
+                                tokenText += '.';
+                                this.reader.next();
+                                while (/[0-7]/.test(this.reader.peek())) {
+                                    tokenText += this.reader.next();
+                                }
+                            }
+                            var value = 0;
+                            value += parseInt(tokenText.split('.')[0], 8);
+                            if (tokenText.includes('.')) {
+                                var decimalPart = tokenText.split('.')[1];
+                                for (var i = 0; i < decimalPart.length; i++) {
+                                    var digit = parseInt(decimalPart[i], 8);
+                                    value += digit / Math.pow(8, i + 1);
+                                }
+                            }
+                            tokens.push(new tokens_1.NumberLiteral(line, char, '0o' + tokenText, start, tokenText.length + 2, value));
+                            continue parsing;
+                        }
+                    }
+                    if (/[0-9\.]/.test(tokenText)) {
+                        var line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
+                        // Decimal
+                        while (this.reader.peek() != '.' && /[0-9]/.test(this.reader.peek())) {
+                            tokenText += this.reader.next();
+                        }
+                        if (this.reader.peek() == '.') {
+                            tokenText += '.';
+                            this.reader.next();
+                            while (/[0-9]/.test(this.reader.peek())) {
+                                tokenText += this.reader.next();
+                            }
+                        }
+                        var value = 0;
+                        value += parseInt(tokenText.split('.')[0], 10);
+                        if (tokenText.includes('.')) {
+                            var decimalPart = tokenText.split('.')[1];
+                            for (var i = 0; i < decimalPart.length; i++) {
+                                var digit = parseInt(decimalPart[i], 10);
+                                value += digit / Math.pow(10, i + 1);
+                            }
+                        }
+                        tokens.push(new tokens_1.NumberLiteral(line, char, tokenText, start, tokenText.length, value));
+                        continue parsing;
                     }
                 }
         }

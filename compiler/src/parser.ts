@@ -8,7 +8,7 @@ export class Parser {
     }
     parse(): Token[] {
         let tokens: Token[] = [];
-        while (!this.reader.done()) {
+        parsing: while (!this.reader.done()) {
             let tokenText: string = this.reader.next();
             if (tokenText)
                 if (tokenText == '/') {
@@ -66,8 +66,65 @@ export class Parser {
                                     value += digit / Math.pow(16, i + 1);
                                 }
                             }
-                            tokens.push(new NumberLiteral(line, char, '0x' + tokenText, start, tokenText.length + 2, value))
+                            tokens.push(new NumberLiteral(line, char, '0x' + tokenText, start, tokenText.length + 2, value));
+                            continue parsing;
+                        } else if (this.reader.peek() == 'o') {
+                            let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
+                            // Octal
+                            this.reader.next();
+                            tokenText = '';
+                            if (!/[0-7\.]/.test(this.reader.peek())) {
+                                let invalidCharacted: string = this.reader.next();
+                                panicAt(this.reader, '[ESCE00003] Octal numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
+                            }
+                            tokenText = '';
+                            while (this.reader.peek() != '.' && /[0-7]/.test(this.reader.peek())) {
+                                tokenText += this.reader.next();
+                            }
+                            if (this.reader.peek() == '.') {
+                                tokenText += '.';
+                                this.reader.next();
+                                while (/[0-7]/.test(this.reader.peek())) {
+                                    tokenText += this.reader.next();
+                                }
+                            }
+                            let value: number = 0;
+                            value += parseInt(tokenText.split('.')[0], 8);
+                            if (tokenText.includes('.')) {
+                                let decimalPart = tokenText.split('.')[1];
+                                for (let i = 0; i < decimalPart.length; i++) {
+                                    const digit = parseInt(decimalPart[i], 8);
+                                    value += digit / Math.pow(8, i + 1);
+                                }
+                            }
+                            tokens.push(new NumberLiteral(line, char, '0o' + tokenText, start, tokenText.length + 2, value));
+                            continue parsing;
                         }
+                    }
+                    if (/[0-9\.]/.test(tokenText)) {
+                        let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
+                        // Decimal
+                        while (this.reader.peek() != '.' && /[0-9]/.test(this.reader.peek())) {
+                            tokenText += this.reader.next();
+                        }
+                        if (this.reader.peek() == '.') {
+                            tokenText += '.';
+                            this.reader.next();
+                            while (/[0-9]/.test(this.reader.peek())) {
+                                tokenText += this.reader.next();
+                            }
+                        }
+                        let value: number = 0;
+                        value += parseInt(tokenText.split('.')[0], 10);
+                        if (tokenText.includes('.')) {
+                            let decimalPart = tokenText.split('.')[1];
+                            for (let i = 0; i < decimalPart.length; i++) {
+                                const digit = parseInt(decimalPart[i], 10);
+                                value += digit / Math.pow(10, i + 1);
+                            }
+                        }
+                        tokens.push(new NumberLiteral(line, char, tokenText, start, tokenText.length, value));
+                        continue parsing;
                     }
                 }
         }
