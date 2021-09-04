@@ -6,4 +6,6 @@
 23903290.4893
 0o325763427
 /* /* /* */ */ */
-'meow\nmeow\\\'\T'
+'meow\nmeow\\\'\\' // Expected: meow<newline>meow\'\
+"doubleQuotedString on next line :
+\"\"" // Expected: doubleQuotedString on next line:<newline>""
