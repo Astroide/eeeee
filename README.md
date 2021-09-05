@@ -1,2 +1,2 @@
 # Escurieux
-A programming language.
+A statically typed programming language.
