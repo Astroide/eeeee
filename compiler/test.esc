@@ -1,10 +1,10 @@
-
+0b10.01
 0xFF00EE
 // 0x$T
 0xabc.def
 24982
 23903290.4893
-0o325763427 0x
+0o325763427
 /* /* /* */ */ */
 'meow\nmeow\\\'\\' // Expected: meow<newline>meow\'\
 "doubleQuotedString on next line :

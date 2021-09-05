@@ -100,6 +100,37 @@ export class Parser {
                             }
                             tokens.push(new NumberLiteral(line, char, '0o' + tokenText, start, tokenText.length + 2, value));
                             continue parsing;
+                        } else if (this.reader.peek() == 'b') {
+                            let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
+                            // Binary
+                            this.reader.next();
+                            tokenText = '';
+                            if (!/[01\.]/.test(this.reader.peek())) {
+                                let invalidCharacted: string = this.reader.next();
+                                panicAt(this.reader, '[ESCE00007] Binary numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
+                            }
+                            tokenText = '';
+                            while (this.reader.peek() != '.' && /[01]/.test(this.reader.peek())) {
+                                tokenText += this.reader.next();
+                            }
+                            if (this.reader.peek() == '.') {
+                                tokenText += '.';
+                                this.reader.next();
+                                while (/[01]/.test(this.reader.peek())) {
+                                    tokenText += this.reader.next();
+                                }
+                            }
+                            let value: number = 0;
+                            value += parseInt(tokenText.split('.')[0], 2);
+                            if (tokenText.includes('.')) {
+                                let decimalPart = tokenText.split('.')[1];
+                                for (let i = 0; i < decimalPart.length; i++) {
+                                    const digit = parseInt(decimalPart[i], 2);
+                                    value += digit / Math.pow(2, i + 1);
+                                }
+                            }
+                            tokens.push(new NumberLiteral(line, char, '0b' + tokenText, start, tokenText.length + 2, value));
+                            continue parsing;
                         }
                     }
                     if (/[0-9\.]/.test(tokenText)) {
