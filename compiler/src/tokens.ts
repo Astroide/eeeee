@@ -88,4 +88,12 @@ class Identifier extends Token {
     }
 }
 
-export { TokenType, Token, StringLiteral, NumberLiteral, BooleanLiteral, Identifier };
+class Keyword extends Token {
+    keyword: string;
+    constructor(line: number, char: number, source: string, start: number, length: number, keyword: string) {
+        super(line, char, source, TokenType.Identifier, start, length);
+        this.keyword = keyword;
+    }
+}
+
+export { TokenType, Token, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword };

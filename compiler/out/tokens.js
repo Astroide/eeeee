@@ -15,7 +15,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 exports.__esModule = true;
-exports.Identifier = exports.BooleanLiteral = exports.NumberLiteral = exports.StringLiteral = exports.Token = exports.TokenType = void 0;
+exports.Keyword = exports.Identifier = exports.BooleanLiteral = exports.NumberLiteral = exports.StringLiteral = exports.Token = exports.TokenType = void 0;
 var TokenType;
 (function (TokenType) {
     TokenType[TokenType["StringLiteral"] = 0] = "StringLiteral";
@@ -109,4 +109,14 @@ var Identifier = /** @class */ (function (_super) {
     return Identifier;
 }(Token));
 exports.Identifier = Identifier;
+var Keyword = /** @class */ (function (_super) {
+    __extends(Keyword, _super);
+    function Keyword(line, char, source, start, length, keyword) {
+        var _this = _super.call(this, line, char, source, TokenType.Identifier, start, length) || this;
+        _this.keyword = keyword;
+        return _this;
+    }
+    return Keyword;
+}(Token));
+exports.Keyword = Keyword;
 //# sourceMappingURL=tokens.js.map
