@@ -12,7 +12,16 @@ export function warn(message: string) {
 }
 function doSomethingAt(fn: (message: string) => any, source: StringReader, message: string, line: number, char: number, text: string) {
     let lineCount = source.lineCount();
-    let lineText = source.getLine(line).slice(0, char) + '\u001b[7m' + text + '\u001b[0m' + source.getLine(line).slice(char + text.length);
+    let lineText: string;
+    if (char != -1 && text != '\n') {
+        lineText = (
+            source.getLine(line).slice(0, char)
+            + '\u001b[7m' + text + '\u001b[0m'
+            + source.getLine(line).slice(char + text.length)
+        );
+    } else {
+        lineText = '\u001b[7m' + source.getLine(line).slice(0, 1) + '\u001b[0m' + source.getLine(line).slice(1);
+    }
     let currentLine = '';
     let errorOrWarningId = message.match(/\[ESC(W|E)\d\d\d\d\d\]/)[0].slice(1, -1);
     fn(`\n${message}
@@ -20,8 +29,8 @@ On line ${line + 1} at character ${char + 1}:
  \u001b[34m${(line - 1).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 2 >= 0 ? (currentLine = source.getLine(line - 2)).slice(0, currentLine.length - 1) : ''}
  \u001b[34m${(line).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 1 >= 0 ? (currentLine = source.getLine(line - 1)).slice(0, currentLine.length - 1) : ''}
  \u001b[34m${(line + 1).toString().padEnd(6, ' ')} here >\u001b[0m ${lineText.slice(0, lineText.length - 1)}
- \u001b[34m${(line + 2).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 1 < lineCount ? (currentLine = source.getLine(line + 1)).slice(0, currentLine.length - 1) : '<EOF>'}
- \u001b[34m${(line + 3).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : '<EOF>'}
+ \u001b[34m${(line + 2).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 1 < lineCount ? (currentLine = source.getLine(line + 1)).slice(0, currentLine.length - 1) : ''}
+ \u001b[34m${(line + 3).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : ''}
 Run escurieux -e ${errorOrWarningId} or escurieux --explain ${errorOrWarningId} for more informations about this error.\n`);
 }
 

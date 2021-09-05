@@ -4,7 +4,7 @@
 0xabc.def
 24982
 23903290.4893
-0o325763427
+0o325763427 0x
 /* /* /* */ */ */
 'meow\nmeow\\\'\\' // Expected: meow<newline>meow\'\
 "doubleQuotedString on next line :
