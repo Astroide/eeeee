@@ -190,6 +190,22 @@ export class Parser {
                         tokens.push(new StringLiteral(line, character, this.reader.source.slice(position, this.reader.current), position, this.reader.current - position, stringContents));
                         continue parsing;
                     }
+                    if ('[]{}()/,.'.includes(tokenText)) {
+                        // Tokens of only one character
+                        let type: TokenType = {
+                            '[': TokenType.LeftBracket,
+                            ']': TokenType.RightBracket,
+                            '{': TokenType.LeftCurlyBracket,
+                            '}': TokenType.RightCurlyBracket,
+                            '(': TokenType.LeftParen,
+                            ')': TokenType.RightParen,
+                            '/': TokenType.Slash,
+                            ',': TokenType.Comma,
+                            '.': TokenType.Dot
+                        }[tokenText];
+                        tokens.push(new Token(this.reader.currentLine, this.reader.currentCharacter - 1, tokenText, type, this.reader.current - 1, 1));
+                        continue parsing;
+                    }
                 }
         }
         return tokens;

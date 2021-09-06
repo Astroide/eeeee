@@ -205,6 +205,22 @@ var Parser = /** @class */ (function () {
                         tokens.push(new tokens_1.StringLiteral(line, character, this.reader.source.slice(position, this.reader.current), position, this.reader.current - position, stringContents));
                         continue parsing;
                     }
+                    if ('[]{}()/,.'.includes(tokenText)) {
+                        // Tokens of only one character
+                        var type = {
+                            '[': tokens_1.TokenType.LeftBracket,
+                            ']': tokens_1.TokenType.RightBracket,
+                            '{': tokens_1.TokenType.LeftCurlyBracket,
+                            '}': tokens_1.TokenType.RightCurlyBracket,
+                            '(': tokens_1.TokenType.LeftParen,
+                            ')': tokens_1.TokenType.RightParen,
+                            '/': tokens_1.TokenType.Slash,
+                            ',': tokens_1.TokenType.Comma,
+                            '.': tokens_1.TokenType.Dot
+                        }[tokenText];
+                        tokens.push(new tokens_1.Token(this.reader.currentLine, this.reader.currentCharacter - 1, tokenText, type, this.reader.current - 1, 1));
+                        continue parsing;
+                    }
                 }
         }
         return tokens;

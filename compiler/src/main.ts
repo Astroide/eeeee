@@ -128,6 +128,8 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
                 } else if (token instanceof StringLiteral) {
                     let num = (<StringLiteral>token).content;
                     print(`Token StringLiteral <${num}>`);
+                } else {
+                    print(`Token BaseToken <${token.getSource()}>`);
                 }
             });
         }

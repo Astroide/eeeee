@@ -172,6 +172,9 @@ function main() {
                                 var num = token.content;
                                 (0, utilities_1.print)("Token StringLiteral <" + num + ">");
                             }
+                            else {
+                                (0, utilities_1.print)("Token BaseToken <" + token.getSource() + ">");
+                            }
                         });
                     }
                     _a.label = 3;
