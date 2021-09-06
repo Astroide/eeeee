@@ -74,7 +74,7 @@ var Parser = /** @class */ (function () {
                                     value += digit / Math.pow(16, i + 1);
                                 }
                             }
-                            tokens.push(new tokens_1.NumberLiteral(line, char, '0x' + tokenText, start, tokenText.length + 2, value));
+                            tokens.push(new tokens_1.NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
                             continue parsing;
                         }
                         else if (this.reader.peek() == 'o') {
@@ -106,7 +106,7 @@ var Parser = /** @class */ (function () {
                                     value += digit / Math.pow(8, i + 1);
                                 }
                             }
-                            tokens.push(new tokens_1.NumberLiteral(line, char, '0o' + tokenText, start, tokenText.length + 2, value));
+                            tokens.push(new tokens_1.NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
                             continue parsing;
                         }
                         else if (this.reader.peek() == 'b') {
@@ -138,7 +138,7 @@ var Parser = /** @class */ (function () {
                                     value += digit / Math.pow(2, i + 1);
                                 }
                             }
-                            tokens.push(new tokens_1.NumberLiteral(line, char, '0b' + tokenText, start, tokenText.length + 2, value));
+                            tokens.push(new tokens_1.NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
                             continue parsing;
                         }
                     }
@@ -164,7 +164,7 @@ var Parser = /** @class */ (function () {
                                 value += digit / Math.pow(10, i + 1);
                             }
                         }
-                        tokens.push(new tokens_1.NumberLiteral(line, char, tokenText, start, tokenText.length, value));
+                        tokens.push(new tokens_1.NumberLiteral(line, char, this.reader.source, start, tokenText.length, value));
                         continue parsing;
                     }
                     if (/('|")/.test(tokenText)) {
@@ -202,7 +202,7 @@ var Parser = /** @class */ (function () {
                             (0, utilities_1.panicAt)(this.reader, "[ESCE00004] Endless string\nString was started here:", line, character, delimiter);
                         }
                         this.reader.next();
-                        tokens.push(new tokens_1.StringLiteral(line, character, this.reader.source.slice(position, this.reader.current), position, this.reader.current - position, stringContents));
+                        tokens.push(new tokens_1.StringLiteral(line, character, this.reader.source, position, this.reader.current - position, stringContents));
                         continue parsing;
                     }
                     if ('[]{}()/,.'.includes(tokenText)) {
@@ -218,7 +218,7 @@ var Parser = /** @class */ (function () {
                             ',': tokens_1.TokenType.Comma,
                             '.': tokens_1.TokenType.Dot
                         }[tokenText];
-                        tokens.push(new tokens_1.Token(this.reader.currentLine, this.reader.currentCharacter - 1, tokenText, type, this.reader.current - 1, 1));
+                        tokens.push(new tokens_1.Token(this.reader.currentLine, this.reader.currentCharacter - 1, this.reader.source, type, this.reader.current - 1, 1));
                         continue parsing;
                     }
                 }
