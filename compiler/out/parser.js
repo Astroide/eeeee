@@ -224,6 +224,27 @@ var Parser = /** @class */ (function () {
                     tokens.push(new tokens_1.Token(this.reader.currentLine, this.reader.currentCharacter - 1, this.reader.source, type, this.reader.current - 1, 1));
                     continue parsing;
                 }
+                if ('+-*=&|'.includes(tokenText)) {
+                    var table = {
+                        '+': tokens_1.TokenType.Plus,
+                        '++': tokens_1.TokenType.PlusPlus,
+                        '-': tokens_1.TokenType.Minus,
+                        '--': tokens_1.TokenType.MinusMinus,
+                        '*': tokens_1.TokenType.Star,
+                        '**': tokens_1.TokenType.StarStar,
+                        '=': tokens_1.TokenType.Equals,
+                        '==': tokens_1.TokenType.DoubleEquals,
+                        '&': tokens_1.TokenType.Ampersand,
+                        '&&': tokens_1.TokenType.DoubleAmpersand,
+                        '|': tokens_1.TokenType.Pipe,
+                        '||': tokens_1.TokenType.DoublePipe
+                    };
+                    if (this.reader.peek() == tokenText) {
+                        tokenText += this.reader.next();
+                    }
+                    tokens.push(new tokens_1.Token(this.reader.currentLine, this.reader.currentCharacter - 1, this.reader.source, table[tokenText], this.reader.current - 1, 1));
+                    continue parsing;
+                }
             }
         }
         return tokens;

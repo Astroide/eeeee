@@ -209,6 +209,27 @@ export class Parser {
                     tokens.push(new Token(this.reader.currentLine, this.reader.currentCharacter - 1, this.reader.source, type, this.reader.current - 1, 1));
                     continue parsing;
                 }
+                if ('+-*=&|'.includes(tokenText)) {
+                    let table = {
+                        '+': TokenType.Plus,
+                        '++': TokenType.PlusPlus,
+                        '-': TokenType.Minus,
+                        '--': TokenType.MinusMinus,
+                        '*': TokenType.Star,
+                        '**': TokenType.StarStar,
+                        '=': TokenType.Equals,
+                        '==': TokenType.DoubleEquals,
+                        '&': TokenType.Ampersand,
+                        '&&': TokenType.DoubleAmpersand,
+                        '|': TokenType.Pipe,
+                        '||': TokenType.DoublePipe
+                    };
+                    if (this.reader.peek() == tokenText) {
+                        tokenText += this.reader.next();
+                    }
+                    tokens.push(new Token(this.reader.currentLine, this.reader.currentCharacter - 1, this.reader.source, table[tokenText], this.reader.current - 1, 1));
+                    continue parsing;
+                }
             }
         }
         return tokens;
