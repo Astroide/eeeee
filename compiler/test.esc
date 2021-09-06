@@ -9,4 +9,4 @@
 'meow\nmeow\\\'\\' // Expected: meow<newline>meow\'\
 "doubleQuotedString on next line :
 \"\"" // Expected: doubleQuotedString on next line:<newline>""
-{[()]},./
+{[()]},/.

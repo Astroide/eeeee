@@ -10,7 +10,7 @@ export class Parser {
         let tokens: Token[] = [];
         parsing: while (!this.reader.done()) {
             let tokenText: string = this.reader.next();
-            if (tokenText)
+            if (tokenText) {
                 if (tokenText == '/') {
                     if (this.reader.peek() == '/') {
                         while (this.reader.peek() != '\n' && !this.reader.done()) this.reader.next();
@@ -33,106 +33,107 @@ export class Parser {
                         }
                         continue parsing;
                     }
-                } else {
-                    if (tokenText == '0') {
-                        if (/[0-9]/.test(this.reader.peek())) {
-                            // Decimal, warn because of leading zero
-                            warnAt(this.reader, '[ESCW00001] Leading zero in number literal', this.reader.currentLine, this.reader.currentCharacter - 1, '0');
-                        } else if (this.reader.peek() == 'x') {
-                            let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
-                            // Hexadecimal
-                            this.reader.next();
-                            tokenText = '';
-                            if (!/[0-9\.A-Fa-f]/.test(this.reader.peek())) {
-                                let invalidCharacted: string = this.reader.next();
-                                panicAt(this.reader, '[ESCE00002] Hexadecimal numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
-                            }
-                            tokenText = '';
-                            while (this.reader.peek() != '.' && /[0-9A-Fa-f]/.test(this.reader.peek())) {
-                                tokenText += this.reader.next();
-                            }
-                            if (this.reader.peek() == '.') {
-                                tokenText += '.';
-                                this.reader.next();
-                                while (/[0-9A-Fa-f]/.test(this.reader.peek())) {
-                                    tokenText += this.reader.next();
-                                }
-                            }
-                            let value: number = 0;
-                            value += parseInt(tokenText.split('.')[0], 16);
-                            if (tokenText.includes('.')) {
-                                let decimalPart = tokenText.split('.')[1];
-                                for (let i = 0; i < decimalPart.length; i++) {
-                                    const digit = parseInt(decimalPart[i], 16);
-                                    value += digit / Math.pow(16, i + 1);
-                                }
-                            }
-                            tokens.push(new NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
-                            continue parsing;
-                        } else if (this.reader.peek() == 'o') {
-                            let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
-                            // Octal
-                            this.reader.next();
-                            tokenText = '';
-                            if (!/[0-7\.]/.test(this.reader.peek())) {
-                                let invalidCharacted: string = this.reader.next();
-                                panicAt(this.reader, '[ESCE00003] Octal numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
-                            }
-                            tokenText = '';
-                            while (this.reader.peek() != '.' && /[0-7]/.test(this.reader.peek())) {
-                                tokenText += this.reader.next();
-                            }
-                            if (this.reader.peek() == '.') {
-                                tokenText += '.';
-                                this.reader.next();
-                                while (/[0-7]/.test(this.reader.peek())) {
-                                    tokenText += this.reader.next();
-                                }
-                            }
-                            let value: number = 0;
-                            value += parseInt(tokenText.split('.')[0], 8);
-                            if (tokenText.includes('.')) {
-                                let decimalPart = tokenText.split('.')[1];
-                                for (let i = 0; i < decimalPart.length; i++) {
-                                    const digit = parseInt(decimalPart[i], 8);
-                                    value += digit / Math.pow(8, i + 1);
-                                }
-                            }
-                            tokens.push(new NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
-                            continue parsing;
-                        } else if (this.reader.peek() == 'b') {
-                            let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
-                            // Binary
-                            this.reader.next();
-                            tokenText = '';
-                            if (!/[01\.]/.test(this.reader.peek())) {
-                                let invalidCharacted: string = this.reader.next();
-                                panicAt(this.reader, '[ESCE00007] Binary numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
-                            }
-                            tokenText = '';
-                            while (this.reader.peek() != '.' && /[01]/.test(this.reader.peek())) {
-                                tokenText += this.reader.next();
-                            }
-                            if (this.reader.peek() == '.') {
-                                tokenText += '.';
-                                this.reader.next();
-                                while (/[01]/.test(this.reader.peek())) {
-                                    tokenText += this.reader.next();
-                                }
-                            }
-                            let value: number = 0;
-                            value += parseInt(tokenText.split('.')[0], 2);
-                            if (tokenText.includes('.')) {
-                                let decimalPart = tokenText.split('.')[1];
-                                for (let i = 0; i < decimalPart.length; i++) {
-                                    const digit = parseInt(decimalPart[i], 2);
-                                    value += digit / Math.pow(2, i + 1);
-                                }
-                            }
-                            tokens.push(new NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
-                            continue parsing;
+                }
+                if (tokenText == '0') {
+                    if (/[0-9]/.test(this.reader.peek())) {
+                        // Decimal, warn because of leading zero
+                        warnAt(this.reader, '[ESCW00001] Leading zero in number literal', this.reader.currentLine, this.reader.currentCharacter - 1, '0');
+                    } else if (this.reader.peek() == 'x') {
+                        let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
+                        // Hexadecimal
+                        this.reader.next();
+                        tokenText = '';
+                        if (!/[0-9\.A-Fa-f]/.test(this.reader.peek())) {
+                            let invalidCharacted: string = this.reader.next();
+                            panicAt(this.reader, '[ESCE00002] Hexadecimal numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
                         }
+                        tokenText = '';
+                        while (this.reader.peek() != '.' && /[0-9A-Fa-f]/.test(this.reader.peek())) {
+                            tokenText += this.reader.next();
+                        }
+                        if (this.reader.peek() == '.') {
+                            tokenText += '.';
+                            this.reader.next();
+                            while (/[0-9A-Fa-f]/.test(this.reader.peek())) {
+                                tokenText += this.reader.next();
+                            }
+                        }
+                        let value: number = 0;
+                        value += parseInt(tokenText.split('.')[0], 16);
+                        if (tokenText.includes('.')) {
+                            let decimalPart = tokenText.split('.')[1];
+                            for (let i = 0; i < decimalPart.length; i++) {
+                                const digit = parseInt(decimalPart[i], 16);
+                                value += digit / Math.pow(16, i + 1);
+                            }
+                        }
+                        tokens.push(new NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
+                        continue parsing;
+                    } else if (this.reader.peek() == 'o') {
+                        let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
+                        // Octal
+                        this.reader.next();
+                        tokenText = '';
+                        if (!/[0-7\.]/.test(this.reader.peek())) {
+                            let invalidCharacted: string = this.reader.next();
+                            panicAt(this.reader, '[ESCE00003] Octal numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
+                        }
+                        tokenText = '';
+                        while (this.reader.peek() != '.' && /[0-7]/.test(this.reader.peek())) {
+                            tokenText += this.reader.next();
+                        }
+                        if (this.reader.peek() == '.') {
+                            tokenText += '.';
+                            this.reader.next();
+                            while (/[0-7]/.test(this.reader.peek())) {
+                                tokenText += this.reader.next();
+                            }
+                        }
+                        let value: number = 0;
+                        value += parseInt(tokenText.split('.')[0], 8);
+                        if (tokenText.includes('.')) {
+                            let decimalPart = tokenText.split('.')[1];
+                            for (let i = 0; i < decimalPart.length; i++) {
+                                const digit = parseInt(decimalPart[i], 8);
+                                value += digit / Math.pow(8, i + 1);
+                            }
+                        }
+                        tokens.push(new NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
+                        continue parsing;
+                    } else if (this.reader.peek() == 'b') {
+                        let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
+                        // Binary
+                        this.reader.next();
+                        tokenText = '';
+                        if (!/[01\.]/.test(this.reader.peek())) {
+                            let invalidCharacted: string = this.reader.next();
+                            panicAt(this.reader, '[ESCE00007] Binary numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
+                        }
+                        tokenText = '';
+                        while (this.reader.peek() != '.' && /[01]/.test(this.reader.peek())) {
+                            tokenText += this.reader.next();
+                        }
+                        if (this.reader.peek() == '.') {
+                            tokenText += '.';
+                            this.reader.next();
+                            while (/[01]/.test(this.reader.peek())) {
+                                tokenText += this.reader.next();
+                            }
+                        }
+                        let value: number = 0;
+                        value += parseInt(tokenText.split('.')[0], 2);
+                        if (tokenText.includes('.')) {
+                            let decimalPart = tokenText.split('.')[1];
+                            for (let i = 0; i < decimalPart.length; i++) {
+                                const digit = parseInt(decimalPart[i], 2);
+                                value += digit / Math.pow(2, i + 1);
+                            }
+                        }
+                        tokens.push(new NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
+                        continue parsing;
                     }
+                }
+                decimalParsing: do {
                     if (/[0-9\.]/.test(tokenText)) {
                         let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
                         // Decimal
@@ -146,6 +147,7 @@ export class Parser {
                                 tokenText += this.reader.next();
                             }
                         }
+                        if (tokenText) break decimalParsing;
                         let value: number = 0;
                         value += parseInt(tokenText.split('.')[0], 10);
                         if (tokenText.includes('.')) {
@@ -158,55 +160,56 @@ export class Parser {
                         tokens.push(new NumberLiteral(line, char, this.reader.source, start, tokenText.length, value));
                         continue parsing;
                     }
-                    if (/('|")/.test(tokenText)) {
-                        let delimiter = tokenText;
-                        let line = this.reader.currentLine, character = this.reader.currentCharacter - 1, position = this.reader.current - 1;
-                        let stringContents = '';
-                        while (this.reader.peek() != delimiter && !this.reader.done()) {
-                            let char = this.reader.next();
-                            if (char != '\\') {
-                                stringContents += char;
+                } while (false);
+                if (/('|")/.test(tokenText)) {
+                    let delimiter = tokenText;
+                    let line = this.reader.currentLine, character = this.reader.currentCharacter - 1, position = this.reader.current - 1;
+                    let stringContents = '';
+                    while (this.reader.peek() != delimiter && !this.reader.done()) {
+                        let char = this.reader.next();
+                        if (char != '\\') {
+                            stringContents += char;
+                        } else {
+                            let next = this.reader.next();
+                            if (next == '\\') {
+                                stringContents += '\\';
+                            } else if (next == '\n') {
+                                // Nothing here
+                            } else if (next == 'n') {
+                                stringContents += '\n';
+                            } else if (next == "'") {
+                                stringContents += "'";
+                            } else if (next == '"') {
+                                stringContents += '"';
                             } else {
-                                let next = this.reader.next();
-                                if (next == '\\') {
-                                    stringContents += '\\';
-                                } else if (next == '\n') {
-                                    // Nothing here
-                                } else if (next == 'n') {
-                                    stringContents += '\n';
-                                } else if (next == "'") {
-                                    stringContents += "'";
-                                } else if (next == '"') {
-                                    stringContents += '"';
-                                } else {
-                                    panicAt(this.reader, `[ESCE00006] Invalid escape sequence: \\${next}`, this.reader.currentLine, this.reader.currentCharacter - 2, '\\' + next);
-                                }
+                                panicAt(this.reader, `[ESCE00006] Invalid escape sequence: \\${next}`, this.reader.currentLine, this.reader.currentCharacter - 2, '\\' + next);
                             }
                         }
-                        if (this.reader.done() && this.reader.peek() != delimiter) {
-                            panicAt(this.reader, "[ESCE00004] Endless string\nString was started here:", line, character, delimiter);
-                        }
-                        this.reader.next();
-                        tokens.push(new StringLiteral(line, character, this.reader.source, position, this.reader.current - position, stringContents));
-                        continue parsing;
                     }
-                    if ('[]{}()/,.'.includes(tokenText)) {
-                        // Tokens of only one character
-                        let type: TokenType = {
-                            '[': TokenType.LeftBracket,
-                            ']': TokenType.RightBracket,
-                            '{': TokenType.LeftCurlyBracket,
-                            '}': TokenType.RightCurlyBracket,
-                            '(': TokenType.LeftParen,
-                            ')': TokenType.RightParen,
-                            '/': TokenType.Slash,
-                            ',': TokenType.Comma,
-                            '.': TokenType.Dot
-                        }[tokenText];
-                        tokens.push(new Token(this.reader.currentLine, this.reader.currentCharacter - 1, this.reader.source, type, this.reader.current - 1, 1));
-                        continue parsing;
+                    if (this.reader.done() && this.reader.peek() != delimiter) {
+                        panicAt(this.reader, "[ESCE00004] Endless string\nString was started here:", line, character, delimiter);
                     }
+                    this.reader.next();
+                    tokens.push(new StringLiteral(line, character, this.reader.source, position, this.reader.current - position, stringContents));
+                    continue parsing;
                 }
+                if ('[]{}()/,.'.includes(tokenText)) {
+                    // Tokens of only one character
+                    let type: TokenType = {
+                        '[': TokenType.LeftBracket,
+                        ']': TokenType.RightBracket,
+                        '{': TokenType.LeftCurlyBracket,
+                        '}': TokenType.RightCurlyBracket,
+                        '(': TokenType.LeftParen,
+                        ')': TokenType.RightParen,
+                        '/': TokenType.Slash,
+                        ',': TokenType.Comma,
+                        '.': TokenType.Dot
+                    }[tokenText];
+                    tokens.push(new Token(this.reader.currentLine, this.reader.currentCharacter - 1, this.reader.source, type, this.reader.current - 1, 1));
+                    continue parsing;
+                }
+            }
         }
         return tokens;
     }
