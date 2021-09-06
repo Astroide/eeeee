@@ -242,7 +242,7 @@ var Parser = /** @class */ (function () {
                     if (this.reader.peek() == tokenText) {
                         tokenText += this.reader.next();
                     }
-                    tokens.push(new tokens_1.Token(this.reader.currentLine, this.reader.currentCharacter - 1, this.reader.source, table[tokenText], this.reader.current - 1, 1));
+                    tokens.push(new tokens_1.Token(this.reader.currentLine, this.reader.currentCharacter - tokenText.length, this.reader.source, table[tokenText], this.reader.current - tokenText.length, tokenText.length));
                     continue parsing;
                 }
             }

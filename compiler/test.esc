@@ -10,3 +10,5 @@
 "doubleQuotedString on next line :
 \"\"" // Expected: doubleQuotedString on next line:<newline>""
 {[()]},/.
+1 + 1 / 2 = 3;
+i++
