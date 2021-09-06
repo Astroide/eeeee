@@ -22,6 +22,8 @@ enum TokenType {
     Else,
     Plus,
     Minus,
+    PlusPlus,
+    MinusMinus,
     Star,
     Slash,
     Equals,
@@ -32,7 +34,9 @@ enum TokenType {
     LeftAngleBracket,
     RightAngleBracket,
     GreaterOrEqual,
-    SmallerOrEqual
+    SmallerOrEqual,
+    LeftShift,
+    RightShift
 }
 
 class Token {
