@@ -208,7 +208,7 @@ var Parser = /** @class */ (function () {
                     tokens.push(new tokens_1.StringLiteral(line, character, this.reader.source, position, this.reader.current - position, stringContents));
                     continue parsing;
                 }
-                if ('[]{}()/,.'.includes(tokenText)) {
+                if ('[]{}()/,.;'.includes(tokenText)) {
                     // Tokens of only one character
                     var type = {
                         '[': tokens_1.TokenType.LeftBracket,
@@ -219,7 +219,8 @@ var Parser = /** @class */ (function () {
                         ')': tokens_1.TokenType.RightParen,
                         '/': tokens_1.TokenType.Slash,
                         ',': tokens_1.TokenType.Comma,
-                        '.': tokens_1.TokenType.Dot
+                        '.': tokens_1.TokenType.Dot,
+                        ';': tokens_1.TokenType.Semicolon
                     }[tokenText];
                     tokens.push(new tokens_1.Token(this.reader.currentLine, this.reader.currentCharacter - 1, this.reader.source, type, this.reader.current - 1, 1));
                     continue parsing;

@@ -193,7 +193,7 @@ export class Parser {
                     tokens.push(new StringLiteral(line, character, this.reader.source, position, this.reader.current - position, stringContents));
                     continue parsing;
                 }
-                if ('[]{}()/,.'.includes(tokenText)) {
+                if ('[]{}()/,.;'.includes(tokenText)) {
                     // Tokens of only one character
                     let type: TokenType = {
                         '[': TokenType.LeftBracket,
@@ -204,7 +204,8 @@ export class Parser {
                         ')': TokenType.RightParen,
                         '/': TokenType.Slash,
                         ',': TokenType.Comma,
-                        '.': TokenType.Dot
+                        '.': TokenType.Dot,
+                        ';': TokenType.Semicolon
                     }[tokenText];
                     tokens.push(new Token(this.reader.currentLine, this.reader.currentCharacter - 1, this.reader.source, type, this.reader.current - 1, 1));
                     continue parsing;
