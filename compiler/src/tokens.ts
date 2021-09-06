@@ -25,6 +25,7 @@ enum TokenType {
     PlusPlus,
     MinusMinus,
     Star,
+    StarStar,
     Slash,
     Equals,
     DoubleEquals,
