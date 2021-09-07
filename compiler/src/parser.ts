@@ -213,11 +213,11 @@ export class Parser {
                 if ('+-*=&|'.includes(tokenText)) {
                     let table = {
                         '+': TokenType.Plus,
-                        '++': TokenType.PlusPlus,
+                        '++': TokenType.DoublePlus,
                         '-': TokenType.Minus,
-                        '--': TokenType.MinusMinus,
+                        '--': TokenType.DoubleMinus,
                         '*': TokenType.Star,
-                        '**': TokenType.StarStar,
+                        '**': TokenType.DoubleStar,
                         '=': TokenType.Equals,
                         '==': TokenType.DoubleEquals,
                         '&': TokenType.Ampersand,

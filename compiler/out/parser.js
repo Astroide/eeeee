@@ -228,11 +228,11 @@ var Parser = /** @class */ (function () {
                 if ('+-*=&|'.includes(tokenText)) {
                     var table = {
                         '+': tokens_1.TokenType.Plus,
-                        '++': tokens_1.TokenType.PlusPlus,
+                        '++': tokens_1.TokenType.DoublePlus,
                         '-': tokens_1.TokenType.Minus,
-                        '--': tokens_1.TokenType.MinusMinus,
+                        '--': tokens_1.TokenType.DoubleMinus,
                         '*': tokens_1.TokenType.Star,
-                        '**': tokens_1.TokenType.StarStar,
+                        '**': tokens_1.TokenType.DoubleStar,
                         '=': tokens_1.TokenType.Equals,
                         '==': tokens_1.TokenType.DoubleEquals,
                         '&': tokens_1.TokenType.Ampersand,
