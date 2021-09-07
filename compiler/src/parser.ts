@@ -147,7 +147,7 @@ export class Parser {
                                 tokenText += this.reader.next();
                             }
                         }
-                        if (tokenText) break decimalParsing;
+                        if (tokenText == '.') break decimalParsing;
                         let value: number = 0;
                         value += parseInt(tokenText.split('.')[0], 10);
                         if (tokenText.includes('.')) {

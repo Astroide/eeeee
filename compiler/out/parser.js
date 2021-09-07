@@ -155,7 +155,7 @@ var Parser = /** @class */ (function () {
                                 tokenText += this.reader.next();
                             }
                         }
-                        if (tokenText)
+                        if (tokenText == '.')
                             break decimalParsing;
                         var value = 0;
                         value += parseInt(tokenText.split('.')[0], 10);
