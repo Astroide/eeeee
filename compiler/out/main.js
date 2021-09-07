@@ -138,6 +138,14 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
                     let num = token.content;
                     (0, utilities_1.print)(`Token StringLiteral <${num}>`);
                 }
+                else if (token instanceof tokens_1.Keyword) {
+                    let num = token.getSource();
+                    (0, utilities_1.print)(`Token Keyword <${num}>`);
+                }
+                else if (token instanceof tokens_1.Identifier) {
+                    let num = token.identifier;
+                    (0, utilities_1.print)(`Token Identifier <${num}>`);
+                }
                 else {
                     (0, utilities_1.print)(`Token BaseToken <${token.getSource()}>`);
                 }

@@ -24,25 +24,27 @@ var TokenType;
     TokenType[TokenType["For"] = 18] = "For";
     TokenType[TokenType["If"] = 19] = "If";
     TokenType[TokenType["Else"] = 20] = "Else";
-    TokenType[TokenType["Plus"] = 21] = "Plus";
-    TokenType[TokenType["Minus"] = 22] = "Minus";
-    TokenType[TokenType["DoublePlus"] = 23] = "DoublePlus";
-    TokenType[TokenType["DoubleMinus"] = 24] = "DoubleMinus";
-    TokenType[TokenType["Star"] = 25] = "Star";
-    TokenType[TokenType["DoubleStar"] = 26] = "DoubleStar";
-    TokenType[TokenType["Slash"] = 27] = "Slash";
-    TokenType[TokenType["Equals"] = 28] = "Equals";
-    TokenType[TokenType["DoubleEquals"] = 29] = "DoubleEquals";
-    TokenType[TokenType["Comma"] = 30] = "Comma";
-    TokenType[TokenType["Dot"] = 31] = "Dot";
-    TokenType[TokenType["Semicolon"] = 32] = "Semicolon";
-    TokenType[TokenType["LeftAngleBracket"] = 33] = "LeftAngleBracket";
-    TokenType[TokenType["RightAngleBracket"] = 34] = "RightAngleBracket";
-    TokenType[TokenType["GreaterOrEqual"] = 35] = "GreaterOrEqual";
-    TokenType[TokenType["SmallerOrEqual"] = 36] = "SmallerOrEqual";
-    TokenType[TokenType["LeftShift"] = 37] = "LeftShift";
-    TokenType[TokenType["RightShift"] = 38] = "RightShift";
-    TokenType[TokenType["DollarSign"] = 39] = "DollarSign";
+    TokenType[TokenType["Continue"] = 21] = "Continue";
+    TokenType[TokenType["Break"] = 22] = "Break";
+    TokenType[TokenType["Plus"] = 23] = "Plus";
+    TokenType[TokenType["Minus"] = 24] = "Minus";
+    TokenType[TokenType["DoublePlus"] = 25] = "DoublePlus";
+    TokenType[TokenType["DoubleMinus"] = 26] = "DoubleMinus";
+    TokenType[TokenType["Star"] = 27] = "Star";
+    TokenType[TokenType["DoubleStar"] = 28] = "DoubleStar";
+    TokenType[TokenType["Slash"] = 29] = "Slash";
+    TokenType[TokenType["Equals"] = 30] = "Equals";
+    TokenType[TokenType["DoubleEquals"] = 31] = "DoubleEquals";
+    TokenType[TokenType["Comma"] = 32] = "Comma";
+    TokenType[TokenType["Dot"] = 33] = "Dot";
+    TokenType[TokenType["Semicolon"] = 34] = "Semicolon";
+    TokenType[TokenType["LeftAngleBracket"] = 35] = "LeftAngleBracket";
+    TokenType[TokenType["RightAngleBracket"] = 36] = "RightAngleBracket";
+    TokenType[TokenType["GreaterOrEqual"] = 37] = "GreaterOrEqual";
+    TokenType[TokenType["SmallerOrEqual"] = 38] = "SmallerOrEqual";
+    TokenType[TokenType["LeftShift"] = 39] = "LeftShift";
+    TokenType[TokenType["RightShift"] = 40] = "RightShift";
+    TokenType[TokenType["DollarSign"] = 41] = "DollarSign";
 })(TokenType || (TokenType = {}));
 exports.TokenType = TokenType;
 class Token {
@@ -89,7 +91,7 @@ class Identifier extends Token {
 exports.Identifier = Identifier;
 class Keyword extends Token {
     constructor(line, char, source, start, length, keyword) {
-        super(line, char, source, TokenType.Identifier, start, length);
+        super(line, char, source, keyword, start, length);
         this.keyword = keyword;
     }
 }

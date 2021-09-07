@@ -245,6 +245,30 @@ class Parser {
                     tokens.push(new tokens_1.Token(this.reader.currentLine, this.reader.currentCharacter - tokenText.length, this.reader.source, table[tokenText], this.reader.current - tokenText.length, tokenText.length));
                     continue parsing;
                 }
+                if (/[a-zA-Z_]/.test(tokenText)) {
+                    // Identifier
+                    let char = this.reader.currentCharacter - 1, current = this.reader.current - 1;
+                    while (!this.reader.done() && /[a-zA-Z_0-9]/.test(this.reader.peek())) {
+                        tokenText += this.reader.next();
+                    }
+                    let keywords = 'fn while for if else continue break'.split(' ');
+                    let keywordTokenTypes = {
+                        'fn': tokens_1.TokenType.Fn,
+                        'while': tokens_1.TokenType.While,
+                        'for': tokens_1.TokenType.For,
+                        'if': tokens_1.TokenType.If,
+                        'else': tokens_1.TokenType.Else,
+                        'continue': tokens_1.TokenType.Continue,
+                        'break': tokens_1.TokenType.Break
+                    };
+                    if (keywords.includes(tokenText)) {
+                        tokens.push(new tokens_1.Keyword(this.reader.currentLine, char, this.reader.source, current, tokenText.length, keywordTokenTypes[tokenText]));
+                    }
+                    else {
+                        tokens.push(new tokens_1.Identifier(this.reader.currentLine, char, this.reader.source, current, tokenText.length, tokenText));
+                    }
+                    continue parsing;
+                }
             }
         }
         return tokens;
