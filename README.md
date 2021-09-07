@@ -6,6 +6,9 @@
 A statically typed programming language.
 
 ### Current State
+As of now, the parser / tokenizer is written (and the compiler will be) in [TypeScript](https://typescriptlang.org), but once Escurieux will be in an appropriate state, they will be rewritten in Escurieux to remove the TypeScript/Node.js dependencies.
+
+The VM will be written in C.
 
 ```
             _
