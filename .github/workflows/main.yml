@@ -31,7 +31,8 @@ jobs:
       - name: Compile Typescript
         run: |
           cd compiler
-          tsc
+          npm install
+          ./node_modules/typescript/bin/tsc
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
