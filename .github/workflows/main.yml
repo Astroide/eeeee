@@ -33,6 +33,7 @@ jobs:
           cd compiler
           npm install
           ./node_modules/typescript/bin/tsc
+          node out/main.js -v test.esc
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
