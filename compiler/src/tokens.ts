@@ -37,7 +37,8 @@ enum TokenType {
     GreaterOrEqual,
     SmallerOrEqual,
     LeftShift,
-    RightShift
+    RightShift,
+    DollarSign
 }
 
 class Token {

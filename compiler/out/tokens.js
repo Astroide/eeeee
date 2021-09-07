@@ -1,20 +1,5 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.Keyword = exports.Identifier = exports.BooleanLiteral = exports.NumberLiteral = exports.StringLiteral = exports.Token = exports.TokenType = void 0;
 var TokenType;
 (function (TokenType) {
@@ -57,10 +42,11 @@ var TokenType;
     TokenType[TokenType["SmallerOrEqual"] = 36] = "SmallerOrEqual";
     TokenType[TokenType["LeftShift"] = 37] = "LeftShift";
     TokenType[TokenType["RightShift"] = 38] = "RightShift";
+    TokenType[TokenType["DollarSign"] = 39] = "DollarSign";
 })(TokenType || (TokenType = {}));
 exports.TokenType = TokenType;
-var Token = /** @class */ (function () {
-    function Token(line, char, source, type, start, length) {
+class Token {
+    constructor(line, char, source, type, start, length) {
         this.source = source;
         this.type = type;
         this.start = start;
@@ -68,60 +54,44 @@ var Token = /** @class */ (function () {
         this.line = line;
         this.char = char;
     }
-    Token.prototype.getSource = function () {
+    getSource() {
         return this.source.substr(this.start, this.length);
-    };
-    return Token;
-}());
+    }
+}
 exports.Token = Token;
-var StringLiteral = /** @class */ (function (_super) {
-    __extends(StringLiteral, _super);
-    function StringLiteral(line, char, source, start, length, content) {
-        var _this = _super.call(this, line, char, source, TokenType.StringLiteral, start, length) || this;
-        _this.content = content;
-        return _this;
+class StringLiteral extends Token {
+    constructor(line, char, source, start, length, content) {
+        super(line, char, source, TokenType.StringLiteral, start, length);
+        this.content = content;
     }
-    return StringLiteral;
-}(Token));
+}
 exports.StringLiteral = StringLiteral;
-var NumberLiteral = /** @class */ (function (_super) {
-    __extends(NumberLiteral, _super);
-    function NumberLiteral(line, char, source, start, length, content) {
-        var _this = _super.call(this, line, char, source, TokenType.NumericLiteral, start, length) || this;
-        _this.content = content;
-        return _this;
+class NumberLiteral extends Token {
+    constructor(line, char, source, start, length, content) {
+        super(line, char, source, TokenType.NumericLiteral, start, length);
+        this.content = content;
     }
-    return NumberLiteral;
-}(Token));
+}
 exports.NumberLiteral = NumberLiteral;
-var BooleanLiteral = /** @class */ (function (_super) {
-    __extends(BooleanLiteral, _super);
-    function BooleanLiteral(line, char, source, start, length, content) {
-        var _this = _super.call(this, line, char, source, TokenType.BooleanLiteral, start, length) || this;
-        _this.content = content;
-        return _this;
+class BooleanLiteral extends Token {
+    constructor(line, char, source, start, length, content) {
+        super(line, char, source, TokenType.BooleanLiteral, start, length);
+        this.content = content;
     }
-    return BooleanLiteral;
-}(Token));
+}
 exports.BooleanLiteral = BooleanLiteral;
-var Identifier = /** @class */ (function (_super) {
-    __extends(Identifier, _super);
-    function Identifier(line, char, source, start, length, identifier) {
-        var _this = _super.call(this, line, char, source, TokenType.Identifier, start, length) || this;
-        _this.identifier = identifier;
-        return _this;
+class Identifier extends Token {
+    constructor(line, char, source, start, length, identifier) {
+        super(line, char, source, TokenType.Identifier, start, length);
+        this.identifier = identifier;
     }
-    return Identifier;
-}(Token));
+}
 exports.Identifier = Identifier;
-var Keyword = /** @class */ (function (_super) {
-    __extends(Keyword, _super);
-    function Keyword(line, char, source, start, length, keyword) {
-        var _this = _super.call(this, line, char, source, TokenType.Identifier, start, length) || this;
-        _this.keyword = keyword;
-        return _this;
+class Keyword extends Token {
+    constructor(line, char, source, start, length, keyword) {
+        super(line, char, source, TokenType.Identifier, start, length);
+        this.keyword = keyword;
     }
-    return Keyword;
-}(Token));
+}
 exports.Keyword = Keyword;
 //# sourceMappingURL=tokens.js.map
