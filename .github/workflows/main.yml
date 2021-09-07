@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v2
 
       # Runs a single command using the runners shell
-      - name: Compile Typescript
+      - name: build
         run: |
           cd compiler
           npm install
