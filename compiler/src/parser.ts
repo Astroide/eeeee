@@ -254,6 +254,15 @@ export class Parser {
                     }
                     continue parsing;
                 }
+
+                // These should be the last ifs
+                if (/\s/.test(tokenText)) {
+                    // Whitespace, OK
+                    continue parsing;
+                }
+
+                // If nothing matched, error
+                panicAt(this.reader, `[ESCE00008] Invalid character : '${tokenText}'`, this.reader.currentLine, this.reader.currentCharacter - 1, tokenText);
             }
         }
         return tokens;

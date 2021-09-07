@@ -9,6 +9,7 @@ exports.errorAndWarningExplanations = {
     E00005: 'Trying to access a character past EOF: This error happens when the parser is trying to get a character past the end of the file. This is usually caused when a backslash is the last character of a string that is not terminated or when an hexadecimal (0x), binary (0b) or octal (0o) number start is at the end of the file, followed by no digits.',
     E00006: 'Invalid escape sequence: This error happens when a backslash \'\\\' in a string is not followed by a valid character to escape. These valid characters are the following: newline, \'n\', \'\\\', \'\'\' and \'"\'.',
     E00007: 'Binary numbers must contain at least one digit: This error happens because there is a binary number start \'0b\' that is not followed by a dot or at least one binary digit (0, 1).',
+    E00008: 'Invalid character : This error is raised when an unrecognized character is read in the source code.',
     W00001: 'Leading zero in number literal: This warning is shown when a number literal starts with one or more extra zeroes, as in 0123, 0893.034 or 0023. If this was intended to be an octal literal, it should have been written like this : 0o123 instead of 0123 or 00123.',
 };
 //# sourceMappingURL=explanations.js.map
