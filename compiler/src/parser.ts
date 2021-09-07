@@ -193,24 +193,7 @@ export class Parser {
                     tokens.push(new StringLiteral(line, character, this.reader.source, position, this.reader.current - position, stringContents));
                     continue parsing;
                 }
-                if ('[]{}()/,.;'.includes(tokenText)) {
-                    // Tokens of only one character
-                    let type: TokenType = {
-                        '[': TokenType.LeftBracket,
-                        ']': TokenType.RightBracket,
-                        '{': TokenType.LeftCurlyBracket,
-                        '}': TokenType.RightCurlyBracket,
-                        '(': TokenType.LeftParen,
-                        ')': TokenType.RightParen,
-                        '/': TokenType.Slash,
-                        ',': TokenType.Comma,
-                        '.': TokenType.Dot,
-                        ';': TokenType.Semicolon
-                    }[tokenText];
-                    tokens.push(new Token(this.reader.currentLine, this.reader.currentCharacter - 1, this.reader.source, type, this.reader.current - 1, 1));
-                    continue parsing;
-                }
-                if ('+-*=&|'.includes(tokenText)) {
+                if ('+-*=&|<>$/[]{}(),.;'.includes(tokenText)) {
                     let table = {
                         '+': TokenType.Plus,
                         '++': TokenType.DoublePlus,
@@ -223,9 +206,26 @@ export class Parser {
                         '&': TokenType.Ampersand,
                         '&&': TokenType.DoubleAmpersand,
                         '|': TokenType.Pipe,
-                        '||': TokenType.DoublePipe
+                        '||': TokenType.DoublePipe,
+                        '[': TokenType.LeftBracket,
+                        ']': TokenType.RightBracket,
+                        '{': TokenType.LeftCurlyBracket,
+                        '}': TokenType.RightCurlyBracket,
+                        '(': TokenType.LeftParen,
+                        ')': TokenType.RightParen,
+                        '/': TokenType.Slash,
+                        ',': TokenType.Comma,
+                        '.': TokenType.Dot,
+                        ';': TokenType.Semicolon,
+                        '<': TokenType.LeftAngleBracket,
+                        '>': TokenType.RightAngleBracket,
+                        '<=': TokenType.SmallerOrEqual,
+                        '>=': TokenType.GreaterOrEqual,
+                        '>>': TokenType.RightShift,
+                        '<<': TokenType.LeftShift,
+
                     };
-                    if (this.reader.peek() == tokenText) {
+                    while ((tokenText + this.reader.peek()) in table) {
                         tokenText += this.reader.next();
                     }
                     tokens.push(new Token(this.reader.currentLine, this.reader.currentCharacter - tokenText.length, this.reader.source, table[tokenText], this.reader.current - tokenText.length, tokenText.length));

@@ -1,16 +1,16 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.Parser = void 0;
-var tokens_1 = require("./tokens");
-var utilities_1 = require("./utilities");
-var Parser = /** @class */ (function () {
-    function Parser(source) {
+const tokens_1 = require("./tokens");
+const utilities_1 = require("./utilities");
+class Parser {
+    constructor(source) {
         this.reader = new utilities_1.StringReader(source);
     }
-    Parser.prototype.parse = function () {
-        var tokens = [];
+    parse() {
+        let tokens = [];
         parsing: while (!this.reader.done()) {
-            var tokenText = this.reader.next();
+            let tokenText = this.reader.next();
             if (tokenText) {
                 if (tokenText == '/') {
                     if (this.reader.peek() == '/') {
@@ -21,9 +21,9 @@ var Parser = /** @class */ (function () {
                         continue parsing;
                     }
                     else if (this.reader.peek() == '*') {
-                        var depth = 1;
+                        let depth = 1;
                         while (depth > 0 && !this.reader.done()) {
-                            var char = this.reader.next();
+                            let char = this.reader.next();
                             if (char == '/' && this.reader.peek() == '*') {
                                 this.reader.next();
                                 depth++;
@@ -34,7 +34,7 @@ var Parser = /** @class */ (function () {
                             }
                         }
                         if (this.reader.done() && depth != 0) {
-                            (0, utilities_1.panicAt)(this.reader, "[ESCE00001] Comments opened with /* must be closed before EOF.\nNote: there " + (depth == 1 ? 'was' : 'were') + " " + depth + " level" + (depth == 1 ? '' : 's') + " of comment nesting when EOF was reached.", this.reader.lineCount() - 1, 0, this.reader.getLine(this.reader.lineCount() - 1).slice(0, -1));
+                            (0, utilities_1.panicAt)(this.reader, `[ESCE00001] Comments opened with /* must be closed before EOF.\nNote: there ${depth == 1 ? 'was' : 'were'} ${depth} level${depth == 1 ? '' : 's'} of comment nesting when EOF was reached.`, this.reader.lineCount() - 1, 0, this.reader.getLine(this.reader.lineCount() - 1).slice(0, -1));
                         }
                         continue parsing;
                     }
@@ -45,12 +45,12 @@ var Parser = /** @class */ (function () {
                         (0, utilities_1.warnAt)(this.reader, '[ESCW00001] Leading zero in number literal', this.reader.currentLine, this.reader.currentCharacter - 1, '0');
                     }
                     else if (this.reader.peek() == 'x') {
-                        var line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
+                        let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
                         // Hexadecimal
                         this.reader.next();
                         tokenText = '';
                         if (!/[0-9\.A-Fa-f]/.test(this.reader.peek())) {
-                            var invalidCharacted = this.reader.next();
+                            let invalidCharacted = this.reader.next();
                             (0, utilities_1.panicAt)(this.reader, '[ESCE00002] Hexadecimal numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
                         }
                         tokenText = '';
@@ -64,12 +64,12 @@ var Parser = /** @class */ (function () {
                                 tokenText += this.reader.next();
                             }
                         }
-                        var value = 0;
+                        let value = 0;
                         value += parseInt(tokenText.split('.')[0], 16);
                         if (tokenText.includes('.')) {
-                            var decimalPart = tokenText.split('.')[1];
-                            for (var i = 0; i < decimalPart.length; i++) {
-                                var digit = parseInt(decimalPart[i], 16);
+                            let decimalPart = tokenText.split('.')[1];
+                            for (let i = 0; i < decimalPart.length; i++) {
+                                const digit = parseInt(decimalPart[i], 16);
                                 value += digit / Math.pow(16, i + 1);
                             }
                         }
@@ -77,12 +77,12 @@ var Parser = /** @class */ (function () {
                         continue parsing;
                     }
                     else if (this.reader.peek() == 'o') {
-                        var line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
+                        let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
                         // Octal
                         this.reader.next();
                         tokenText = '';
                         if (!/[0-7\.]/.test(this.reader.peek())) {
-                            var invalidCharacted = this.reader.next();
+                            let invalidCharacted = this.reader.next();
                             (0, utilities_1.panicAt)(this.reader, '[ESCE00003] Octal numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
                         }
                         tokenText = '';
@@ -96,12 +96,12 @@ var Parser = /** @class */ (function () {
                                 tokenText += this.reader.next();
                             }
                         }
-                        var value = 0;
+                        let value = 0;
                         value += parseInt(tokenText.split('.')[0], 8);
                         if (tokenText.includes('.')) {
-                            var decimalPart = tokenText.split('.')[1];
-                            for (var i = 0; i < decimalPart.length; i++) {
-                                var digit = parseInt(decimalPart[i], 8);
+                            let decimalPart = tokenText.split('.')[1];
+                            for (let i = 0; i < decimalPart.length; i++) {
+                                const digit = parseInt(decimalPart[i], 8);
                                 value += digit / Math.pow(8, i + 1);
                             }
                         }
@@ -109,12 +109,12 @@ var Parser = /** @class */ (function () {
                         continue parsing;
                     }
                     else if (this.reader.peek() == 'b') {
-                        var line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
+                        let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
                         // Binary
                         this.reader.next();
                         tokenText = '';
                         if (!/[01\.]/.test(this.reader.peek())) {
-                            var invalidCharacted = this.reader.next();
+                            let invalidCharacted = this.reader.next();
                             (0, utilities_1.panicAt)(this.reader, '[ESCE00007] Binary numbers must contain at least one digit', this.reader.currentLine, this.reader.currentCharacter - 1, invalidCharacted);
                         }
                         tokenText = '';
@@ -128,12 +128,12 @@ var Parser = /** @class */ (function () {
                                 tokenText += this.reader.next();
                             }
                         }
-                        var value = 0;
+                        let value = 0;
                         value += parseInt(tokenText.split('.')[0], 2);
                         if (tokenText.includes('.')) {
-                            var decimalPart = tokenText.split('.')[1];
-                            for (var i = 0; i < decimalPart.length; i++) {
-                                var digit = parseInt(decimalPart[i], 2);
+                            let decimalPart = tokenText.split('.')[1];
+                            for (let i = 0; i < decimalPart.length; i++) {
+                                const digit = parseInt(decimalPart[i], 2);
                                 value += digit / Math.pow(2, i + 1);
                             }
                         }
@@ -143,7 +143,7 @@ var Parser = /** @class */ (function () {
                 }
                 decimalParsing: do {
                     if (/[0-9\.]/.test(tokenText)) {
-                        var line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
+                        let line = this.reader.currentLine, char = this.reader.currentCharacter - 1, start = this.reader.current - 1;
                         // Decimal
                         while (this.reader.peek() != '.' && /[0-9]/.test(this.reader.peek())) {
                             tokenText += this.reader.next();
@@ -157,12 +157,12 @@ var Parser = /** @class */ (function () {
                         }
                         if (tokenText == '.')
                             break decimalParsing;
-                        var value = 0;
+                        let value = 0;
                         value += parseInt(tokenText.split('.')[0], 10);
                         if (tokenText.includes('.')) {
-                            var decimalPart = tokenText.split('.')[1];
-                            for (var i = 0; i < decimalPart.length; i++) {
-                                var digit = parseInt(decimalPart[i], 10);
+                            let decimalPart = tokenText.split('.')[1];
+                            for (let i = 0; i < decimalPart.length; i++) {
+                                const digit = parseInt(decimalPart[i], 10);
                                 value += digit / Math.pow(10, i + 1);
                             }
                         }
@@ -171,16 +171,16 @@ var Parser = /** @class */ (function () {
                     }
                 } while (false);
                 if (/('|")/.test(tokenText)) {
-                    var delimiter = tokenText;
-                    var line = this.reader.currentLine, character = this.reader.currentCharacter - 1, position = this.reader.current - 1;
-                    var stringContents = '';
+                    let delimiter = tokenText;
+                    let line = this.reader.currentLine, character = this.reader.currentCharacter - 1, position = this.reader.current - 1;
+                    let stringContents = '';
                     while (this.reader.peek() != delimiter && !this.reader.done()) {
-                        var char = this.reader.next();
+                        let char = this.reader.next();
                         if (char != '\\') {
                             stringContents += char;
                         }
                         else {
-                            var next = this.reader.next();
+                            let next = this.reader.next();
                             if (next == '\\') {
                                 stringContents += '\\';
                             }
@@ -197,7 +197,7 @@ var Parser = /** @class */ (function () {
                                 stringContents += '"';
                             }
                             else {
-                                (0, utilities_1.panicAt)(this.reader, "[ESCE00006] Invalid escape sequence: \\" + next, this.reader.currentLine, this.reader.currentCharacter - 2, '\\' + next);
+                                (0, utilities_1.panicAt)(this.reader, `[ESCE00006] Invalid escape sequence: \\${next}`, this.reader.currentLine, this.reader.currentCharacter - 2, '\\' + next);
                             }
                         }
                     }
@@ -208,25 +208,8 @@ var Parser = /** @class */ (function () {
                     tokens.push(new tokens_1.StringLiteral(line, character, this.reader.source, position, this.reader.current - position, stringContents));
                     continue parsing;
                 }
-                if ('[]{}()/,.;'.includes(tokenText)) {
-                    // Tokens of only one character
-                    var type = {
-                        '[': tokens_1.TokenType.LeftBracket,
-                        ']': tokens_1.TokenType.RightBracket,
-                        '{': tokens_1.TokenType.LeftCurlyBracket,
-                        '}': tokens_1.TokenType.RightCurlyBracket,
-                        '(': tokens_1.TokenType.LeftParen,
-                        ')': tokens_1.TokenType.RightParen,
-                        '/': tokens_1.TokenType.Slash,
-                        ',': tokens_1.TokenType.Comma,
-                        '.': tokens_1.TokenType.Dot,
-                        ';': tokens_1.TokenType.Semicolon
-                    }[tokenText];
-                    tokens.push(new tokens_1.Token(this.reader.currentLine, this.reader.currentCharacter - 1, this.reader.source, type, this.reader.current - 1, 1));
-                    continue parsing;
-                }
-                if ('+-*=&|'.includes(tokenText)) {
-                    var table = {
+                if ('+-*=&|<>$/[]{}(),.;'.includes(tokenText)) {
+                    let table = {
                         '+': tokens_1.TokenType.Plus,
                         '++': tokens_1.TokenType.DoublePlus,
                         '-': tokens_1.TokenType.Minus,
@@ -238,9 +221,25 @@ var Parser = /** @class */ (function () {
                         '&': tokens_1.TokenType.Ampersand,
                         '&&': tokens_1.TokenType.DoubleAmpersand,
                         '|': tokens_1.TokenType.Pipe,
-                        '||': tokens_1.TokenType.DoublePipe
+                        '||': tokens_1.TokenType.DoublePipe,
+                        '[': tokens_1.TokenType.LeftBracket,
+                        ']': tokens_1.TokenType.RightBracket,
+                        '{': tokens_1.TokenType.LeftCurlyBracket,
+                        '}': tokens_1.TokenType.RightCurlyBracket,
+                        '(': tokens_1.TokenType.LeftParen,
+                        ')': tokens_1.TokenType.RightParen,
+                        '/': tokens_1.TokenType.Slash,
+                        ',': tokens_1.TokenType.Comma,
+                        '.': tokens_1.TokenType.Dot,
+                        ';': tokens_1.TokenType.Semicolon,
+                        '<': tokens_1.TokenType.LeftAngleBracket,
+                        '>': tokens_1.TokenType.RightAngleBracket,
+                        '<=': tokens_1.TokenType.SmallerOrEqual,
+                        '>=': tokens_1.TokenType.GreaterOrEqual,
+                        '>>': tokens_1.TokenType.RightShift,
+                        '<<': tokens_1.TokenType.LeftShift,
                     };
-                    if (this.reader.peek() == tokenText) {
+                    while ((tokenText + this.reader.peek()) in table) {
                         tokenText += this.reader.next();
                     }
                     tokens.push(new tokens_1.Token(this.reader.currentLine, this.reader.currentCharacter - tokenText.length, this.reader.source, table[tokenText], this.reader.current - tokenText.length, tokenText.length));
@@ -249,8 +248,7 @@ var Parser = /** @class */ (function () {
             }
         }
         return tokens;
-    };
-    return Parser;
-}());
+    }
+}
 exports.Parser = Parser;
 //# sourceMappingURL=parser.js.map
