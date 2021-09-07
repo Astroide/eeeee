@@ -4,3 +4,16 @@
 ![Build Status - Windows](https://github.com/astroide/escurieux/actions/workflows/windows.yml/badge.svg)
 
 A statically typed programming language.
+
+### Current State
+
+```
+            _
+            V
+   ┌────────┰────────┰───────────┰──────────────┐
+Parser  Compiler    VM   Standard Library   Rewriting
+                                          the compiler
+                                          in Escurieux
+Parser / tokenizer : done.
+Compiler : just started writing.
+```
