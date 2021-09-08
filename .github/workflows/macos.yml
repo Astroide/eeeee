@@ -34,3 +34,4 @@ jobs:
           npm install
           ./node_modules/typescript/bin/tsc
           node out/main.js -v test.esc
+          echo "New File" > filetest
