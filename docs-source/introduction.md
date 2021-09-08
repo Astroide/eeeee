@@ -10,8 +10,8 @@ These are the fundamental data types of Escurieux:
 * `float` (64 bits floating-point)
 * `float32` (32 bits floating-point)
 * `ifloat` (infinite-size and infinite-precision floating-point)
-* `char`
-* `boolean`
+* `char` (character)
+* `boolean` (boolean)
 
 Note that numeric types are by default 64 bits.
 
