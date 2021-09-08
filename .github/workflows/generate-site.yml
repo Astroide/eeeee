@@ -36,4 +36,5 @@ jobs:
           python3 docs-generator.py
           git config --local user.email "bot@thisemailwontwork.invalid"
           git config --local user.name "Site Generator"
+          git add .
           git commit -m "Update generated docs" -a
