@@ -18,4 +18,4 @@ Note that numeric types are by default 64 bits.
 All these types are classes, which means that instance of these types have methods and fields, just like any other object.
 
 ### Basic Operators
-The number types support these operators : `+`, `-`, `*`, `/`
+The number types support these operators : `+`, `-`, `*`, `/`, and `%`
