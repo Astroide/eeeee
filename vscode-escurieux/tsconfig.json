@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
-        "outDir": "out"
+        "outDir": "out",
+        "sourceMap": true
     },
     "files": [
         "src/extension.ts"

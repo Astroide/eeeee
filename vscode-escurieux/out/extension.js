@@ -8,3 +8,5 @@ globalThis.console = {
     }
 };
 console.log('Starting up Escurieux extension...');
+console.log('Finished starting up.');
+//# sourceMappingURL=extension.js.map
