@@ -1,3 +1,4 @@
+@! Introduction
 ## Introduction
 In Escurieux, everything (except imports and macros, because these are compile-time things) is an expression. Classes are expressions. Functions are expressions. Variable declarations are expressions.
 

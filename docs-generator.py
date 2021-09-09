@@ -1,6 +1,5 @@
 import os
 import time
-id = int(time.time())
 files = []
 name_list = os.listdir('./docs-source')
 
@@ -22,8 +21,33 @@ for name in generator():
 for file in files:
     content = open('./docs-source/' + file, mode='r').read()
     # process the content...
+    title = ''
+    content = content.splitlines()
+    if content[0].startswith('@!'):
+        title = content[0][2:].strip()
+        content = content[1:]
+
+    for i in range(len(content)):
+        if content[i].startswith('#'):
+            hashes = len(content[i]) - len(content[i].lstrip('#'))
+            if hashes > 6:
+                print(f'Error : cannot have a <h7> (file {file})')
+                exit(1)
+            content[i] = f'<h{hashes}>{content[i].lstrip("# ")}</h{hashes}>'
+    content = '\n'.join(content)
     # end processing
-    content = f'<!-- id: {id} -->\n' + content
+    id = int(time.time() * 1000)  # Unix time
+    content = f'''<!DOCTYPE html>
+<html>
+<head>
+<!-- Generated at Unix time {id * 1000} by the Escurieux Docs Generator. Copyright (c) 2020 Olie Auger. -->
+    <title>{title}</title>
+</head>
+<body>
+{content}
+</body>
+</html>
+'''
     file = os.path.splitext(file)[0]
     os.makedirs(os.path.dirname(
         './docs/' + file), exist_ok=True)
