@@ -1,4 +1,4 @@
-let modeSelector = document.getElementById('mode-selector'), htmlElement = document.querySelector('hmtl');
+let modeSelector = document.getElementById('mode-selector'), htmlElement = document.body.parentElement;
 modeSelector.addEventListener('click', _ => {
     if (htmlElement.classList.contains('light-theme')) {
         htmlElement.classList.remove('light-theme');
