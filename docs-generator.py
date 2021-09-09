@@ -123,14 +123,16 @@ for file in files:
         # end processing
         id = int(time.time() * 1000)  # Unix time
         content = f'''<!DOCTYPE html>
-<html>
+<html class="light-theme">
 <head>
 <!-- Generated at Unix time {id * 1000} by the Escurieux Docs Generator. Copyright (c) 2020 Olie Auger. -->
     <title>{title}</title>
     <link rel="stylesheet" href="/escurieux/theme.css" />
 </head>
 <body>
+<div id="mode-selector"><code>[Light mode] Dark mode</code></div>
 {content}
+<script src="/escurieux/script.js"></script>
 </body>
 </html>
 '''
