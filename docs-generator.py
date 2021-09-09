@@ -20,37 +20,124 @@ for name in generator():
 
 for file in files:
     content = open('./docs-source/' + file, mode='r').read()
-    # process the content...
-    title = ''
-    content = content.splitlines()
-    if content[0].startswith('@!'):
-        title = content[0][2:].strip()
-        content = content[1:]
+    if os.path.splitext(file)[1] == '.md':
+        # process the content...
+        title = ''
+        content = (content + ' ').splitlines()
+        if content[0].startswith('@!'):
+            title = content[0][2:].strip()
+            content = content[1:]
 
-    for i in range(len(content)):
-        if content[i].startswith('#'):
-            hashes = len(content[i]) - len(content[i].lstrip('#'))
-            if hashes > 6:
-                print(f'Error : cannot have a <h7> (file {file})')
-                exit(1)
-            content[i] = f'<h{hashes}>{content[i].lstrip("# ")}</h{hashes}>'
-    content = '\n'.join(content)
-    # end processing
-    id = int(time.time() * 1000)  # Unix time
-    content = f'''<!DOCTYPE html>
+        in_ul = False
+        for i in range(len(content)):
+            if in_ul and not content[i].startswith('* '):
+                in_ul = False
+                content[i] = '</ul>' + content[i]
+            if content[i].startswith('#'):
+                hashes = len(content[i]) - len(content[i].lstrip('#'))
+                if hashes > 6:
+                    print(f'Error : cannot have a <h7> (file {file})')
+                    exit(1)
+                content[i] = f'<h{hashes}>{content[i].lstrip("# ")}</h{hashes}>'
+            elif content[i].startswith('* '):
+                if in_ul:
+                    content[i] = '<li>' + content[i][2:]
+                else:
+                    content[i] = '<ul><li>' + content[i][2:]
+                    in_ul = True
+
+        content = '\n'.join(content)
+        stack = []
+        out = ''
+        iterator = iter(content)
+
+        def iterator_function():
+            global iterator
+            try:
+                while True:
+                    yield next(iterator)
+            except StopIteration:
+                pass
+
+        def concat(val, iter):
+            yield val
+            try:
+                while True:
+                    yield next(iter)
+            except StopIteration:
+                pass
+
+        for char in iterator_function():
+            if char == '*':
+                next_char = next(iterator)
+                if next_char == '*':
+                    if len(stack) != 0 and stack[-1][0] == '**':
+                        delimiter, tag_name = stack.pop()
+                        out += f'</{tag_name}>'
+                    else:
+                        stack.append(('**', 'strong'))
+                        out += f'<{stack[-1][1]}>'
+                else:
+                    iterator = concat(next_char, iterator)
+                    if len(stack) != 0 and stack[-1][0] == '*':
+                        delimiter, tag_name = stack.pop()
+                        out += f'</{tag_name}>'
+                    else:
+                        stack.append(('*', 'em'))
+                        out += f'<{stack[-1][1]}>'
+            elif char == '_':
+                next_char = next(iterator)
+                if next_char == '_':
+                    if len(stack) != 0 and stack[-1][0] == '_':
+                        delimiter, tag_name = stack.pop()
+                        out += f'</{tag_name}>'
+                    else:
+                        stack.append(('_', 'strong'))
+                        out += f'<{stack[-1][1]}>'
+                else:
+                    iterator = concat(next_char, iterator)
+                    if len(stack) != 0 and stack[-1][0] == '_':
+                        delimiter, tag_name = stack.pop()
+                        out += f'</{tag_name}>'
+                    else:
+                        stack.append(('_', 'em'))
+                        out += f'<{stack[-1][1]}>'
+            elif char == '`':
+                out += '<code>'
+                next_char = ''
+                while next_char != '`':
+                    out += next_char
+                    next_char = next(iterator)
+
+                out += '</code>'
+
+            elif char == '\\':
+                next_char = next(iterator)
+                if next_char == '\\':
+                    out += '\\'
+                else:
+                    out += next_char
+            else:
+                out += char
+        content = out
+        # end processing
+        id = int(time.time() * 1000)  # Unix time
+        content = f'''<!DOCTYPE html>
 <html>
 <head>
 <!-- Generated at Unix time {id * 1000} by the Escurieux Docs Generator. Copyright (c) 2020 Olie Auger. -->
     <title>{title}</title>
+    <link rel="stylesheet" href="/escurieux/theme.css" />
 </head>
 <body>
 {content}
 </body>
 </html>
 '''
-    file = os.path.splitext(file)[0]
+        file = os.path.splitext(file)[0] + '.html'
+
     os.makedirs(os.path.dirname(
         './docs/' + file), exist_ok=True)
-    handle = open('./docs/' + file + '.html', mode='w')
+    handle = open('./docs/' + file, mode='w')
     handle.write(content)
     handle.close()
