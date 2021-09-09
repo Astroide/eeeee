@@ -1,16 +1,39 @@
+:root.dark-theme {
+    --text-color: rgb(201, 209, 217);
+    --background-color: #111;
+    --code-background-color: #112;
+}
+
+:root.light-theme {
+    --text-color: black;
+    --background-color: #fff;
+    --code-background-color: #ddd;
+}
+
 * {
     font-family: Arial, Helvetica, sans-serif;
-    background-color: rgb(255, 255, 255);
-    color: black;
+    background-color: var(--background-color);
+    color: var(--text-color);
 }
 
 code {
     font-family: 'Menlo', 'Courier New', Courier, monospace;
-    background-color: #ddd;
+    background-color: var(--code-background-color);
     padding: 3px;
     border-radius: 5px;
 }
 
 li {
     margin: 10px;
+}
+
+#mode-selector {
+    width: auto;
+    height: auto;
+    position: fixed;
+    top: 0;
+    right: 0;
+    cursor: pointer;
+    user-select: none;
+    padding: 5px;
 }
