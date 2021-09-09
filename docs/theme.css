@@ -1,7 +1,7 @@
 :root.dark-theme {
     --text-color: rgb(201, 209, 217);
-    --background-color: #111;
-    --code-background-color: #112;
+    --background-color: #112;
+    --code-background-color: #292929;
 }
 
 :root.light-theme {
