@@ -1,4 +1,6 @@
 import os
+import time
+id = int(time.time())
 files = []
 name_list = os.listdir('./docs-source')
 
@@ -21,6 +23,7 @@ for file in files:
     content = open('./docs-source/' + file, mode='r').read()
     # process the content...
     # end processing
+    content = f'<!-- id: {{id}} -->\n' + content
     file = os.path.splitext(file)[0]
     os.makedirs(os.path.dirname(
         './docs/' + file), exist_ok=True)
