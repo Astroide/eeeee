@@ -68,7 +68,25 @@ for file in files:
                 pass
 
         for char in iterator_function():
-            if char == '*':
+            if char == '[':
+                next_char = ''
+                url = ''
+                title = ''
+                while next_char != ']':
+                    title += next_char
+                    next_char = next(iterator)
+                next(iterator)
+                while next_char != ']':
+                    url += next_char
+                    next_char = next(iterator)
+                out += f'<a href="{url}">{title}</a>'
+            elif char == '\n':
+                next_char = next(iterator)
+                if next_char == '\n':
+                    out += '<br>'
+                else:
+                    iterator = concat(next_char, iterator)
+            elif char == '*':
                 next_char = next(iterator)
                 if next_char == '*':
                     if len(stack) != 0 and stack[-1][0] == '**':
