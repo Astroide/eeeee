@@ -1,5 +1,24 @@
 @! 1 - Introduction
-## 1 - Introduction
+# 1 - Introduction
+
+## 1.0 - Hello World
+
+This is the simplest `Hello, World!` Escurieux program :
+
+`
+stdout.writeln('Hello, World!');
+`
+
+#### Breakdown of the `Hello, World!`
+`
+stdout                           // Standard Output
+      .writeln                   // writeln - write with trailing newline
+              ('Hello, World!')  // Call the method with as argument the string 'Hello, World!'
+                               ; // The semicolon marks the end of an expression
+`
+
+{
+## 1.1
 In Escurieux, everything (except imports and macros, because these are compile-time things) is an expression. Classes are expressions. Functions are expressions. Variable declarations are expressions.
 
 ### Data types
@@ -23,3 +42,4 @@ The number types support these operators : `+`, `-`, `*`, `/`, and `%`.
 Whenever one of these operations is computed, the result will *always* be of the most precise of the two types.
 
 That means that `float * int -> float`, `iint * ifloat -> ifloat`, `int32 * float -> float`.
+}

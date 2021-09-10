@@ -68,7 +68,12 @@ for file in files:
                 pass
 
         for char in iterator_function():
-            if char == '[':
+            if char == '{':
+                next_char = ''
+                while next_char != '}':
+                    title += next_char
+                    next_char = next(iterator)
+            elif char == '[':
                 next_char = ''
                 url = ''
                 title = ''
