@@ -129,6 +129,8 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
         let parser = new parser_1.Parser(contentsOfSourceFile);
         let tokenGenerator = parser.parse();
         if (verbose) {
+            (0, utilities_1.print)('=== Tokens ===');
+            (0, utilities_1.print)('Note : these may be incorrect if you are using a macro that requires untokenized input.');
             let tokenGeneratorForPrinting = (new parser_1.Parser(contentsOfSourceFile)).parse();
             [...tokenGeneratorForPrinting.gen].forEach(token => {
                 if (token instanceof tokens_1.NumberLiteral) {
