@@ -81,7 +81,7 @@ for file in files:
                     title += next_char
                     next_char = next(iterator)
                 next(iterator)
-                while next_char != ']':
+                while next_char != ')':
                     url += next_char
                     next_char = next(iterator)
                 out += f'<a href="{url}">{title}</a>'
