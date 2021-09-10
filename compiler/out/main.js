@@ -130,7 +130,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
         let tokenGenerator = parser.parse();
         if (verbose) {
             let tokenGeneratorForPrinting = (new parser_1.Parser(contentsOfSourceFile)).parse();
-            [...tokenGeneratorForPrinting].forEach(token => {
+            [...tokenGeneratorForPrinting.gen].forEach(token => {
                 if (token instanceof tokens_1.NumberLiteral) {
                     let num = token.content;
                     (0, utilities_1.print)(`Token NumberLiteral <${num}>`);
@@ -147,7 +147,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
                     let num = token.identifier;
                     (0, utilities_1.print)(`Token Identifier <${num}>`);
                 }
-                else {
+                else if (token instanceof tokens_1.Token) {
                     (0, utilities_1.print)(`Token BaseToken <${token.getSource()}>`);
                 }
             });

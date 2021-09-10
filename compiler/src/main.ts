@@ -1,7 +1,7 @@
 import { argv, exit } from "process";
 import { errorAndWarningExplanations } from "./explanations";
 import { Parser } from "./parser";
-import { Identifier, Keyword, NumberLiteral, StringLiteral } from "./tokens";
+import { Identifier, Keyword, NumberLiteral, StringLiteral, Token } from "./tokens";
 import { panic, print, readFile, Result } from "./utilities";
 async function main() {
     const commandLineArguments = argv.slice(2).sort((a: string, _) => a.startsWith('-') ? -1 : 1);
@@ -122,7 +122,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
         let tokenGenerator = parser.parse();
         if (verbose) {
             let tokenGeneratorForPrinting = (new Parser(contentsOfSourceFile)).parse();
-            [...tokenGeneratorForPrinting].forEach(token => {
+            [...tokenGeneratorForPrinting.gen].forEach(token => {
                 if (token instanceof NumberLiteral) {
                     let num = (<NumberLiteral>token).content;
                     print(`Token NumberLiteral <${num}>`);
@@ -135,7 +135,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
                 } else if (token instanceof Identifier) {
                     let num = (<Identifier>token).identifier;
                     print(`Token Identifier <${num}>`);
-                } else {
+                } else if (token instanceof Token) {
                     print(`Token BaseToken <${token.getSource()}>`);
                 }
             });
