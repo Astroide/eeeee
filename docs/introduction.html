@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="light-theme">
 <head>
-<!-- Generated at Unix time 1631234690481000 by the Escurieux Docs Generator. Copyright (c) 2020 Olie Auger. -->
+<!-- Generated at Unix time 1631273188183000 by the Escurieux Docs Generator. Copyright (c) 2020 Olie Auger. -->
     <title>1 - Introduction
 <h2>1.1</h2>
 In Escurieux, everything (except imports and macros, because these are compile-time things) is an expression. Classes are expressions. Functions are expressions. Variable declarations are expressions.
@@ -32,10 +32,8 @@ That means that §float * int -> float§, §iint * ifloat -> ifloat§, §int32 *
 </head>
 <body>
 <div id="mode-selector"><code>[Light mode] Dark mode</code></div>
-<h1>1 - Introduction</h1><br><h2>1.0 - Hello World</h2><br>This is the simplest <code>Hello, World!</code> Escurieux program :<br><pre><code>
-stdout.writeln('Hello, World!');
-</code></pre><br><h4>Breakdown of the <code>Hello, World!</code></h4><pre><code>
-stdout                           // Standard Output
+<h1>1 - Introduction</h1><br><h2>1.0 - Hello World</h2><br>This is the simplest <code>Hello, World!</code> Escurieux program :<br><pre><code>stdout.writeln('Hello, World!');
+</code></pre><br><h4>Breakdown of the <code>Hello, World!</code></h4><pre><code>stdout                           // Standard Output
       .writeln                   // writeln - write with trailing newline
               ('Hello, World!')  // Call the method with as argument the string 'Hello, World!'
                                ; // The semicolon marks the end of an expression
