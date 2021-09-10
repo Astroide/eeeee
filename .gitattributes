@@ -1,0 +1,4 @@
+docs/** linguist-generated
+docs-source/** linguist-documentation
+compiler/out/** linguist-generated
+vscode-escurieux/out/** linguist-generated
