@@ -84,7 +84,7 @@ for file in files:
                 while next_char != ')':
                     url += next_char
                     next_char = next(iterator)
-                out += f'<a href="{url}">{title}</a>'
+                out += f'<a href="{url.lstrip("]")}">{title}</a>'
             elif char == '\n':
                 next_char = next(iterator)
                 if next_char == '\n':
@@ -125,14 +125,23 @@ for file in files:
                     else:
                         stack.append(('_', 'em'))
                         out += f'<{stack[-1][1]}>'
-            elif char == '`':
+            elif char == '§':
                 out += '<code>'
                 next_char = ''
-                while next_char != '`':
+                while next_char != '§':
                     out += next_char
                     next_char = next(iterator)
 
                 out += '</code>'
+
+            elif char == '«':
+                out += '<pre><code>'
+                next_char = ''
+                while next_char != '»':
+                    out += next_char
+                    next_char = next(iterator)
+
+                out += '</code></pre>'
 
             elif char == '\\':
                 next_char = next(iterator)
