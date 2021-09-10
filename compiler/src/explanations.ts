@@ -1,4 +1,4 @@
-export let errorAndWarningExplanations: { [x: string]: string } = {
+export const errorAndWarningExplanations: { [x: string]: string } = {
     E00001: 'Comments opened with /* must be closed before EOF: This error happens when there are more block comment starts (/*) than there are block comment ends (*/) in a source file. This might be happening because block comments in Escurieux nest, so /* /* */ (which would be valid in many programming languages) is not valid in Escurieux.',
     E00002: 'Hexadecimal numbers must contain at least one digit: This error happens because there is a hexadecimal number start \'0x\' that is not followed by a dot or at least one hexadecimal digit (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A / a, B / b, C / c, D / d, E / e or F / f).',
     E00003: 'Octal numbers must contain at least one digit: This error happens because there is a octal number start \'0o\' that is not followed by a dot or at least one octal digit (0, 1, 2, 3, 4, 5, 6, 7).',

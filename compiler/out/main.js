@@ -40,7 +40,7 @@ async function main() {
                 (0, utilities_1.panic)('No option exists that starts with three dashes');
             }
             else {
-                let originalArgument = argument;
+                const originalArgument = argument;
                 argument = argument.replace(/^(-)/, '').replace(/^(-)/, '');
                 let foundMatch = false;
                 for (const optionName in commandLineOptions) {
@@ -99,7 +99,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
         (0, process_1.exit)(0);
     }
     if (getOption('explain')) {
-        let errorID = filename;
+        const errorID = filename;
         let hasFoundAnything = false;
         for (const id in explanations_1.errorAndWarningExplanations) {
             if (Object.prototype.hasOwnProperty.call(explanations_1.errorAndWarningExplanations, id) && ('ESC' + id) == errorID) {
@@ -120,33 +120,33 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
         (0, utilities_1.panic)('The VM has not been implemented yet.');
     }
     else {
-        let verbose = !!getOption('verbose');
-        let result = await (0, utilities_1.readFile)(filename);
+        const verbose = !!getOption('verbose');
+        const result = await (0, utilities_1.readFile)(filename);
         if (result.err()) {
             (0, utilities_1.panic)(`The file ${filename} does not exist. Node.js error:\n${result.errorMessage}`);
         }
-        let contentsOfSourceFile = result.value;
-        let parser = new parser_1.Parser(contentsOfSourceFile);
-        let tokenGenerator = parser.parse();
+        const contentsOfSourceFile = result.value;
+        const parser = new parser_1.Parser(contentsOfSourceFile);
+        const tokenGenerator = parser.parse();
         if (verbose) {
             (0, utilities_1.print)('=== Tokens ===');
             (0, utilities_1.print)('Note : these may be incorrect if you are using a macro that requires untokenized input.');
-            let tokenGeneratorForPrinting = (new parser_1.Parser(contentsOfSourceFile)).parse();
+            const tokenGeneratorForPrinting = (new parser_1.Parser(contentsOfSourceFile)).parse();
             [...tokenGeneratorForPrinting.gen].forEach(token => {
                 if (token instanceof tokens_1.NumberLiteral) {
-                    let num = token.content;
+                    const num = token.content;
                     (0, utilities_1.print)(`Token NumberLiteral <${num}>`);
                 }
                 else if (token instanceof tokens_1.StringLiteral) {
-                    let num = token.content;
+                    const num = token.content;
                     (0, utilities_1.print)(`Token StringLiteral <${num}>`);
                 }
                 else if (token instanceof tokens_1.Keyword) {
-                    let num = token.getSource();
+                    const num = token.getSource();
                     (0, utilities_1.print)(`Token Keyword <${num}>`);
                 }
                 else if (token instanceof tokens_1.Identifier) {
-                    let num = token.identifier;
+                    const num = token.identifier;
                     (0, utilities_1.print)(`Token Identifier <${num}>`);
                 }
                 else if (token instanceof tokens_1.Token) {

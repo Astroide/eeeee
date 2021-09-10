@@ -1,17 +1,17 @@
-import { exit } from "process";
-import { readFile as fsReadFile } from "fs/promises";
+import { exit } from 'process';
+import { readFile as fsReadFile } from 'fs/promises';
 export function panic(message: string): never {
     console.error('\u001b[31mFatal error\u001b[0m: ' + message + '\nRun escurieux -h or escurieux --help for help.');
     exit(1);
 }
-export function print(message: string) {
+export function print(message: string): void {
     console.error(message);
 }
-export function warn(message: string) {
+export function warn(message: string): void {
     console.error(`\u001b[33mWarning\u001b[0m: ${message}`);
 }
-function doSomethingAt(fn: (message: string) => any, source: StringReader, message: string, line: number, char: number, text: string) {
-    let lineCount = source.lineCount();
+function doSomethingAt(fn: (message: string) => void, source: StringReader, message: string, line: number, char: number, text: string) {
+    const lineCount = source.lineCount();
     let lineText: string;
     if (char != -1 && text != '\n') {
         lineText = (
@@ -23,7 +23,7 @@ function doSomethingAt(fn: (message: string) => any, source: StringReader, messa
         lineText = '\u001b[7m' + source.getLine(line).slice(0, 1) + '\u001b[0m' + source.getLine(line).slice(1);
     }
     let currentLine = '';
-    let errorOrWarningId = message.match(/\[ESC(W|E)\d\d\d\d\d\]/)[0].slice(1, -1);
+    const errorOrWarningId = message.match(/\[ESC(W|E)\d\d\d\d\d\]/)[0].slice(1, -1);
     fn(`\n${message}
 On line ${line + 1} at character ${char + 1}:
  \u001b[34m${(line - 1).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 2 >= 0 ? (currentLine = source.getLine(line - 2)).slice(0, currentLine.length - 1) : ''}
@@ -34,9 +34,9 @@ On line ${line + 1} at character ${char + 1}:
 Run escurieux -e ${errorOrWarningId} or escurieux --explain ${errorOrWarningId} for more informations about this error.\n`);
 }
 
-export let panicAt = (source: StringReader, message: string, line: number, char: number, text: string) => doSomethingAt(panic, source, message, line, char, text);
+export const panicAt = (source: StringReader, message: string, line: number, char: number, text: string): void => doSomethingAt(panic, source, message, line, char, text);
 
-export let warnAt = (source: StringReader, message: string, line: number, char: number, text: string) => doSomethingAt(warn, source, message, line, char, text)
+export const warnAt = (source: StringReader, message: string, line: number, char: number, text: string): void => doSomethingAt(warn, source, message, line, char, text);
 
 
 export class StringReader {
@@ -61,9 +61,9 @@ export class StringReader {
             this.currentLine++;
             this.currentCharacter = 0;
         }
-        let char = this.source[this.current++];
+        const char = this.source[this.current++];
         if (char === undefined) {
-            panicAt(this, "[ESCE00005] Trying to access a character past EOF", this.currentLine + (this.currentCharacter == 0 ? -1 : 0), this.currentCharacter - 1, this.last);
+            panicAt(this, '[ESCE00005] Trying to access a character past EOF', this.currentLine + (this.currentCharacter == 0 ? -1 : 0), this.currentCharacter - 1, this.last);
         }
         this.last = char;
         return char;
@@ -77,7 +77,7 @@ export class StringReader {
     done(): boolean {
         return this.current == this.source.length;
     }
-    update(source: string) {
+    update(source: string): void {
         this.source = source;
         this.current = 0;
         this.currentCharacter = 0;
@@ -88,7 +88,7 @@ export class StringReader {
         while (StringReader.lineReader.currentLine != lineNumber) {
             StringReader.lineReader.next();
         }
-        let line: string = '';
+        let line = '';
         while (StringReader.lineReader.currentLine != lineNumber + 1 && !StringReader.lineReader.done()) {
             line += StringReader.lineReader.next();
         }
@@ -102,35 +102,38 @@ export class StringReader {
 }
 
 export class Result<T> {
-    variant: "Ok" | "Err";
+    variant: 'Ok' | 'Err';
     value?: T;
     errorMessage?: string;
-    constructor() { }
+    constructor() {
+        this.value = null;
+        this.errorMessage = null;
+    }
     static Ok<T>(value: T): Result<T> {
-        let result = new Result<T>();
-        result.variant = "Ok";
+        const result = new Result<T>();
+        result.variant = 'Ok';
         result.value = value;
         return result;
     }
     static Err<T>(errorMessage: string): Result<T> {
-        let result = new Result<T>();
-        result.variant = "Err";
+        const result = new Result<T>();
+        result.variant = 'Err';
         result.errorMessage = errorMessage;
         return result;
     }
     ok(): boolean {
-        return this.variant == "Ok";
+        return this.variant == 'Ok';
     }
     err(): boolean {
-        return this.variant == "Err";
+        return this.variant == 'Err';
     }
 }
 
 export async function readFile(filename: string): Promise<Result<string>> {
-    let contents = await new Promise((resolve) => {
+    const contents = await new Promise((resolve) => {
         fsReadFile(filename, { encoding: 'utf-8', flag: 'r' })
             .then((fileContents) => resolve(Result.Ok(fileContents)))
-            .catch((errorMessage) => resolve(Result.Err("" + errorMessage)));
+            .catch((errorMessage) => resolve(Result.Err('' + errorMessage)));
     });
     return <Result<string>>contents;
 }

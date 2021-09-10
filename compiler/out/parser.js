@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Parser = void 0;
+/* eslint-disable @typescript-eslint/no-this-alias */
 const tokens_1 = require("./tokens");
 const utilities_1 = require("./utilities");
 class Parser {
@@ -8,7 +9,7 @@ class Parser {
         this.reader = new utilities_1.StringReader(source);
     }
     parse() {
-        let self = this;
+        const self = this;
         let raw = false;
         return {
             setRaw: value => {
@@ -33,7 +34,7 @@ class Parser {
                             else if (self.reader.peek() == '*') {
                                 let depth = 1;
                                 while (depth > 0 && !self.reader.done()) {
-                                    let char = self.reader.next();
+                                    const char = self.reader.next();
                                     if (char == '/' && self.reader.peek() == '*') {
                                         self.reader.next();
                                         depth++;
@@ -55,12 +56,12 @@ class Parser {
                                 (0, utilities_1.warnAt)(self.reader, '[ESCW00001] Leading zero in number literal', self.reader.currentLine, self.reader.currentCharacter - 1, '0');
                             }
                             else if (self.reader.peek() == 'x') {
-                                let line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
+                                const line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
                                 // Hexadecimal
                                 self.reader.next();
                                 tokenText = '';
-                                if (!/[0-9\.A-Fa-f]/.test(self.reader.peek())) {
-                                    let invalidCharacted = self.reader.next();
+                                if (!/[0-9.A-Fa-f]/.test(self.reader.peek())) {
+                                    const invalidCharacted = self.reader.next();
                                     (0, utilities_1.panicAt)(self.reader, '[ESCE00002] Hexadecimal numbers must contain at least one digit', self.reader.currentLine, self.reader.currentCharacter - 1, invalidCharacted);
                                 }
                                 tokenText = '';
@@ -77,7 +78,7 @@ class Parser {
                                 let value = 0;
                                 value += parseInt(tokenText.split('.')[0], 16);
                                 if (tokenText.includes('.')) {
-                                    let decimalPart = tokenText.split('.')[1];
+                                    const decimalPart = tokenText.split('.')[1];
                                     for (let i = 0; i < decimalPart.length; i++) {
                                         const digit = parseInt(decimalPart[i], 16);
                                         value += digit / Math.pow(16, i + 1);
@@ -87,12 +88,12 @@ class Parser {
                                 continue parsing;
                             }
                             else if (self.reader.peek() == 'o') {
-                                let line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
+                                const line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
                                 // Octal
                                 self.reader.next();
                                 tokenText = '';
-                                if (!/[0-7\.]/.test(self.reader.peek())) {
-                                    let invalidCharacted = self.reader.next();
+                                if (!/[0-7.]/.test(self.reader.peek())) {
+                                    const invalidCharacted = self.reader.next();
                                     (0, utilities_1.panicAt)(self.reader, '[ESCE00003] Octal numbers must contain at least one digit', self.reader.currentLine, self.reader.currentCharacter - 1, invalidCharacted);
                                 }
                                 tokenText = '';
@@ -109,7 +110,7 @@ class Parser {
                                 let value = 0;
                                 value += parseInt(tokenText.split('.')[0], 8);
                                 if (tokenText.includes('.')) {
-                                    let decimalPart = tokenText.split('.')[1];
+                                    const decimalPart = tokenText.split('.')[1];
                                     for (let i = 0; i < decimalPart.length; i++) {
                                         const digit = parseInt(decimalPart[i], 8);
                                         value += digit / Math.pow(8, i + 1);
@@ -119,12 +120,12 @@ class Parser {
                                 continue parsing;
                             }
                             else if (self.reader.peek() == 'b') {
-                                let line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
+                                const line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
                                 // Binary
                                 self.reader.next();
                                 tokenText = '';
-                                if (!/[01\.]/.test(self.reader.peek())) {
-                                    let invalidCharacted = self.reader.next();
+                                if (!/[01.]/.test(self.reader.peek())) {
+                                    const invalidCharacted = self.reader.next();
                                     (0, utilities_1.panicAt)(self.reader, '[ESCE00007] Binary numbers must contain at least one digit', self.reader.currentLine, self.reader.currentCharacter - 1, invalidCharacted);
                                 }
                                 tokenText = '';
@@ -141,7 +142,7 @@ class Parser {
                                 let value = 0;
                                 value += parseInt(tokenText.split('.')[0], 2);
                                 if (tokenText.includes('.')) {
-                                    let decimalPart = tokenText.split('.')[1];
+                                    const decimalPart = tokenText.split('.')[1];
                                     for (let i = 0; i < decimalPart.length; i++) {
                                         const digit = parseInt(decimalPart[i], 2);
                                         value += digit / Math.pow(2, i + 1);
@@ -152,8 +153,8 @@ class Parser {
                             }
                         }
                         decimalParsing: do {
-                            if (/[0-9\.]/.test(tokenText)) {
-                                let line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
+                            if (/[0-9.]/.test(tokenText)) {
+                                const line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
                                 // Decimal
                                 while (self.reader.peek() != '.' && /[0-9]/.test(self.reader.peek())) {
                                     tokenText += self.reader.next();
@@ -170,7 +171,7 @@ class Parser {
                                 let value = 0;
                                 value += parseInt(tokenText.split('.')[0], 10);
                                 if (tokenText.includes('.')) {
-                                    let decimalPart = tokenText.split('.')[1];
+                                    const decimalPart = tokenText.split('.')[1];
                                     for (let i = 0; i < decimalPart.length; i++) {
                                         const digit = parseInt(decimalPart[i], 10);
                                         value += digit / Math.pow(10, i + 1);
@@ -181,16 +182,16 @@ class Parser {
                             }
                         } while (false);
                         if (/('|")/.test(tokenText)) {
-                            let delimiter = tokenText;
-                            let line = self.reader.currentLine, character = self.reader.currentCharacter - 1, position = self.reader.current - 1;
+                            const delimiter = tokenText;
+                            const line = self.reader.currentLine, character = self.reader.currentCharacter - 1, position = self.reader.current - 1;
                             let stringContents = '';
                             while (self.reader.peek() != delimiter && !self.reader.done()) {
-                                let char = self.reader.next();
+                                const char = self.reader.next();
                                 if (char != '\\') {
                                     stringContents += char;
                                 }
                                 else {
-                                    let next = self.reader.next();
+                                    const next = self.reader.next();
                                     if (next == '\\') {
                                         stringContents += '\\';
                                     }
@@ -200,8 +201,8 @@ class Parser {
                                     else if (next == 'n') {
                                         stringContents += '\n';
                                     }
-                                    else if (next == "'") {
-                                        stringContents += "'";
+                                    else if (next == '\'') {
+                                        stringContents += '\'';
                                     }
                                     else if (next == '"') {
                                         stringContents += '"';
@@ -212,14 +213,14 @@ class Parser {
                                 }
                             }
                             if (self.reader.done() && self.reader.peek() != delimiter) {
-                                (0, utilities_1.panicAt)(self.reader, "[ESCE00004] Endless string\nString was started here:", line, character, delimiter);
+                                (0, utilities_1.panicAt)(self.reader, '[ESCE00004] Endless string\nString was started here:', line, character, delimiter);
                             }
                             self.reader.next();
                             yield (new tokens_1.StringLiteral(line, character, self.reader.source, position, self.reader.current - position, stringContents));
                             continue parsing;
                         }
                         if ('+-*=&|<>$/[]{}(),.;'.includes(tokenText)) {
-                            let table = {
+                            const table = {
                                 '+': tokens_1.TokenType.Plus,
                                 '++': tokens_1.TokenType.DoublePlus,
                                 '-': tokens_1.TokenType.Minus,
@@ -257,12 +258,12 @@ class Parser {
                         }
                         if (/[a-zA-Z_]/.test(tokenText)) {
                             // Identifier
-                            let char = self.reader.currentCharacter - 1, current = self.reader.current - 1;
+                            const char = self.reader.currentCharacter - 1, current = self.reader.current - 1;
                             while (!self.reader.done() && /[a-zA-Z_0-9]/.test(self.reader.peek())) {
                                 tokenText += self.reader.next();
                             }
-                            let keywords = 'fn while for if else continue break'.split(' ');
-                            let keywordTokenTypes = {
+                            const keywords = 'fn while for if else continue break'.split(' ');
+                            const keywordTokenTypes = {
                                 'fn': tokens_1.TokenType.Fn,
                                 'while': tokens_1.TokenType.While,
                                 'for': tokens_1.TokenType.For,

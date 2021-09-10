@@ -18,7 +18,7 @@ function warn(message) {
 }
 exports.warn = warn;
 function doSomethingAt(fn, source, message, line, char, text) {
-    let lineCount = source.lineCount();
+    const lineCount = source.lineCount();
     let lineText;
     if (char != -1 && text != '\n') {
         lineText = (source.getLine(line).slice(0, char)
@@ -29,7 +29,7 @@ function doSomethingAt(fn, source, message, line, char, text) {
         lineText = '\u001b[7m' + source.getLine(line).slice(0, 1) + '\u001b[0m' + source.getLine(line).slice(1);
     }
     let currentLine = '';
-    let errorOrWarningId = message.match(/\[ESC(W|E)\d\d\d\d\d\]/)[0].slice(1, -1);
+    const errorOrWarningId = message.match(/\[ESC(W|E)\d\d\d\d\d\]/)[0].slice(1, -1);
     fn(`\n${message}
 On line ${line + 1} at character ${char + 1}:
  \u001b[34m${(line - 1).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 2 >= 0 ? (currentLine = source.getLine(line - 2)).slice(0, currentLine.length - 1) : ''}
@@ -39,9 +39,9 @@ On line ${line + 1} at character ${char + 1}:
  \u001b[34m${(line + 3).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : ''}
 Run escurieux -e ${errorOrWarningId} or escurieux --explain ${errorOrWarningId} for more informations about this error.\n`);
 }
-let panicAt = (source, message, line, char, text) => doSomethingAt(panic, source, message, line, char, text);
+const panicAt = (source, message, line, char, text) => doSomethingAt(panic, source, message, line, char, text);
 exports.panicAt = panicAt;
-let warnAt = (source, message, line, char, text) => doSomethingAt(warn, source, message, line, char, text);
+const warnAt = (source, message, line, char, text) => doSomethingAt(warn, source, message, line, char, text);
 exports.warnAt = warnAt;
 class StringReader {
     constructor(source) {
@@ -56,9 +56,9 @@ class StringReader {
             this.currentLine++;
             this.currentCharacter = 0;
         }
-        let char = this.source[this.current++];
+        const char = this.source[this.current++];
         if (char === undefined) {
-            (0, exports.panicAt)(this, "[ESCE00005] Trying to access a character past EOF", this.currentLine + (this.currentCharacter == 0 ? -1 : 0), this.currentCharacter - 1, this.last);
+            (0, exports.panicAt)(this, '[ESCE00005] Trying to access a character past EOF', this.currentLine + (this.currentCharacter == 0 ? -1 : 0), this.currentCharacter - 1, this.last);
         }
         this.last = char;
         return char;
@@ -102,32 +102,35 @@ _a = StringReader;
     _a.lineReader = new StringReader('');
 })();
 class Result {
-    constructor() { }
+    constructor() {
+        this.value = null;
+        this.errorMessage = null;
+    }
     static Ok(value) {
-        let result = new Result();
-        result.variant = "Ok";
+        const result = new Result();
+        result.variant = 'Ok';
         result.value = value;
         return result;
     }
     static Err(errorMessage) {
-        let result = new Result();
-        result.variant = "Err";
+        const result = new Result();
+        result.variant = 'Err';
         result.errorMessage = errorMessage;
         return result;
     }
     ok() {
-        return this.variant == "Ok";
+        return this.variant == 'Ok';
     }
     err() {
-        return this.variant == "Err";
+        return this.variant == 'Err';
     }
 }
 exports.Result = Result;
 async function readFile(filename) {
-    let contents = await new Promise((resolve) => {
+    const contents = await new Promise((resolve) => {
         (0, promises_1.readFile)(filename, { encoding: 'utf-8', flag: 'r' })
             .then((fileContents) => resolve(Result.Ok(fileContents)))
-            .catch((errorMessage) => resolve(Result.Err("" + errorMessage)));
+            .catch((errorMessage) => resolve(Result.Err('' + errorMessage)));
     });
     return contents;
 }

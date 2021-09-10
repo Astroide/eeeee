@@ -1,8 +1,8 @@
-import { argv, exit } from "process";
-import { errorAndWarningExplanations } from "./explanations";
-import { Parser } from "./parser";
-import { Identifier, Keyword, NumberLiteral, StringLiteral, Token } from "./tokens";
-import { panic, print, readFile, Result } from "./utilities";
+import { argv, exit } from 'process';
+import { errorAndWarningExplanations } from './explanations';
+import { Parser } from './parser';
+import { Identifier, Keyword, NumberLiteral, StringLiteral, Token } from './tokens';
+import { panic, print, readFile } from './utilities';
 async function main() {
     const commandLineArguments = argv.slice(2).sort((a: string, _) => a.startsWith('-') ? -1 : 1);
     const commandLineOptions: { [x: string]: { short: string, long: string } } = {
@@ -37,7 +37,7 @@ async function main() {
             if (argument.startsWith('---')) {
                 panic('No option exists that starts with three dashes');
             } else {
-                let originalArgument = argument;
+                const originalArgument = argument;
                 argument = argument.replace(/^(-)/, '').replace(/^(-)/, '');
                 let foundMatch = false;
                 for (const optionName in commandLineOptions) {
@@ -92,7 +92,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
         exit(0);
     }
     if (getOption('explain')) {
-        let errorID = filename;
+        const errorID = filename;
         let hasFoundAnything = false;
         for (const id in errorAndWarningExplanations) {
             if (Object.prototype.hasOwnProperty.call(errorAndWarningExplanations, id) && ('ESC' + id) == errorID) {
@@ -112,30 +112,30 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
     if (getOption('bytecode')) {
         panic('The VM has not been implemented yet.');
     } else {
-        let verbose: boolean = !!getOption('verbose');
-        let result = await readFile(filename);
+        const verbose = !!getOption('verbose');
+        const result = await readFile(filename);
         if (result.err()) {
-            panic(`The file ${filename} does not exist. Node.js error:\n${result.errorMessage}`)
+            panic(`The file ${filename} does not exist. Node.js error:\n${result.errorMessage}`);
         }
-        let contentsOfSourceFile = result.value;
-        let parser = new Parser(contentsOfSourceFile);
-        let tokenGenerator = parser.parse();
+        const contentsOfSourceFile = result.value;
+        const parser = new Parser(contentsOfSourceFile);
+        const tokenGenerator = parser.parse();
         if (verbose) {
             print('=== Tokens ===');
             print('Note : these may be incorrect if you are using a macro that requires untokenized input.');
-            let tokenGeneratorForPrinting = (new Parser(contentsOfSourceFile)).parse();
+            const tokenGeneratorForPrinting = (new Parser(contentsOfSourceFile)).parse();
             [...tokenGeneratorForPrinting.gen].forEach(token => {
                 if (token instanceof NumberLiteral) {
-                    let num = (<NumberLiteral>token).content;
+                    const num = (<NumberLiteral>token).content;
                     print(`Token NumberLiteral <${num}>`);
                 } else if (token instanceof StringLiteral) {
-                    let num = (<StringLiteral>token).content;
+                    const num = (<StringLiteral>token).content;
                     print(`Token StringLiteral <${num}>`);
                 } else if (token instanceof Keyword) {
-                    let num = (<Keyword>token).getSource();
+                    const num = (<Keyword>token).getSource();
                     print(`Token Keyword <${num}>`);
                 } else if (token instanceof Identifier) {
-                    let num = (<Identifier>token).identifier;
+                    const num = (<Identifier>token).identifier;
                     print(`Token Identifier <${num}>`);
                 } else if (token instanceof Token) {
                     print(`Token BaseToken <${token.getSource()}>`);
