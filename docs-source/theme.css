@@ -21,7 +21,12 @@ pre {
     background-color: var(--code-background-color);
     padding: 3px;
     border-radius: 5px;
-    display: unset;
+    display: inline-block;
+}
+
+code {
+    background-color: var(--code-background-color);
+    font-family: 'Menlo', 'Courier New', Courier, monospace;
 }
 
 li {
