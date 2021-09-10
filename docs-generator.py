@@ -137,6 +137,7 @@ for file in files:
             elif char == '«':
                 out += '<pre><code>'
                 next_char = ''
+                next(iterator)
                 while next_char != '»':
                     out += next_char
                     next_char = next(iterator)
