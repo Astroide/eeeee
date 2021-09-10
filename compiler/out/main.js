@@ -127,9 +127,10 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
         }
         let contentsOfSourceFile = result.value;
         let parser = new parser_1.Parser(contentsOfSourceFile);
-        let tokens = parser.parse();
+        let tokenGenerator = parser.parse();
         if (verbose) {
-            tokens.forEach(token => {
+            let tokenGeneratorForPrinting = (new parser_1.Parser(contentsOfSourceFile)).parse();
+            [...tokenGeneratorForPrinting].forEach(token => {
                 if (token instanceof tokens_1.NumberLiteral) {
                     let num = token.content;
                     (0, utilities_1.print)(`Token NumberLiteral <${num}>`);

@@ -7,7 +7,7 @@ class Parser {
     constructor(source) {
         this.reader = new utilities_1.StringReader(source);
     }
-    parse() {
+    *parse() {
         let tokens = [];
         parsing: while (!this.reader.done()) {
             let tokenText = this.reader.next();
@@ -73,7 +73,7 @@ class Parser {
                                 value += digit / Math.pow(16, i + 1);
                             }
                         }
-                        tokens.push(new tokens_1.NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
+                        yield (new tokens_1.NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
                         continue parsing;
                     }
                     else if (this.reader.peek() == 'o') {
@@ -105,7 +105,7 @@ class Parser {
                                 value += digit / Math.pow(8, i + 1);
                             }
                         }
-                        tokens.push(new tokens_1.NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
+                        yield (new tokens_1.NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
                         continue parsing;
                     }
                     else if (this.reader.peek() == 'b') {
@@ -137,7 +137,7 @@ class Parser {
                                 value += digit / Math.pow(2, i + 1);
                             }
                         }
-                        tokens.push(new tokens_1.NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
+                        yield (new tokens_1.NumberLiteral(line, char, this.reader.source, start, tokenText.length + 2, value));
                         continue parsing;
                     }
                 }
@@ -166,7 +166,7 @@ class Parser {
                                 value += digit / Math.pow(10, i + 1);
                             }
                         }
-                        tokens.push(new tokens_1.NumberLiteral(line, char, this.reader.source, start, tokenText.length, value));
+                        yield (new tokens_1.NumberLiteral(line, char, this.reader.source, start, tokenText.length, value));
                         continue parsing;
                     }
                 } while (false);
@@ -205,7 +205,7 @@ class Parser {
                         (0, utilities_1.panicAt)(this.reader, "[ESCE00004] Endless string\nString was started here:", line, character, delimiter);
                     }
                     this.reader.next();
-                    tokens.push(new tokens_1.StringLiteral(line, character, this.reader.source, position, this.reader.current - position, stringContents));
+                    yield (new tokens_1.StringLiteral(line, character, this.reader.source, position, this.reader.current - position, stringContents));
                     continue parsing;
                 }
                 if ('+-*=&|<>$/[]{}(),.;'.includes(tokenText)) {
@@ -242,7 +242,7 @@ class Parser {
                     while ((tokenText + this.reader.peek()) in table) {
                         tokenText += this.reader.next();
                     }
-                    tokens.push(new tokens_1.Token(this.reader.currentLine, this.reader.currentCharacter - tokenText.length, this.reader.source, table[tokenText], this.reader.current - tokenText.length, tokenText.length));
+                    yield (new tokens_1.Token(this.reader.currentLine, this.reader.currentCharacter - tokenText.length, this.reader.source, table[tokenText], this.reader.current - tokenText.length, tokenText.length));
                     continue parsing;
                 }
                 if (/[a-zA-Z_]/.test(tokenText)) {
@@ -262,10 +262,10 @@ class Parser {
                         'break': tokens_1.TokenType.Break
                     };
                     if (keywords.includes(tokenText)) {
-                        tokens.push(new tokens_1.Keyword(this.reader.currentLine, char, this.reader.source, current, tokenText.length, keywordTokenTypes[tokenText]));
+                        yield (new tokens_1.Keyword(this.reader.currentLine, char, this.reader.source, current, tokenText.length, keywordTokenTypes[tokenText]));
                     }
                     else {
-                        tokens.push(new tokens_1.Identifier(this.reader.currentLine, char, this.reader.source, current, tokenText.length, tokenText));
+                        yield (new tokens_1.Identifier(this.reader.currentLine, char, this.reader.source, current, tokenText.length, tokenText));
                     }
                     continue parsing;
                 }
@@ -278,7 +278,7 @@ class Parser {
                 (0, utilities_1.panicAt)(this.reader, `[ESCE00008] Invalid character : '${tokenText}'`, this.reader.currentLine, this.reader.currentCharacter - 1, tokenText);
             }
         }
-        return tokens;
+        return;
     }
 }
 exports.Parser = Parser;
