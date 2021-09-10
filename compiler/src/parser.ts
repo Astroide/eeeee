@@ -1,14 +1,15 @@
-import { TokenType, Token, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword } from "./tokens";
-import { StringReader, warnAt, panicAt } from "./utilities";
+/* eslint-disable @typescript-eslint/no-this-alias */
+import { TokenType, Token, StringLiteral, NumberLiteral, Identifier, Keyword } from './tokens';
+import { StringReader, warnAt, panicAt } from './utilities';
 
-type TokenGenerator = { gen: Generator<Token | string, any, unknown>, setRaw: (boolean) => void };
+type TokenGenerator = { gen: Generator<Token | string, void, unknown>, setRaw: (boolean) => void };
 export class Parser {
     reader: StringReader;
     constructor(source: string) {
         this.reader = new StringReader(source);
     }
     parse(): TokenGenerator {
-        let self = this;
+        const self = this;
         let raw = false;
         return {
             setRaw: value => {
@@ -30,7 +31,7 @@ export class Parser {
                             } else if (self.reader.peek() == '*') {
                                 let depth = 1;
                                 while (depth > 0 && !self.reader.done()) {
-                                    let char = self.reader.next();
+                                    const char = self.reader.next();
                                     if (char == '/' && self.reader.peek() == '*') {
                                         self.reader.next();
                                         depth++;
@@ -50,12 +51,12 @@ export class Parser {
                                 // Decimal, warn because of leading zero
                                 warnAt(self.reader, '[ESCW00001] Leading zero in number literal', self.reader.currentLine, self.reader.currentCharacter - 1, '0');
                             } else if (self.reader.peek() == 'x') {
-                                let line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
+                                const line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
                                 // Hexadecimal
                                 self.reader.next();
                                 tokenText = '';
-                                if (!/[0-9\.A-Fa-f]/.test(self.reader.peek())) {
-                                    let invalidCharacted: string = self.reader.next();
+                                if (!/[0-9.A-Fa-f]/.test(self.reader.peek())) {
+                                    const invalidCharacted: string = self.reader.next();
                                     panicAt(self.reader, '[ESCE00002] Hexadecimal numbers must contain at least one digit', self.reader.currentLine, self.reader.currentCharacter - 1, invalidCharacted);
                                 }
                                 tokenText = '';
@@ -69,10 +70,10 @@ export class Parser {
                                         tokenText += self.reader.next();
                                     }
                                 }
-                                let value: number = 0;
+                                let value = 0;
                                 value += parseInt(tokenText.split('.')[0], 16);
                                 if (tokenText.includes('.')) {
-                                    let decimalPart = tokenText.split('.')[1];
+                                    const decimalPart = tokenText.split('.')[1];
                                     for (let i = 0; i < decimalPart.length; i++) {
                                         const digit = parseInt(decimalPart[i], 16);
                                         value += digit / Math.pow(16, i + 1);
@@ -81,12 +82,12 @@ export class Parser {
                                 yield (new NumberLiteral(line, char, self.reader.source, start, tokenText.length + 2, value));
                                 continue parsing;
                             } else if (self.reader.peek() == 'o') {
-                                let line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
+                                const line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
                                 // Octal
                                 self.reader.next();
                                 tokenText = '';
-                                if (!/[0-7\.]/.test(self.reader.peek())) {
-                                    let invalidCharacted: string = self.reader.next();
+                                if (!/[0-7.]/.test(self.reader.peek())) {
+                                    const invalidCharacted: string = self.reader.next();
                                     panicAt(self.reader, '[ESCE00003] Octal numbers must contain at least one digit', self.reader.currentLine, self.reader.currentCharacter - 1, invalidCharacted);
                                 }
                                 tokenText = '';
@@ -100,10 +101,10 @@ export class Parser {
                                         tokenText += self.reader.next();
                                     }
                                 }
-                                let value: number = 0;
+                                let value = 0;
                                 value += parseInt(tokenText.split('.')[0], 8);
                                 if (tokenText.includes('.')) {
-                                    let decimalPart = tokenText.split('.')[1];
+                                    const decimalPart = tokenText.split('.')[1];
                                     for (let i = 0; i < decimalPart.length; i++) {
                                         const digit = parseInt(decimalPart[i], 8);
                                         value += digit / Math.pow(8, i + 1);
@@ -112,12 +113,12 @@ export class Parser {
                                 yield (new NumberLiteral(line, char, self.reader.source, start, tokenText.length + 2, value));
                                 continue parsing;
                             } else if (self.reader.peek() == 'b') {
-                                let line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
+                                const line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
                                 // Binary
                                 self.reader.next();
                                 tokenText = '';
-                                if (!/[01\.]/.test(self.reader.peek())) {
-                                    let invalidCharacted: string = self.reader.next();
+                                if (!/[01.]/.test(self.reader.peek())) {
+                                    const invalidCharacted: string = self.reader.next();
                                     panicAt(self.reader, '[ESCE00007] Binary numbers must contain at least one digit', self.reader.currentLine, self.reader.currentCharacter - 1, invalidCharacted);
                                 }
                                 tokenText = '';
@@ -131,10 +132,10 @@ export class Parser {
                                         tokenText += self.reader.next();
                                     }
                                 }
-                                let value: number = 0;
+                                let value = 0;
                                 value += parseInt(tokenText.split('.')[0], 2);
                                 if (tokenText.includes('.')) {
-                                    let decimalPart = tokenText.split('.')[1];
+                                    const decimalPart = tokenText.split('.')[1];
                                     for (let i = 0; i < decimalPart.length; i++) {
                                         const digit = parseInt(decimalPart[i], 2);
                                         value += digit / Math.pow(2, i + 1);
@@ -145,8 +146,8 @@ export class Parser {
                             }
                         }
                         decimalParsing: do {
-                            if (/[0-9\.]/.test(tokenText)) {
-                                let line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
+                            if (/[0-9.]/.test(tokenText)) {
+                                const line = self.reader.currentLine, char = self.reader.currentCharacter - 1, start = self.reader.current - 1;
                                 // Decimal
                                 while (self.reader.peek() != '.' && /[0-9]/.test(self.reader.peek())) {
                                     tokenText += self.reader.next();
@@ -159,10 +160,10 @@ export class Parser {
                                     }
                                 }
                                 if (tokenText == '.') break decimalParsing;
-                                let value: number = 0;
+                                let value = 0;
                                 value += parseInt(tokenText.split('.')[0], 10);
                                 if (tokenText.includes('.')) {
-                                    let decimalPart = tokenText.split('.')[1];
+                                    const decimalPart = tokenText.split('.')[1];
                                     for (let i = 0; i < decimalPart.length; i++) {
                                         const digit = parseInt(decimalPart[i], 10);
                                         value += digit / Math.pow(10, i + 1);
@@ -173,23 +174,23 @@ export class Parser {
                             }
                         } while (false);
                         if (/('|")/.test(tokenText)) {
-                            let delimiter = tokenText;
-                            let line = self.reader.currentLine, character = self.reader.currentCharacter - 1, position = self.reader.current - 1;
+                            const delimiter = tokenText;
+                            const line = self.reader.currentLine, character = self.reader.currentCharacter - 1, position = self.reader.current - 1;
                             let stringContents = '';
                             while (self.reader.peek() != delimiter && !self.reader.done()) {
-                                let char = self.reader.next();
+                                const char = self.reader.next();
                                 if (char != '\\') {
                                     stringContents += char;
                                 } else {
-                                    let next = self.reader.next();
+                                    const next = self.reader.next();
                                     if (next == '\\') {
                                         stringContents += '\\';
                                     } else if (next == '\n') {
                                         // Nothing here
                                     } else if (next == 'n') {
                                         stringContents += '\n';
-                                    } else if (next == "'") {
-                                        stringContents += "'";
+                                    } else if (next == '\'') {
+                                        stringContents += '\'';
                                     } else if (next == '"') {
                                         stringContents += '"';
                                     } else {
@@ -198,14 +199,14 @@ export class Parser {
                                 }
                             }
                             if (self.reader.done() && self.reader.peek() != delimiter) {
-                                panicAt(self.reader, "[ESCE00004] Endless string\nString was started here:", line, character, delimiter);
+                                panicAt(self.reader, '[ESCE00004] Endless string\nString was started here:', line, character, delimiter);
                             }
                             self.reader.next();
                             yield (new StringLiteral(line, character, self.reader.source, position, self.reader.current - position, stringContents));
                             continue parsing;
                         }
                         if ('+-*=&|<>$/[]{}(),.;'.includes(tokenText)) {
-                            let table = {
+                            const table = {
                                 '+': TokenType.Plus,
                                 '++': TokenType.DoublePlus,
                                 '-': TokenType.Minus,
@@ -244,12 +245,12 @@ export class Parser {
                         }
                         if (/[a-zA-Z_]/.test(tokenText)) {
                             // Identifier
-                            let char = self.reader.currentCharacter - 1, current = self.reader.current - 1;
+                            const char = self.reader.currentCharacter - 1, current = self.reader.current - 1;
                             while (!self.reader.done() && /[a-zA-Z_0-9]/.test(self.reader.peek())) {
                                 tokenText += self.reader.next();
                             }
-                            let keywords = 'fn while for if else continue break'.split(' ');
-                            let keywordTokenTypes = {
+                            const keywords = 'fn while for if else continue break'.split(' ');
+                            const keywordTokenTypes = {
                                 'fn': TokenType.Fn,
                                 'while': TokenType.While,
                                 'for': TokenType.For,
@@ -278,6 +279,6 @@ export class Parser {
                 }
                 return;
             })())
-        }
+        };
     }
 }
