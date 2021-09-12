@@ -3,6 +3,7 @@ import { errorAndWarningExplanations } from './explanations';
 import { Parser } from './parser';
 import { Identifier, Keyword, NumberLiteral, StringLiteral, Token } from './tokens';
 import { panic, print, readFile } from './utilities';
+
 async function main() {
     const commandLineArguments = argv.slice(2).sort((a: string, _) => a.startsWith('-') ? -1 : 1);
     const commandLineOptions: { [x: string]: { short: string, long: string } } = {

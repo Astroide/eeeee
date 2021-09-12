@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Parser = void 0;
-/* eslint-disable @typescript-eslint/no-this-alias */
 const tokens_1 = require("./tokens");
 const utilities_1 = require("./utilities");
 class Parser {

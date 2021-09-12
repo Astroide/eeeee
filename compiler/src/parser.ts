@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-this-alias */
 import { TokenType, Token, StringLiteral, NumberLiteral, Identifier, Keyword } from './tokens';
 import { StringReader, warnAt, panicAt } from './utilities';
 
-type TokenGenerator = { gen: Generator<Token | string, void, unknown>, setRaw: (boolean) => void };
+export type TokenGenerator = { gen: Generator<Token | string, void, unknown>, setRaw: (boolean) => void };
 export class Parser {
     reader: StringReader;
     constructor(source: string) {
