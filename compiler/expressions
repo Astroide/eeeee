@@ -1,0 +1,62 @@
+Expression:
+| NumericLiteral
+| StringLiteral
+| BooleanLiteral
+| Identifier
+| AddExpression
+| SubstractExpression
+| MultiplyExpression
+| DivideExpression
+| Block
+| Lambda
+| Group
+| FunctionCall
+| FieldAccess
+
+Group:
+| "(" Expression ")"
+
+AddExpression:
+| Expression "+" Expression
+
+SubstractExpression:
+| Expression "-" Expression
+
+MultiplyExpression:
+| Expression "*" Expression
+
+DivideExpression:
+| Expression "/" Expression
+
+Statement:
+| Expression ";"
+
+StatementList:
+| Statement
+| Statement StatementList
+
+Block:
+| "{" StatementList "}"
+
+TypelessArgumentList:
+| Identifier
+| Identifier "," TypelessArgumentList
+| Identifier ","
+
+Lambda:
+| "|" TypelessArgumentList "|" Expression
+| "|" "|" Expression
+| "|" TypelessArgumentList "|" Block
+| "|" "|" Block
+
+Arguments:
+| Expression
+| Expression "," Arguments
+| Expression ","
+
+FunctionCall:
+| Expression "(" ")"
+| Expression "(" Arguments ")"
+
+FieldAccess:
+| Expression "." Identifier
