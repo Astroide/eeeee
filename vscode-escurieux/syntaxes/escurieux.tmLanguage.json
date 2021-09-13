@@ -3,10 +3,16 @@
 	"name": "Escurieux",
 	"patterns": [
 		{
-			"include": "#keywords"
+			"include": "#control_keywords"
+		},
+		{
+			"include": "#declaration_keywords"
 		},
 		{
 			"include": "#double_quoted_strings"
+		},
+		{
+			"include": "#single_quoted_strings"
 		},
 		{
 			"include": "#hexadecimal_numbers"
@@ -15,21 +21,26 @@
 			"include": "#octal_numbers"
 		},
 		{
+			"include": "#binary_numbers"
+		},
+		{
 			"include": "#decimal_numbers"
+		},
+		{
+			"include": "#line_comments"
+		},
+		{
+			"include": "#block_comments"
 		}
 	],
 	"repository": {
-		"keywords": {
-			"patterns": [
-				{
-					"name": "keyword.control.escurieux",
-					"match": "\\b(if|while|for|return)\\b"
-				},
-				{
-					"name": "keyword.declaration.escurieux",
-					"match": "\\b(fn|let|const)\\b"
-				}
-			]
+		"control_keywords": {
+			"name": "keyword.control.escurieux",
+			"match": "(if|while|for|return)"
+		},
+		"declaration_keywords": {
+			"name": "keyword.declaration.escurieux",
+			"match": "(fn|let|const)"
 		},
 		"double_quoted_strings": {
 			"name": "string.quoted.double.escurieux",
@@ -38,7 +49,7 @@
 			"patterns": [
 				{
 					"name": "constant.character.escape.escurieux",
-					"match": "\\\\."
+					"match": "\\\\(\\\\|'|\"|n)"
 				}
 			]
 		},
@@ -49,7 +60,7 @@
 			"patterns": [
 				{
 					"name": "constant.character.escape.escurieux",
-					"match": "\\\\."
+					"match": "\\\\(\\\\|'|\"|n)"
 				}
 			]
 		},
@@ -61,9 +72,27 @@
 			"name": "constant.numeric.octal",
 			"match": "\\b0o([01234567])*(\\.([01234567])*)?\\b"
 		},
+		"binary_numbers": {
+			"name": "constant.numeric.octal",
+			"match": "\\b0b([01])*(\\.([01])*)?\\b"
+		},
 		"decimal_numbers": {
 			"name": "constant.numeric.decimal",
 			"match": "\\b([0123456789])*(\\.([0123456789])*)?\\b"
+		},
+		"line_comments": {
+			"name": "comment.line.double-slash",
+			"match": "//([^\\n]*)\n"
+		},
+		"block_comments": {
+			"name": "comment.block",
+			"begin": "/\\*",
+			"end": "\\*/",
+			"patterns": [
+				{
+					"include": "#block_comments"
+				}
+			]
 		}
 	},
 	"scopeName": "source.escurieux"

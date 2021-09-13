@@ -128,6 +128,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
         const contentsOfSourceFile = result.value;
         const parser = new parser_1.Parser(contentsOfSourceFile);
         const tokenGenerator = parser.parse();
+        const values = [...tokenGenerator.gen]; // Consume the generator
         if (verbose) {
             (0, utilities_1.print)('=== Tokens ===');
             (0, utilities_1.print)('Note : these may be incorrect if you are using a macro that requires untokenized input.');
