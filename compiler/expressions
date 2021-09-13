@@ -12,6 +12,8 @@ Expression:
 | Group
 | FunctionCall
 | FieldAccess
+| VariableDeclaration
+| ConstantDeclaration
 
 Group:
 | "(" Expression ")"
@@ -58,5 +60,17 @@ FunctionCall:
 | Expression "(" ")"
 | Expression "(" Arguments ")"
 
+Type:
+| Identifier
+| Identifier "<" Type ">"
+
 FieldAccess:
 | Expression "." Identifier
+
+VariableDeclaration:
+| "let" Identifier "=" Expression
+| "let" Identifier ":" Type "=" Expression
+
+ConstantDeclaration:
+| "const" Identifier "=" Expression
+| "const" Identifier ":" Type "=" Expression
