@@ -1,76 +1,76 @@
 Expression:
-| NumericLiteral
-| StringLiteral
-| BooleanLiteral
-| Identifier
-| AddExpression
-| SubstractExpression
-| MultiplyExpression
-| DivideExpression
-| Block
-| Lambda
-| Group
-| FunctionCall
-| FieldAccess
-| VariableDeclaration
-| ConstantDeclaration
+| expr:NumericLiteral
+| expr:StringLiteral
+| expr:BooleanLiteral
+| expr:Identifier
+| expr:AddExpression
+| expr:SubstractExpression
+| expr:MultiplyExpression
+| expr:DivideExpression
+| expr:Block
+| expr:Lambda
+| expr:Group
+| expr:FunctionCall
+| expr:FieldAccess
+| expr:VariableDeclaration
+| expr:ConstantDeclaration
 
 Group:
-| "(" Expression ")"
+| "(" expr:Expression ")"
 
 AddExpression:
-| Expression "+" Expression
+| left:Expression "+" right:Expression
 
 SubstractExpression:
-| Expression "-" Expression
+| left:Expression "-" right:Expression
 
 MultiplyExpression:
-| Expression "*" Expression
+| left:Expression "*" Right:Expression
 
 DivideExpression:
-| Expression "/" Expression
+| left:Expression "/" Right:Expression
 
 Statement:
-| Expression ";"
+| expr:Expression ";"
 
 StatementList:
-| Statement
-| Statement StatementList
+| car:Statement
+| car:Statement cdr:StatementList
 
 Block:
-| "{" StatementList "}"
+| "{" list:StatementList "}"
 
 TypelessArgumentList:
-| Identifier
-| Identifier "," TypelessArgumentList
-| Identifier ","
+| car:Identifier
+| car:Identifier "," cdr:TypelessArgumentList
+| car:Identifier ","
 
 Lambda:
-| "|" TypelessArgumentList "|" Expression
-| "|" "|" Expression
-| "|" TypelessArgumentList "|" Block
-| "|" "|" Block
+| "|" args:TypelessArgumentList "|" body:Expression
+| "|" "|" body:Expression
+| "|" args:TypelessArgumentList "|" body:Block
+| "|" "|" body:Block
 
 Arguments:
-| Expression
-| Expression "," Arguments
-| Expression ","
+| car:Expression
+| car:Expression "," cdr:Arguments
+| car:Expression ","
 
 FunctionCall:
-| Expression "(" ")"
-| Expression "(" Arguments ")"
+| fn:Expression "(" ")"
+| fn:Expression "(" args:Arguments ")"
 
 Type:
-| Identifier
-| Identifier "<" Type ">"
+| type:Identifier
+| type:Identifier "<" generic:Type ">"
 
 FieldAccess:
-| Expression "." Identifier
+| obj:Expression "." field:Identifier
 
 VariableDeclaration:
-| "let" Identifier "=" Expression
-| "let" Identifier ":" Type "=" Expression
+| "let" name:Identifier "=" value:Expression
+| "let" name:Identifier ":" type:Type "=" value:Expression
 
 ConstantDeclaration:
-| "const" Identifier "=" Expression
-| "const" Identifier ":" Type "=" Expression
+| "const" name:Identifier "=" value:Expression
+| "const" name:Identifier ":" type:Type "=" value:Expression
