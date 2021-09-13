@@ -48,6 +48,7 @@ for (const line of contents.split('\n')) {
     }
 }
 output.write('/* Generated file */\n');
+output.write('import { TokenType, Token, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword } from \'./tokens\';\n');
 for (const rule of rules) {
     output.write(`export class ${rule.name} {\n`);
     const classFields = new Map();

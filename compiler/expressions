@@ -1,5 +1,5 @@
 Expression:
-| expr:NumericLiteral
+| expr:NumberLiteral
 | expr:StringLiteral
 | expr:BooleanLiteral
 | expr:Identifier
