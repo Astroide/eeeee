@@ -35,7 +35,7 @@ let rule = {
 for (const line of contents.split('\n')) {
     if (line.startsWith('| ')) {
         // Add a variant
-        rule.variants.push(line.slice(2));
+        rule.variants.push(line.slice(2).split(' '));
     }
     else {
         if (rule.name != '') {
@@ -48,6 +48,29 @@ for (const line of contents.split('\n')) {
     }
 }
 output.write('/* Generated file */\n');
+for (const rule of rules) {
+    output.write(`export class ${rule.name} {\n`);
+    const classFields = new Map();
+    for (const variant of rule.variants) {
+        for (const variantPart of variant) {
+            if (!variantPart.startsWith('"')) {
+                const [name, type] = variantPart.split(':');
+                if (classFields.has(name)) {
+                    const types = classFields.get(name);
+                    types.push(type);
+                    classFields.set(name, types);
+                }
+                else {
+                    classFields.set(name, [type]);
+                }
+            }
+        }
+    }
+    for (const [fieldName, types] of classFields) {
+        output.write(`    ${fieldName}: ${[...new Set(types)].join(' | ')};\n`);
+    }
+    output.write('}\n');
+}
 console.log(rules);
 output.close();
 //# sourceMappingURL=expression-processor.js.map
