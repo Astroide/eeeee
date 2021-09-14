@@ -34,27 +34,33 @@ if (!contents) {
 
 const rules: {
     name: string;
-    variants: any[];
+    variants: string[][];
+    priority: number;
 }[] = [];
 
 let rule: {
     name: string;
-    variants: any[];
+    variants: string[][];
+    priority: number;
 } = {
     name: '',
-    variants: []
+    variants: [],
+    priority: 0
 };
 for (const line of contents.split('\n')) {
     if (line.startsWith('| ')) {
         // Add a variant
         rule.variants.push(line.slice(2).split(' '));
+    } else if (line.startsWith('#priority')) {
+        rule.priority = parseInt(line.slice(9).trim());
     } else {
         if (rule.name != '') {
             rules.push(rule);
         }
         rule = {
             name: line.slice(0, -1),
-            variants: []
+            variants: [],
+            priority: 0
         };
     }
 }
@@ -64,6 +70,7 @@ output.write('import { TokenType, Token, StringLiteral, NumberLiteral, BooleanLi
 
 for (const rule of rules) {
     output.write(`export class ${rule.name} {\n`);
+    output.write(`    static priority = ${rule.priority};\n`);
     const classFields: Map<string, string[]> = new Map();
     for (const variant of rule.variants) {
         for (const variantPart of <string[]>variant) {

@@ -1,4 +1,5 @@
 Expression:
+#priority 0
 | expr:NumberLiteral
 | expr:StringLiteral
 | expr:BooleanLiteral

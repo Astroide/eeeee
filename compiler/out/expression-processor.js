@@ -30,12 +30,16 @@ if (!contents) {
 const rules = [];
 let rule = {
     name: '',
-    variants: []
+    variants: [],
+    priority: 0
 };
 for (const line of contents.split('\n')) {
     if (line.startsWith('| ')) {
         // Add a variant
         rule.variants.push(line.slice(2).split(' '));
+    }
+    else if (line.startsWith('#priority')) {
+        rule.priority = parseInt(line.slice(9).trim());
     }
     else {
         if (rule.name != '') {
@@ -43,7 +47,8 @@ for (const line of contents.split('\n')) {
         }
         rule = {
             name: line.slice(0, -1),
-            variants: []
+            variants: [],
+            priority: 0
         };
     }
 }
@@ -51,6 +56,7 @@ output.write('/* Generated file */\n');
 output.write('import { TokenType, Token, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword } from \'./tokens\';\n');
 for (const rule of rules) {
     output.write(`export class ${rule.name} {\n`);
+    output.write(`    static priority = ${rule.priority};\n`);
     const classFields = new Map();
     for (const variant of rule.variants) {
         for (const variantPart of variant) {
