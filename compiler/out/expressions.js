@@ -12,23 +12,23 @@ Group.priority = 0;
 class AddExpression {
 }
 exports.AddExpression = AddExpression;
-AddExpression.priority = 0;
+AddExpression.priority = 2;
 class SubstractExpression {
 }
 exports.SubstractExpression = SubstractExpression;
-SubstractExpression.priority = 0;
+SubstractExpression.priority = 2;
 class MultiplyExpression {
 }
 exports.MultiplyExpression = MultiplyExpression;
-MultiplyExpression.priority = 0;
+MultiplyExpression.priority = 3;
 class DivideExpression {
 }
 exports.DivideExpression = DivideExpression;
-DivideExpression.priority = 0;
+DivideExpression.priority = 3;
 class Statement {
 }
 exports.Statement = Statement;
-Statement.priority = 0;
+Statement.priority = 1;
 class StatementList {
 }
 exports.StatementList = StatementList;
@@ -52,7 +52,7 @@ Arguments.priority = 0;
 class FunctionCall {
 }
 exports.FunctionCall = FunctionCall;
-FunctionCall.priority = 0;
+FunctionCall.priority = 6;
 class Type {
 }
 exports.Type = Type;
@@ -60,7 +60,7 @@ Type.priority = 0;
 class FieldAccess {
 }
 exports.FieldAccess = FieldAccess;
-FieldAccess.priority = 0;
+FieldAccess.priority = 7;
 class VariableDeclaration {
 }
 exports.VariableDeclaration = VariableDeclaration;

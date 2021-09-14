@@ -20,18 +20,23 @@ Group:
 | "(" expr:Expression ")"
 
 AddExpression:
+#priority 2
 | left:Expression "+" right:Expression
 
 SubstractExpression:
+#priority 2
 | left:Expression "-" right:Expression
 
 MultiplyExpression:
+#priority 3
 | left:Expression "*" Right:Expression
 
 DivideExpression:
+#priority 3
 | left:Expression "/" Right:Expression
 
 Statement:
+#priority 1
 | expr:Expression ";"
 
 StatementList:
@@ -58,6 +63,7 @@ Arguments:
 | car:Expression ","
 
 FunctionCall:
+#priority 6
 | fn:Expression "(" ")"
 | fn:Expression "(" args:Arguments ")"
 
@@ -66,6 +72,7 @@ Type:
 | type:Identifier "<" generic:Type ">"
 
 FieldAccess:
+#priority 7
 | obj:Expression "." field:Identifier
 
 VariableDeclaration:

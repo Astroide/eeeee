@@ -3,6 +3,9 @@ module.exports = {
         'es2021': true,
         'node': true
     },
+    'ignorePatterns': [
+        'expressions.ts'
+    ],
     'extends': [
         'eslint:recommended',
         'plugin:@typescript-eslint/recommended'

@@ -9,27 +9,27 @@ export class Group {
     expr: Expression;
 }
 export class AddExpression {
-    static priority = 0;
+    static priority = 2;
     left: Expression;
     right: Expression;
 }
 export class SubstractExpression {
-    static priority = 0;
+    static priority = 2;
     left: Expression;
     right: Expression;
 }
 export class MultiplyExpression {
-    static priority = 0;
+    static priority = 3;
     left: Expression;
     Right: Expression;
 }
 export class DivideExpression {
-    static priority = 0;
+    static priority = 3;
     left: Expression;
     Right: Expression;
 }
 export class Statement {
-    static priority = 0;
+    static priority = 1;
     expr: Expression;
 }
 export class StatementList {
@@ -57,7 +57,7 @@ export class Arguments {
     cdr: Arguments;
 }
 export class FunctionCall {
-    static priority = 0;
+    static priority = 6;
     fn: Expression;
     args: Arguments;
 }
@@ -67,7 +67,7 @@ export class Type {
     generic: Type;
 }
 export class FieldAccess {
-    static priority = 0;
+    static priority = 7;
     obj: Expression;
     field: Identifier;
 }
