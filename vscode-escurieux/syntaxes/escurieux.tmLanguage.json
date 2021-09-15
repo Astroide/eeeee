@@ -36,7 +36,7 @@
 	"repository": {
 		"control_keywords": {
 			"name": "keyword.control.escurieux",
-			"match": "(if|while|for|return)"
+			"match": "(if|while|for|return|continue|break|else)"
 		},
 		"declaration_keywords": {
 			"name": "keyword.declaration.escurieux",
