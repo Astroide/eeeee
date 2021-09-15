@@ -1,7 +1,8 @@
 {
     "editor.formatOnSave": true,
     "files.associations": {
-        "*.h": "c"
+        "*.h": "c",
+        "expressions": "coffeescript"
     },
     "editor.suggest.preview": true
 }
