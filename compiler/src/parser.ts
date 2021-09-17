@@ -1,4 +1,4 @@
-import { TokenType, Token, StringLiteral, NumberLiteral, Identifier, Keyword } from './tokens';
+import { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, Identifier, Keyword } from './tokens';
 import { StringReader, warnAt, panicAt } from './utilities';
 
 export type TokenGenerator = { gen: Generator<Token | string, void, unknown>, setRaw: (boolean) => void };
@@ -172,7 +172,7 @@ export class Parser {
                                 continue parsing;
                             }
                         } while (false);
-                        if (/('|")/.test(tokenText)) {
+                        if (/"/.test(tokenText)) {
                             const delimiter = tokenText;
                             const line = self.reader.currentLine, character = self.reader.currentCharacter - 1, position = self.reader.current - 1;
                             let stringContents = '';
@@ -202,6 +202,29 @@ export class Parser {
                             }
                             self.reader.next();
                             yield (new StringLiteral(line, character, self.reader.source, position, self.reader.current - position, stringContents));
+                            continue parsing;
+                        }
+                        if (/'/.test(tokenText)) {
+                            const line = self.reader.currentLine, character = self.reader.currentCharacter - 1, position = self.reader.current - 1;
+                            let charContents = self.reader.next();
+                            if (charContents == '\\') {
+                                charContents = '';
+                                const escaped = self.reader.next();
+                                if (escaped == '\\') {
+                                    charContents += '\\';
+                                } else if (escaped == '\n') {
+                                    panicAt(self.reader, '[ESCE00009] Cannot escape a newline in a character literal', line, character, '\\');
+                                } else if (escaped == 'n') {
+                                    charContents += '\n';
+                                } else if (escaped == '\'') {
+                                    charContents += '\'';
+                                } else if (escaped == '"') {
+                                    charContents += '"';
+                                } else {
+                                    panicAt(self.reader, `[ESCE00006] Invalid escape sequence: \\${escaped}`, self.reader.currentLine, self.reader.currentCharacter - 2, '\\' + escaped);
+                                }
+                            }
+                            yield (new CharLiteral(line, character, self.reader.source, position, self.reader.current - position, charContents));
                             continue parsing;
                         }
                         if ('+-*=&|<>$/[]{}(),.;'.includes(tokenText)) {

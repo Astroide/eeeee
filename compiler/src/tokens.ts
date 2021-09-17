@@ -72,6 +72,14 @@ class StringLiteral extends Token {
     }
 }
 
+class CharLiteral extends Token {
+    content: string;
+    constructor(line: number, char: number, source: string, start: number, length: number, content: string) {
+        super(line, char, source, TokenType.StringLiteral, start, length);
+        this.content = content;
+    }
+}
+
 class NumberLiteral extends Token {
     content: number;
     constructor(line: number, char: number, source: string, start: number, length: number, content: number) {
@@ -104,4 +112,4 @@ class Keyword extends Token {
     }
 }
 
-export { TokenType, Token, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword };
+export { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword };

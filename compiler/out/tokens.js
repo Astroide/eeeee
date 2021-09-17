@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Keyword = exports.Identifier = exports.BooleanLiteral = exports.NumberLiteral = exports.StringLiteral = exports.Token = exports.TokenType = void 0;
+exports.Keyword = exports.Identifier = exports.BooleanLiteral = exports.NumberLiteral = exports.StringLiteral = exports.CharLiteral = exports.Token = exports.TokenType = void 0;
 var TokenType;
 (function (TokenType) {
     TokenType[TokenType["StringLiteral"] = 0] = "StringLiteral";
@@ -68,6 +68,13 @@ class StringLiteral extends Token {
     }
 }
 exports.StringLiteral = StringLiteral;
+class CharLiteral extends Token {
+    constructor(line, char, source, start, length, content) {
+        super(line, char, source, TokenType.StringLiteral, start, length);
+        this.content = content;
+    }
+}
+exports.CharLiteral = CharLiteral;
 class NumberLiteral extends Token {
     constructor(line, char, source, start, length, content) {
         super(line, char, source, TokenType.NumericLiteral, start, length);
