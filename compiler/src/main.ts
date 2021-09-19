@@ -1,5 +1,6 @@
 import { argv, exit } from 'process';
 import { errorAndWarningExplanations } from './explanations';
+import { Parser } from './parser';
 import { Tokenizer } from './tokenizer';
 import { Identifier, Keyword, NumberLiteral, StringLiteral, Token } from './tokens';
 import { panic, print, readFile } from './utilities';
@@ -119,9 +120,8 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
             panic(`The file ${filename} does not exist. Node.js error:\n${result.errorMessage}`);
         }
         const contentsOfSourceFile = result.value;
-        const parser = new Tokenizer(contentsOfSourceFile);
-        const tokenGenerator = parser.tokenize();
-        const values = [...tokenGenerator.gen]; // Consume the generator
+        const tokenizer = new Tokenizer(contentsOfSourceFile);
+        const tokenGenerator = tokenizer.tokenize();
         if (verbose) {
             print('=== Tokens ===');
             print('Note : these may be incorrect if you are using a macro that requires untokenized input.');
@@ -144,6 +144,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
                 }
             });
         }
+        const parser = new Parser(tokenGenerator, tokenizer.reader);
     }
 }
 main();

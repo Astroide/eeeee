@@ -40,7 +40,9 @@ enum TokenType {
     SmallerOrEqual,
     LeftShift,
     RightShift,
-    DollarSign
+    DollarSign,
+    Const,
+    Let
 }
 
 class Token {

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const process_1 = require("process");
 const explanations_1 = require("./explanations");
+const parser_1 = require("./parser");
 const tokenizer_1 = require("./tokenizer");
 const tokens_1 = require("./tokens");
 const utilities_1 = require("./utilities");
@@ -126,9 +127,8 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
             (0, utilities_1.panic)(`The file ${filename} does not exist. Node.js error:\n${result.errorMessage}`);
         }
         const contentsOfSourceFile = result.value;
-        const parser = new tokenizer_1.Tokenizer(contentsOfSourceFile);
-        const tokenGenerator = parser.tokenize();
-        const values = [...tokenGenerator.gen]; // Consume the generator
+        const tokenizer = new tokenizer_1.Tokenizer(contentsOfSourceFile);
+        const tokenGenerator = tokenizer.tokenize();
         if (verbose) {
             (0, utilities_1.print)('=== Tokens ===');
             (0, utilities_1.print)('Note : these may be incorrect if you are using a macro that requires untokenized input.');
@@ -155,6 +155,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
                 }
             });
         }
+        const parser = new parser_1.Parser(tokenGenerator, tokenizer.reader);
     }
 }
 main();

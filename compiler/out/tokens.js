@@ -45,6 +45,8 @@ var TokenType;
     TokenType[TokenType["LeftShift"] = 39] = "LeftShift";
     TokenType[TokenType["RightShift"] = 40] = "RightShift";
     TokenType[TokenType["DollarSign"] = 41] = "DollarSign";
+    TokenType[TokenType["Const"] = 42] = "Const";
+    TokenType[TokenType["Let"] = 43] = "Let";
 })(TokenType || (TokenType = {}));
 exports.TokenType = TokenType;
 class Token {

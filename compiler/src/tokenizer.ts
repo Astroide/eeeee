@@ -1,13 +1,13 @@
 import { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, Identifier, Keyword } from './tokens';
 import { StringReader, warnAt, panicAt } from './utilities';
 
-export type TokenGenerator = { gen: Generator<Token | string, void, unknown>, setRaw: (boolean) => void };
+export type TokenStream = { gen: Generator<Token | string, void, unknown>, setRaw: (boolean) => void };
 export class Tokenizer {
     reader: StringReader;
     constructor(source: string) {
         this.reader = new StringReader(source);
     }
-    tokenize(): TokenGenerator {
+    tokenize(): TokenStream {
         const self = this;
         let raw = false;
         return {
