@@ -2,12 +2,12 @@ import { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, Identifier
 import { StringReader, warnAt, panicAt } from './utilities';
 
 export type TokenGenerator = { gen: Generator<Token | string, void, unknown>, setRaw: (boolean) => void };
-export class Parser {
+export class Tokenizer {
     reader: StringReader;
     constructor(source: string) {
         this.reader = new StringReader(source);
     }
-    parse(): TokenGenerator {
+    tokenize(): TokenGenerator {
         const self = this;
         let raw = false;
         return {

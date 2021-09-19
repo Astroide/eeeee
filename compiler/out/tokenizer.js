@@ -1,13 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Parser = void 0;
+exports.Tokenizer = void 0;
 const tokens_1 = require("./tokens");
 const utilities_1 = require("./utilities");
-class Parser {
+class Tokenizer {
     constructor(source) {
         this.reader = new utilities_1.StringReader(source);
     }
-    parse() {
+    tokenize() {
         const self = this;
         let raw = false;
         return {
@@ -321,5 +321,5 @@ class Parser {
         };
     }
 }
-exports.Parser = Parser;
-//# sourceMappingURL=parser.js.map
+exports.Tokenizer = Tokenizer;
+//# sourceMappingURL=tokenizer.js.map
