@@ -61,6 +61,25 @@ class IdentifierExpression extends Expression {
         this.id = id;
     }
 }
+class LiteralExpression extends Expression {
+    constructor(value, type) {
+        super();
+        this.value = value;
+        this.type = type;
+    }
+}
+class LiteralSubparser {
+    parse(_parser, token) {
+        if (token.type == tokens_1.TokenType.CharacterLiteral)
+            return new LiteralExpression(token.content, tokens_1.TokenType.CharacterLiteral);
+        else if (token.type == tokens_1.TokenType.StringLiteral)
+            return new LiteralExpression(token.content, tokens_1.TokenType.StringLiteral);
+        else if (token.type == tokens_1.TokenType.NumericLiteral)
+            return new LiteralExpression(token.content, tokens_1.TokenType.NumericLiteral);
+        else if (token.type == tokens_1.TokenType.BooleanLiteral)
+            return new LiteralExpression(token.content, tokens_1.TokenType.BooleanLiteral);
+    }
+}
 class PrefixOperatorExpression {
     constructor(operator, operand) {
         this.operator = operator;
@@ -85,6 +104,10 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.Minus, new PrefixOperatorSubparser());
         this.registerPrefix(tokens_1.TokenType.Tilde, new PrefixOperatorSubparser());
         this.registerPrefix(tokens_1.TokenType.Bang, new PrefixOperatorSubparser());
+        this.registerPrefix(tokens_1.TokenType.CharacterLiteral, new LiteralSubparser());
+        this.registerPrefix(tokens_1.TokenType.StringLiteral, new LiteralSubparser());
+        this.registerPrefix(tokens_1.TokenType.NumericLiteral, new LiteralSubparser());
+        this.registerPrefix(tokens_1.TokenType.BooleanLiteral, new LiteralSubparser());
     }
     registerPrefix(type, subparser) {
         this.prefixSubparsers.set(type, subparser);

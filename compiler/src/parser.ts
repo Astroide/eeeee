@@ -1,6 +1,7 @@
+import { CharacterEncoding } from 'crypto';
 import { tokenTypeExplanations } from './explanations';
 import { TokenStream } from './tokenizer';
-import { Token, TokenType } from './tokens';
+import { BooleanLiteral, CharLiteral, NumberLiteral, StringLiteral, Token, TokenType } from './tokens';
 import { panicAt, StringReader } from './utilities';
 
 class PeekableTokenStream {
@@ -80,6 +81,29 @@ class IdentifierExpression extends Expression {
     }
 }
 
+class LiteralExpression extends Expression {
+    value: string | number | boolean;
+    type: TokenType.NumericLiteral | TokenType.BooleanLiteral | TokenType.StringLiteral | TokenType.CharacterLiteral;
+    constructor(value: string | number | boolean, type: TokenType.NumericLiteral | TokenType.BooleanLiteral | TokenType.StringLiteral | TokenType.CharacterLiteral) {
+        super();
+        this.value = value;
+        this.type = type;
+    }
+}
+
+class LiteralSubparser implements PrefixSubparser {
+    parse(_parser: Parser, token: Token): Expression {
+        if (token.type == TokenType.CharacterLiteral)
+            return new LiteralExpression((<CharLiteral>token).content, TokenType.CharacterLiteral);
+        else if (token.type == TokenType.StringLiteral)
+            return new LiteralExpression((<StringLiteral>token).content, TokenType.StringLiteral);
+        else if (token.type == TokenType.NumericLiteral)
+            return new LiteralExpression((<NumberLiteral>token).content, TokenType.NumericLiteral);
+        else if (token.type == TokenType.BooleanLiteral)
+            return new LiteralExpression((<BooleanLiteral>token).content, TokenType.BooleanLiteral);
+    }
+}
+
 class PrefixOperatorExpression {
     operator: TokenType;
     operand: Expression;
@@ -112,6 +136,11 @@ export class Parser {
         this.registerPrefix(TokenType.Minus, new PrefixOperatorSubparser());
         this.registerPrefix(TokenType.Tilde, new PrefixOperatorSubparser());
         this.registerPrefix(TokenType.Bang, new PrefixOperatorSubparser());
+        this.registerPrefix(TokenType.CharacterLiteral, new LiteralSubparser());
+        this.registerPrefix(TokenType.StringLiteral, new LiteralSubparser());
+        this.registerPrefix(TokenType.NumericLiteral, new LiteralSubparser());
+        this.registerPrefix(TokenType.BooleanLiteral, new LiteralSubparser());
+
     }
 
     registerPrefix(type: TokenType, subparser: PrefixSubparser): void {

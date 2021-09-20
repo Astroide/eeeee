@@ -2,6 +2,7 @@ enum TokenType {
     StringLiteral,
     NumericLiteral,
     BooleanLiteral,
+    CharacterLiteral,
     Pipe,
     DoublePipe,
     Ampersand,
@@ -79,7 +80,7 @@ class StringLiteral extends Token {
 class CharLiteral extends Token {
     content: string;
     constructor(line: number, char: number, source: string, start: number, length: number, content: string) {
-        super(line, char, source, TokenType.StringLiteral, start, length);
+        super(line, char, source, TokenType.CharacterLiteral, start, length);
         this.content = content;
     }
 }
