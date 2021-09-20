@@ -156,6 +156,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
             });
         }
         const parser = new parser_1.Parser(tokenGenerator, tokenizer.reader);
+        console.log(parser.getExpression());
     }
 }
 main();

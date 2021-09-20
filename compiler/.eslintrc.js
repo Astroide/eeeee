@@ -42,10 +42,11 @@ module.exports = {
                 'allowedNames': ['self'] // Allow `const self = this`; `[]` by default
             }
         ],
-        'no-unused-vars': [
-            'warning',
+        '@typescript-eslint/no-unused-vars': [
+            'warn',
             {
-                'varsIgnorePattern': '_[A-Za-z0-9_]*'
+                'varsIgnorePattern': '_[A-Za-z0-9_]*',
+                'argsIgnorePattern': '_[A-Za-z0-9_]*'
             }
         ]
     }
