@@ -70,7 +70,28 @@ class InfixOperatorSubparser implements InfixSubparser {
     }
 }
 
+class GroupSubparser implements PrefixSubparser {
+    parse(parser: Parser, _token: Token): Expression {
+        const inside = parser.getExpression();
+        parser.tokenSource.consume(TokenType.RightParen, 'parenthesized expressions need to be closed');
+        return new GroupExpression(inside);
+    }
+
+}
+
 class Expression { }
+
+class GroupExpression extends Expression {
+    content: Expression;
+    constructor(content: Expression) {
+        super();
+        this.content = content;
+    }
+
+    toString(): string {
+        return `GroupExpression::<${this.content.toString()}>`;
+    }
+}
 
 class IdentifierExpression extends Expression {
     id: string;
@@ -154,6 +175,7 @@ export class Parser {
         [TokenType.BooleanLiteral, TokenType.CharacterLiteral, TokenType.StringLiteral, TokenType.NumericLiteral].forEach(type => {
             self.registerPrefix(type, new LiteralSubparser());
         });
+        this.registerPrefix(TokenType.LeftParen, new GroupSubparser());
         [
             TokenType.Ampersand, TokenType.DoubleAmpersand,
             TokenType.Pipe, TokenType.DoublePipe,

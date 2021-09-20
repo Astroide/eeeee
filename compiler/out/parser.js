@@ -53,7 +53,23 @@ class InfixOperatorSubparser {
         return new InfixOperatorExpression(token.type, left, right);
     }
 }
+class GroupSubparser {
+    parse(parser, _token) {
+        const inside = parser.getExpression();
+        parser.tokenSource.consume(tokens_1.TokenType.RightParen, 'parenthesized expressions need to be closed');
+        return new GroupExpression(inside);
+    }
+}
 class Expression {
+}
+class GroupExpression extends Expression {
+    constructor(content) {
+        super();
+        this.content = content;
+    }
+    toString() {
+        return `GroupExpression::<${this.content.toString()}>`;
+    }
 }
 class IdentifierExpression extends Expression {
     constructor(id) {
@@ -119,6 +135,7 @@ class Parser {
         [tokens_1.TokenType.BooleanLiteral, tokens_1.TokenType.CharacterLiteral, tokens_1.TokenType.StringLiteral, tokens_1.TokenType.NumericLiteral].forEach(type => {
             self.registerPrefix(type, new LiteralSubparser());
         });
+        this.registerPrefix(tokens_1.TokenType.LeftParen, new GroupSubparser());
         [
             tokens_1.TokenType.Ampersand, tokens_1.TokenType.DoubleAmpersand,
             tokens_1.TokenType.Pipe, tokens_1.TokenType.DoublePipe,
