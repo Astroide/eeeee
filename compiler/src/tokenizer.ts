@@ -227,7 +227,7 @@ export class Tokenizer {
                             yield (new CharLiteral(line, character, self.reader.source, position, self.reader.current - position, charContents));
                             continue parsing;
                         }
-                        if ('+-*=&|<>$/[]{}(),.;~'.includes(tokenText)) {
+                        if ('+-*=&|<>$/[]{}(),.;~!'.includes(tokenText)) {
                             const table = {
                                 '+': TokenType.Plus,
                                 '++': TokenType.DoublePlus,
@@ -258,7 +258,8 @@ export class Tokenizer {
                                 '>>': TokenType.RightShift,
                                 '<<': TokenType.LeftShift,
                                 '!': TokenType.Bang,
-                                '~': TokenType.Tilde
+                                '~': TokenType.Tilde,
+                                '!=': TokenType.NotEquals
                             };
                             while ((tokenText + self.reader.peek()) in table) {
                                 tokenText += self.reader.next();

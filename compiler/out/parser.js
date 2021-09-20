@@ -142,7 +142,10 @@ class Parser {
             tokens_1.TokenType.Star, tokens_1.TokenType.DoubleStar,
             tokens_1.TokenType.Minus, tokens_1.TokenType.Plus,
             tokens_1.TokenType.Slash, tokens_1.TokenType.Xor,
-            tokens_1.TokenType.DoubleEquals
+            tokens_1.TokenType.DoubleEquals,
+            tokens_1.TokenType.GreaterOrEqual, tokens_1.TokenType.SmallerOrEqual,
+            tokens_1.TokenType.NotEquals,
+            tokens_1.TokenType.LeftShift, tokens_1.TokenType.RightShift
         ].forEach(type => {
             self.registerInfix(type, new InfixOperatorSubparser());
         });

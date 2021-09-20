@@ -182,7 +182,10 @@ export class Parser {
             TokenType.Star, TokenType.DoubleStar,
             TokenType.Minus, TokenType.Plus,
             TokenType.Slash, TokenType.Xor,
-            TokenType.DoubleEquals
+            TokenType.DoubleEquals,
+            TokenType.GreaterOrEqual, TokenType.SmallerOrEqual,
+            TokenType.NotEquals,
+            TokenType.LeftShift, TokenType.RightShift
         ].forEach(type => {
             self.registerInfix(type, new InfixOperatorSubparser());
         });

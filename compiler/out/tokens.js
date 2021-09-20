@@ -50,6 +50,7 @@ var TokenType;
     TokenType[TokenType["Let"] = 44] = "Let";
     TokenType[TokenType["Bang"] = 45] = "Bang";
     TokenType[TokenType["Tilde"] = 46] = "Tilde";
+    TokenType[TokenType["NotEquals"] = 47] = "NotEquals";
 })(TokenType || (TokenType = {}));
 exports.TokenType = TokenType;
 class Token {

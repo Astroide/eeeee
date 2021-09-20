@@ -45,7 +45,8 @@ enum TokenType {
     Const,
     Let,
     Bang,
-    Tilde
+    Tilde,
+    NotEquals
 }
 
 class Token {
