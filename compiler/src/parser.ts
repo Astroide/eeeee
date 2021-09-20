@@ -1,4 +1,3 @@
-import { CharacterEncoding } from 'crypto';
 import { tokenTypeExplanations } from './explanations';
 import { TokenStream } from './tokenizer';
 import { BooleanLiteral, CharLiteral, NumberLiteral, StringLiteral, Token, TokenType } from './tokens';
@@ -79,6 +78,10 @@ class IdentifierExpression extends Expression {
         super();
         this.id = id;
     }
+
+    toString(): string {
+        return `Identifier[${this.id}]`;
+    }
 }
 
 class LiteralExpression extends Expression {
@@ -88,6 +91,10 @@ class LiteralExpression extends Expression {
         super();
         this.value = value;
         this.type = type;
+    }
+
+    toString(): string {
+        return `${TokenType[this.type]}[${this.value}]`;
     }
 }
 
@@ -111,6 +118,10 @@ class PrefixOperatorExpression {
         this.operator = operator;
         this.operand = operand;
     }
+
+    toString(): string {
+        return TokenType[this.operator] + '.prefix::<' + this.operand.toString() + '>';
+    }
 }
 
 class InfixOperatorExpression extends Expression {
@@ -123,6 +134,10 @@ class InfixOperatorExpression extends Expression {
         this.leftOperand = left;
         this.rightOperand = right;
     }
+
+    toString(): string {
+        return `${TokenType[this.operator]}.infix::<${this.leftOperand.toString()}, ${this.rightOperand.toString()}>`;
+    }
 }
 
 export class Parser {
@@ -132,15 +147,23 @@ export class Parser {
     constructor(source: TokenStream, reader: StringReader) {
         this.tokenSource = new PeekableTokenStream(source, reader);
         this.registerPrefix(TokenType.Identifier, new IdentifierSubparser());
-        this.registerPrefix(TokenType.Plus, new PrefixOperatorSubparser());
-        this.registerPrefix(TokenType.Minus, new PrefixOperatorSubparser());
-        this.registerPrefix(TokenType.Tilde, new PrefixOperatorSubparser());
-        this.registerPrefix(TokenType.Bang, new PrefixOperatorSubparser());
-        this.registerPrefix(TokenType.CharacterLiteral, new LiteralSubparser());
-        this.registerPrefix(TokenType.StringLiteral, new LiteralSubparser());
-        this.registerPrefix(TokenType.NumericLiteral, new LiteralSubparser());
-        this.registerPrefix(TokenType.BooleanLiteral, new LiteralSubparser());
-
+        const self = this;
+        [TokenType.Plus, TokenType.Minus, TokenType.Tilde, TokenType.Bang].forEach(type => {
+            self.registerPrefix(type, new PrefixOperatorSubparser());
+        });
+        [TokenType.BooleanLiteral, TokenType.CharacterLiteral, TokenType.StringLiteral, TokenType.NumericLiteral].forEach(type => {
+            self.registerPrefix(type, new LiteralSubparser());
+        });
+        [
+            TokenType.Ampersand, TokenType.DoubleAmpersand,
+            TokenType.Pipe, TokenType.DoublePipe,
+            TokenType.Star, TokenType.DoubleStar,
+            TokenType.Minus, TokenType.Plus,
+            TokenType.Slash, TokenType.Xor,
+            TokenType.DoubleEquals
+        ].forEach(type => {
+            self.registerInfix(type, new InfixOperatorSubparser());
+        });
     }
 
     registerPrefix(type: TokenType, subparser: PrefixSubparser): void {
@@ -156,6 +179,13 @@ export class Parser {
         if (!this.prefixSubparsers.has(token.type)) {
             panicAt(this.tokenSource.reader, `[ESCE00011] Could not parse : '${token.getSource()}'`, token.line, token.char, token.getSource());
         }
-        return this.prefixSubparsers.get(token.type).parse(this, token);
+        const left = this.prefixSubparsers.get(token.type).parse(this, token);
+        const next: Token = this.tokenSource.peek();
+        if (this.infixSubparsers.has(next.type)) {
+            this.tokenSource.next();
+            return this.infixSubparsers.get(next.type).parse(this, left, next);
+        } else {
+            return left;
+        }
     }
 }

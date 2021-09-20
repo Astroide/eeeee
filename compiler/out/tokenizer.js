@@ -246,7 +246,7 @@ class Tokenizer {
                             yield (new tokens_1.CharLiteral(line, character, self.reader.source, position, self.reader.current - position, charContents));
                             continue parsing;
                         }
-                        if ('+-*=&|<>$/[]{}(),.;'.includes(tokenText)) {
+                        if ('+-*=&|<>$/[]{}(),.;~'.includes(tokenText)) {
                             const table = {
                                 '+': tokens_1.TokenType.Plus,
                                 '++': tokens_1.TokenType.DoublePlus,
