@@ -44,7 +44,13 @@ class IdentifierSubparser {
 class PrefixOperatorSubparser {
     parse(parser, token) {
         const operand = parser.getExpression();
-        return new PrefixExpression(token.type, operand);
+        return new PrefixOperatorExpression(token.type, operand);
+    }
+}
+class InfixOperatorSubparser {
+    parse(parser, left, token) {
+        const right = parser.getExpression();
+        return new InfixOperatorExpression(token.type, left, right);
     }
 }
 class Expression {
@@ -55,15 +61,24 @@ class IdentifierExpression extends Expression {
         this.id = id;
     }
 }
-class PrefixExpression {
+class PrefixOperatorExpression {
     constructor(operator, operand) {
         this.operator = operator;
         this.operand = operand;
     }
 }
+class InfixOperatorExpression extends Expression {
+    constructor(operator, left, right) {
+        super();
+        this.operator = operator;
+        this.leftOperand = left;
+        this.rightOperand = right;
+    }
+}
 class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();
+        this.infixSubparsers = new Map();
         this.tokenSource = new PeekableTokenStream(source, reader);
         this.registerPrefix(tokens_1.TokenType.Identifier, new IdentifierSubparser());
         this.registerPrefix(tokens_1.TokenType.Plus, new PrefixOperatorSubparser());
@@ -73,6 +88,9 @@ class Parser {
     }
     registerPrefix(type, subparser) {
         this.prefixSubparsers.set(type, subparser);
+    }
+    registerInfix(type, subparser) {
+        this.infixSubparsers.set(type, subparser);
     }
     getExpression() {
         const token = this.tokenSource.next();

@@ -46,6 +46,10 @@ interface PrefixSubparser {
     parse(parser: Parser, token: Token): Expression;
 }
 
+interface InfixSubparser {
+    parse(parser: Parser, left: Expression, token: Token): Expression;
+}
+
 class IdentifierSubparser implements PrefixSubparser {
     parse(parser: Parser, token: Token): Expression {
         return new IdentifierExpression(token.getSource());
@@ -55,7 +59,14 @@ class IdentifierSubparser implements PrefixSubparser {
 class PrefixOperatorSubparser implements PrefixSubparser {
     parse(parser: Parser, token: Token): Expression {
         const operand: Expression = parser.getExpression();
-        return new PrefixExpression(token.type, operand);
+        return new PrefixOperatorExpression(token.type, operand);
+    }
+}
+
+class InfixOperatorSubparser implements InfixSubparser {
+    parse(parser: Parser, left: Expression, token: Token): Expression {
+        const right = parser.getExpression();
+        return new InfixOperatorExpression(token.type, left, right);
     }
 }
 
@@ -69,7 +80,7 @@ class IdentifierExpression extends Expression {
     }
 }
 
-class PrefixExpression {
+class PrefixOperatorExpression {
     operator: TokenType;
     operand: Expression;
     constructor(operator: TokenType, operand: Expression) {
@@ -78,9 +89,22 @@ class PrefixExpression {
     }
 }
 
+class InfixOperatorExpression extends Expression {
+    operator: TokenType;
+    leftOperand: Expression;
+    rightOperand: Expression;
+    constructor(operator: TokenType, left: Expression, right: Expression) {
+        super();
+        this.operator = operator;
+        this.leftOperand = left;
+        this.rightOperand = right;
+    }
+}
+
 export class Parser {
     tokenSource: PeekableTokenStream;
     prefixSubparsers: Map<TokenType, PrefixSubparser> = new Map();
+    infixSubparsers: Map<TokenType, InfixSubparser> = new Map();
     constructor(source: TokenStream, reader: StringReader) {
         this.tokenSource = new PeekableTokenStream(source, reader);
         this.registerPrefix(TokenType.Identifier, new IdentifierSubparser());
@@ -92,6 +116,10 @@ export class Parser {
 
     registerPrefix(type: TokenType, subparser: PrefixSubparser): void {
         this.prefixSubparsers.set(type, subparser);
+    }
+
+    registerInfix(type: TokenType, subparser: InfixSubparser): void {
+        this.infixSubparsers.set(type, subparser);
     }
 
     getExpression(): Expression {
