@@ -41,6 +41,12 @@ module.exports = {
                 'allowDestructuring': false, // Disallow `const { props, state } = this`; true by default
                 'allowedNames': ['self'] // Allow `const self = this`; `[]` by default
             }
+        ],
+        'no-unused-vars': [
+            'warning',
+            {
+                'varsIgnorePattern': '_[A-Za-z0-9_]*'
+            }
         ]
     }
 };
