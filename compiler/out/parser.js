@@ -67,6 +67,9 @@ class Parser {
         this.tokenSource = new PeekableTokenStream(source, reader);
         this.registerPrefix(tokens_1.TokenType.Identifier, new IdentifierSubparser());
         this.registerPrefix(tokens_1.TokenType.Plus, new PrefixOperatorSubparser());
+        this.registerPrefix(tokens_1.TokenType.Minus, new PrefixOperatorSubparser());
+        this.registerPrefix(tokens_1.TokenType.Tilde, new PrefixOperatorSubparser());
+        this.registerPrefix(tokens_1.TokenType.Bang, new PrefixOperatorSubparser());
     }
     registerPrefix(type, subparser) {
         this.prefixSubparsers.set(type, subparser);

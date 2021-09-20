@@ -42,7 +42,9 @@ enum TokenType {
     RightShift,
     DollarSign,
     Const,
-    Let
+    Let,
+    Bang,
+    Tilde
 }
 
 class Token {

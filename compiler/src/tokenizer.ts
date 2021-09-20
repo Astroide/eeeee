@@ -257,7 +257,8 @@ export class Tokenizer {
                                 '>=': TokenType.GreaterOrEqual,
                                 '>>': TokenType.RightShift,
                                 '<<': TokenType.LeftShift,
-
+                                '!': TokenType.Bang,
+                                '~': TokenType.Tilde
                             };
                             while ((tokenText + self.reader.peek()) in table) {
                                 tokenText += self.reader.next();

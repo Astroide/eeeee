@@ -47,6 +47,8 @@ var TokenType;
     TokenType[TokenType["DollarSign"] = 41] = "DollarSign";
     TokenType[TokenType["Const"] = 42] = "Const";
     TokenType[TokenType["Let"] = 43] = "Let";
+    TokenType[TokenType["Bang"] = 44] = "Bang";
+    TokenType[TokenType["Tilde"] = 45] = "Tilde";
 })(TokenType || (TokenType = {}));
 exports.TokenType = TokenType;
 class Token {

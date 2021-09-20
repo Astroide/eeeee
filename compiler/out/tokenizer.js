@@ -276,6 +276,8 @@ class Tokenizer {
                                 '>=': tokens_1.TokenType.GreaterOrEqual,
                                 '>>': tokens_1.TokenType.RightShift,
                                 '<<': tokens_1.TokenType.LeftShift,
+                                '!': tokens_1.TokenType.Bang,
+                                '~': tokens_1.TokenType.Tilde
                             };
                             while ((tokenText + self.reader.peek()) in table) {
                                 tokenText += self.reader.next();
