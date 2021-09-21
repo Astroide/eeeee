@@ -16,6 +16,14 @@ export const errorAndWarningExplanations: { [x: string]: string } = {
 export const tokenTypeExplanations: Map<TokenType, string> = new Map<TokenType, string>();
 [
     [TokenType.Identifier, 'an identifier, e.g. myVariable'],
+    [TokenType.LeftBracket, '\'[\''],
+    [TokenType.RightBracket, '\']\''],
+    [TokenType.LeftCurlyBracket, '\'{\''],
+    [TokenType.RightCurlyBracket, '\'}\''],
+    [TokenType.LeftAngleBracket, '\'<\''],
+    [TokenType.RightAngleBracket, '\'>\''],
+    [TokenType.LeftParen, '\'(\''],
+    [TokenType.RightParen, '\')\'']
 ].forEach(
     ([type, explanation]) =>
         tokenTypeExplanations.set(<TokenType>type, <string>explanation));

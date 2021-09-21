@@ -17,5 +17,13 @@ exports.errorAndWarningExplanations = {
 exports.tokenTypeExplanations = new Map();
 [
     [tokens_1.TokenType.Identifier, 'an identifier, e.g. myVariable'],
+    [tokens_1.TokenType.LeftBracket, '\'[\''],
+    [tokens_1.TokenType.RightBracket, '\']\''],
+    [tokens_1.TokenType.LeftCurlyBracket, '\'{\''],
+    [tokens_1.TokenType.RightCurlyBracket, '\'}\''],
+    [tokens_1.TokenType.LeftAngleBracket, '\'<\''],
+    [tokens_1.TokenType.RightAngleBracket, '\'>\''],
+    [tokens_1.TokenType.LeftParen, '\'(\''],
+    [tokens_1.TokenType.RightParen, '\')\'']
 ].forEach(([type, explanation]) => exports.tokenTypeExplanations.set(type, explanation));
 //# sourceMappingURL=explanations.js.map
