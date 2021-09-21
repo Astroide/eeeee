@@ -67,7 +67,7 @@ class FunctionCallSubparser {
         while (!parser.tokenSource.match(tokens_1.TokenType.RightParen)) {
             if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
                 const token = parser.tokenSource.next();
-                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Leading commas are not allowed.', token.line, token.char, token.getSource());
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
             const arg = parser.getExpression();
             args.push(arg);

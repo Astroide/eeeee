@@ -86,7 +86,7 @@ class FunctionCallSubparser implements InfixSubparser {
         while (!parser.tokenSource.match(TokenType.RightParen)) {
             if (parser.tokenSource.match(TokenType.Comma)) {
                 const token = parser.tokenSource.next();
-                panicAt(parser.tokenSource.reader, '[ESCE00011] Leading commas are not allowed.', token.line, token.char, token.getSource());
+                panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
             const arg = parser.getExpression();
             args.push(arg);
