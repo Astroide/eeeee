@@ -34,11 +34,12 @@ class PeekableTokenStream {
         return next.type == type;
     }
 
-    consume(type: TokenType, message: string) {
+    consume(type: TokenType, message: string): Token {
         const next = this.next();
         if (next.type != type) {
             panicAt(this.reader, `[ESCE00010] Expected TokenType.${TokenType[type]}${tokenTypeExplanations.has(type) ? ` (${tokenTypeExplanations.get(type)})` : ''}, got '${next.getSource()}' : ${message}`, next.line, next.char, next.getSource());
         }
+        return next;
     }
 }
 
@@ -148,7 +149,8 @@ class PropertyAccessExpression extends Expression {
 
 class PropertyAccessSubparser implements InfixSubparser {
     parse(parser: Parser, left: Expression, _token: Token): Expression {
-        return new PropertyAccessExpression(left, parser.tokenSource.next().getSource());
+        const propertyName = parser.tokenSource.consume(TokenType.Identifier, 'expected a property name after a dot').getSource();
+        return new PropertyAccessExpression(left, propertyName);
     }
 }
 
@@ -227,7 +229,7 @@ export class Parser {
         }
         const left = this.prefixSubparsers.get(token.type).parse(this, token);
         const next: Token = this.tokenSource.peek();
-        console.log(`infix: ${next.getSource()} ${TokenType[next.type]}`);
+        // console.log(`infix: ${next.getSource()} ${TokenType[next.type]}`);
         if (this.infixSubparsers.has(next.type)) {
             this.tokenSource.next();
             return this.infixSubparsers.get(next.type).parse(this, left, next);
