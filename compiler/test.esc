@@ -1,4 +1,4 @@
-meow(meow(1, 2, 3))
+File.open("file.txt", "r").read().split('\n)
 ('a * -0b10.01 & 0xFF..sign) + (2 / 3)
 0xFF00EE
 // 0x$T 
