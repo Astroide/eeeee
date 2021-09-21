@@ -61,6 +61,27 @@ class GroupSubparser {
         return new GroupExpression(inside);
     }
 }
+class FunctionCallSubparser {
+    parse(parser, callee, _token) {
+        const args = [];
+        while (!parser.tokenSource.match(tokens_1.TokenType.RightParen)) {
+            if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                const token = parser.tokenSource.next();
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Leading commas are not allowed.', token.line, token.char, token.getSource());
+            }
+            const arg = parser.getExpression();
+            args.push(arg);
+            if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                parser.tokenSource.next();
+            }
+            else if (!parser.tokenSource.match(tokens_1.TokenType.RightParen)) {
+                const token = parser.tokenSource.next();
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
+            }
+        }
+        return new FunctionCallExpression(callee, args);
+    }
+}
 class Expression {
 }
 class GroupExpression extends Expression {
@@ -70,6 +91,16 @@ class GroupExpression extends Expression {
     }
     toString() {
         return `GroupExpression::<${this.content.toString()}>`;
+    }
+}
+class FunctionCallExpression extends Expression {
+    constructor(callee, args) {
+        super();
+        this.callee = callee;
+        this.args = args;
+    }
+    toString() {
+        return `FunctionCall::<${this.callee.toString()}${this.args.length > 0 ? ', ' + this.args.map(x => x.toString()).join(', ') : ''}>`;
     }
 }
 class IdentifierExpression extends Expression {
@@ -167,6 +198,7 @@ class Parser {
             self.registerInfix(type, new InfixOperatorSubparser());
         });
         this.registerInfix(tokens_1.TokenType.Dot, new PropertyAccessSubparser());
+        this.registerInfix(tokens_1.TokenType.LeftParen, new FunctionCallSubparser());
     }
     registerPrefix(type, subparser) {
         this.prefixSubparsers.set(type, subparser);

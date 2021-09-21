@@ -80,6 +80,27 @@ class GroupSubparser implements PrefixSubparser {
 
 }
 
+class FunctionCallSubparser implements InfixSubparser {
+    parse(parser: Parser, callee: Expression, _token: Token): Expression {
+        const args: Expression[] = [];
+        while (!parser.tokenSource.match(TokenType.RightParen)) {
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                const token = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00011] Leading commas are not allowed.', token.line, token.char, token.getSource());
+            }
+            const arg = parser.getExpression();
+            args.push(arg);
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                parser.tokenSource.next();
+            } else if (!parser.tokenSource.match(TokenType.RightParen)) {
+                const token = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
+            }
+        }
+        return new FunctionCallExpression(callee, args);
+    }
+}
+
 class Expression { }
 
 class GroupExpression extends Expression {
@@ -91,6 +112,20 @@ class GroupExpression extends Expression {
 
     toString(): string {
         return `GroupExpression::<${this.content.toString()}>`;
+    }
+}
+
+class FunctionCallExpression extends Expression {
+    callee: Expression;
+    args: Expression[];
+    constructor(callee: Expression, args: Expression[]) {
+        super();
+        this.callee = callee;
+        this.args = args;
+    }
+
+    toString(): string {
+        return `FunctionCall::<${this.callee.toString()}${this.args.length > 0 ? ', ' + this.args.map(x => x.toString()).join(', ') : ''}>`;
     }
 }
 
@@ -212,6 +247,7 @@ export class Parser {
             self.registerInfix(type, new InfixOperatorSubparser());
         });
         this.registerInfix(TokenType.Dot, new PropertyAccessSubparser());
+        this.registerInfix(TokenType.LeftParen, new FunctionCallSubparser());
     }
 
     registerPrefix(type: TokenType, subparser: PrefixSubparser): void {
