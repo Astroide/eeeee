@@ -37,7 +37,7 @@
     ],
     "main": "out/extension.js",
     "dependencies": {
-        "@types/vscode": "^1.59.0"
+        "@types/vscode": "^1.60.0"
     },
     "scripts": {
         "compile-ts": "tsc"
