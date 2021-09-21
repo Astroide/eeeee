@@ -132,6 +132,26 @@ class LiteralSubparser implements PrefixSubparser {
     }
 }
 
+class PropertyAccessExpression extends Expression {
+    object: Expression;
+    property: string;
+    constructor(object: Expression, property: string) {
+        super();
+        this.object = object;
+        this.property = property;
+    }
+
+    toString(): string {
+        return `PropertyAccess::<${this.object.toString()}, ${this.property}>`;
+    }
+}
+
+class PropertyAccessSubparser implements InfixSubparser {
+    parse(parser: Parser, left: Expression, _token: Token): Expression {
+        return new PropertyAccessExpression(left, parser.tokenSource.next().getSource());
+    }
+}
+
 class PrefixOperatorExpression {
     operator: TokenType;
     operand: Expression;
@@ -189,6 +209,7 @@ export class Parser {
         ].forEach(type => {
             self.registerInfix(type, new InfixOperatorSubparser());
         });
+        this.registerInfix(TokenType.Dot, new PropertyAccessSubparser());
     }
 
     registerPrefix(type: TokenType, subparser: PrefixSubparser): void {
@@ -206,6 +227,7 @@ export class Parser {
         }
         const left = this.prefixSubparsers.get(token.type).parse(this, token);
         const next: Token = this.tokenSource.peek();
+        console.log(`infix: ${next.getSource()} ${TokenType[next.type]}`);
         if (this.infixSubparsers.has(next.type)) {
             this.tokenSource.next();
             return this.infixSubparsers.get(next.type).parse(this, left, next);

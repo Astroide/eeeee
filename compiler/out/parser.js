@@ -102,6 +102,21 @@ class LiteralSubparser {
             return new LiteralExpression(token.content, tokens_1.TokenType.BooleanLiteral);
     }
 }
+class PropertyAccessExpression extends Expression {
+    constructor(object, property) {
+        super();
+        this.object = object;
+        this.property = property;
+    }
+    toString() {
+        return `PropertyAccess::<${this.object.toString()}, ${this.property}>`;
+    }
+}
+class PropertyAccessSubparser {
+    parse(parser, left, _token) {
+        return new PropertyAccessExpression(left, parser.tokenSource.next().getSource());
+    }
+}
 class PrefixOperatorExpression {
     constructor(operator, operand) {
         this.operator = operator;
@@ -149,6 +164,7 @@ class Parser {
         ].forEach(type => {
             self.registerInfix(type, new InfixOperatorSubparser());
         });
+        this.registerInfix(tokens_1.TokenType.Dot, new PropertyAccessSubparser());
     }
     registerPrefix(type, subparser) {
         this.prefixSubparsers.set(type, subparser);
@@ -163,6 +179,7 @@ class Parser {
         }
         const left = this.prefixSubparsers.get(token.type).parse(this, token);
         const next = this.tokenSource.peek();
+        console.log(`infix: ${next.getSource()} ${tokens_1.TokenType[next.type]}`);
         if (this.infixSubparsers.has(next.type)) {
             this.tokenSource.next();
             return this.infixSubparsers.get(next.type).parse(this, left, next);
