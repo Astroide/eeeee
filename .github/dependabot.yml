@@ -6,6 +6,10 @@ updates:
     directory: "/compiler" # Location of package manifests
     schedule:
       interval: "daily"
+  - package-ecosystem: "npm" # See documentation for possible values
+    directory: "/vscode-escurieux" # Location of package manifests
+    schedule:
+      interval: "daily"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
