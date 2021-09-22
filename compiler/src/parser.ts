@@ -43,12 +43,26 @@ class PeekableTokenStream {
     }
 }
 
+const Precedence = {
+    // const ASSIGNMENT = 1;
+    CONDITIONAL: 2,
+    SUM: 3,
+    PRODUCT: 4,
+    EXPONENT: 5,
+    PREFIX: 6,
+    POSTFIX: 7,
+    CALL: 8,
+    PROPERTY_ACCESS: 9,
+};
+Object.seal(Precedence);
+
 interface PrefixSubparser {
     parse(parser: Parser, token: Token): Expression;
 }
 
 interface InfixSubparser {
     parse(parser: Parser, left: Expression, token: Token): Expression;
+    precedence: number;
 }
 
 class IdentifierSubparser implements PrefixSubparser {
@@ -59,21 +73,25 @@ class IdentifierSubparser implements PrefixSubparser {
 
 class PrefixOperatorSubparser implements PrefixSubparser {
     parse(parser: Parser, token: Token): Expression {
-        const operand: Expression = parser.getExpression();
+        const operand: Expression = parser.getExpression(Precedence.PREFIX);
         return new PrefixOperatorExpression(token.type, operand);
     }
 }
 
 class InfixOperatorSubparser implements InfixSubparser {
+    precedence: number;
+    constructor(precedence: number) {
+        this.precedence = precedence;
+    }
     parse(parser: Parser, left: Expression, token: Token): Expression {
-        const right = parser.getExpression();
+        const right = parser.getExpression(Precedence.SUM);
         return new InfixOperatorExpression(token.type, left, right);
     }
 }
 
 class GroupSubparser implements PrefixSubparser {
     parse(parser: Parser, _token: Token): Expression {
-        const inside = parser.getExpression();
+        const inside = parser.getExpression(Precedence.PREFIX);
         parser.tokenSource.consume(TokenType.RightParen, 'parenthesized expressions need to be closed');
         return new GroupExpression(inside);
     }
@@ -81,6 +99,10 @@ class GroupSubparser implements PrefixSubparser {
 }
 
 class FunctionCallSubparser implements InfixSubparser {
+    precedence: number;
+    constructor(precedence: number) {
+        this.precedence = precedence;
+    }
     parse(parser: Parser, callee: Expression, _token: Token): Expression {
         const args: Expression[] = [];
         while (!parser.tokenSource.match(TokenType.RightParen)) {
@@ -88,7 +110,7 @@ class FunctionCallSubparser implements InfixSubparser {
                 const token = parser.tokenSource.next();
                 panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
-            const arg = parser.getExpression();
+            const arg = parser.getExpression(this.precedence);
             args.push(arg);
             if (parser.tokenSource.match(TokenType.Comma)) {
                 parser.tokenSource.next();
@@ -183,6 +205,10 @@ class PropertyAccessExpression extends Expression {
 }
 
 class PropertyAccessSubparser implements InfixSubparser {
+    precedence: number;
+    constructor(precedence: number) {
+        this.precedence = precedence;
+    }
     parse(parser: Parser, left: Expression, _token: Token): Expression {
         const propertyName = parser.tokenSource.consume(TokenType.Identifier, 'expected a property name after a dot').getSource();
         return new PropertyAccessExpression(left, propertyName);
@@ -233,21 +259,28 @@ export class Parser {
             self.registerPrefix(type, new LiteralSubparser());
         });
         this.registerPrefix(TokenType.LeftParen, new GroupSubparser());
-        [
-            TokenType.Ampersand, TokenType.DoubleAmpersand,
-            TokenType.Pipe, TokenType.DoublePipe,
-            TokenType.Star, TokenType.DoubleStar,
-            TokenType.Minus, TokenType.Plus,
-            TokenType.Slash, TokenType.Xor,
-            TokenType.DoubleEquals,
-            TokenType.GreaterOrEqual, TokenType.SmallerOrEqual,
-            TokenType.NotEquals,
-            TokenType.LeftShift, TokenType.RightShift
-        ].forEach(type => {
-            self.registerInfix(type, new InfixOperatorSubparser());
+        (<[TokenType, number][]>[
+            [TokenType.Ampersand, Precedence.SUM],
+            [TokenType.DoubleAmpersand, Precedence.SUM],
+            [TokenType.Pipe, Precedence.SUM],
+            [TokenType.DoublePipe, Precedence.SUM],
+            [TokenType.Star, Precedence.PRODUCT],
+            [TokenType.DoubleStar, Precedence.EXPONENT],
+            [TokenType.Minus, Precedence.SUM],
+            [TokenType.Plus, Precedence.SUM],
+            [TokenType.Slash, Precedence.PRODUCT],
+            [TokenType.Xor, Precedence.SUM],
+            [TokenType.DoubleEquals, Precedence.CONDITIONAL],
+            [TokenType.GreaterOrEqual, Precedence.CONDITIONAL],
+            [TokenType.SmallerOrEqual, Precedence.CONDITIONAL],
+            [TokenType.NotEquals, Precedence.CONDITIONAL],
+            [TokenType.LeftShift, Precedence.SUM],
+            [TokenType.RightShift, Precedence.SUM]
+        ]).forEach(([type, precedence]) => {
+            self.registerInfix(type, new InfixOperatorSubparser(precedence));
         });
-        this.registerInfix(TokenType.Dot, new PropertyAccessSubparser());
-        this.registerInfix(TokenType.LeftParen, new FunctionCallSubparser());
+        this.registerInfix(TokenType.Dot, new PropertyAccessSubparser(Precedence.PROPERTY_ACCESS));
+        this.registerInfix(TokenType.LeftParen, new FunctionCallSubparser(Precedence.CALL));
     }
 
     registerPrefix(type: TokenType, subparser: PrefixSubparser): void {
@@ -258,19 +291,27 @@ export class Parser {
         this.infixSubparsers.set(type, subparser);
     }
 
-    getExpression(): Expression {
-        const token: Token = this.tokenSource.next();
+    getPrecedence(): number {
+        const subparser = this.infixSubparsers.get(this.tokenSource.peek().type);
+        if (subparser) {
+            return subparser.precedence;
+        }
+        return 0;
+    }
+
+    getExpression(precedence: number): Expression {
+        let token: Token = this.tokenSource.next();
         if (!this.prefixSubparsers.has(token.type)) {
             panicAt(this.tokenSource.reader, `[ESCE00011] Could not parse : '${token.getSource()}'`, token.line, token.char, token.getSource());
         }
-        const left = this.prefixSubparsers.get(token.type).parse(this, token);
-        const next: Token = this.tokenSource.peek();
+        let left = this.prefixSubparsers.get(token.type).parse(this, token);
         // console.log(`infix: ${next.getSource()} ${TokenType[next.type]}`);
-        if (this.infixSubparsers.has(next.type)) {
-            this.tokenSource.next();
-            return this.infixSubparsers.get(next.type).parse(this, left, next);
-        } else {
-            return left;
+        while (precedence < this.getPrecedence()) {
+            token = this.tokenSource.next();
+            const infix = this.infixSubparsers.get(token.type);
+            left = infix.parse(this, left, token);
         }
+
+        return left;
     }
 }
