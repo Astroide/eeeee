@@ -206,9 +206,9 @@ class Parser {
         });
         this.registerPrefix(tokens_1.TokenType.LeftParen, new GroupSubparser());
         [
-            [tokens_1.TokenType.Ampersand, Precedence.SUM],
+            [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoubleAmpersand, Precedence.SUM],
-            [tokens_1.TokenType.Pipe, Precedence.SUM],
+            [tokens_1.TokenType.Pipe, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoublePipe, Precedence.SUM],
             [tokens_1.TokenType.Star, Precedence.PRODUCT],
             [tokens_1.TokenType.DoubleStar, Precedence.EXPONENT],
