@@ -71,8 +71,8 @@ class InfixOperatorSubparser {
 }
 class GroupSubparser {
     parse(parser, _token) {
-        const inside = parser.getExpression(Precedence.PREFIX);
-        parser.tokenSource.consume(tokens_1.TokenType.RightParen, 'parenthesized expressions need to be closed');
+        const inside = parser.getExpression(0);
+        parser.tokenSource.consume(tokens_1.TokenType.RightParenthesis, 'parenthesized expressions need to be closed');
         return new GroupExpression(inside);
     }
 }
@@ -82,7 +82,7 @@ class FunctionCallSubparser {
     }
     parse(parser, callee, _token) {
         const args = [];
-        while (!parser.tokenSource.match(tokens_1.TokenType.RightParen)) {
+        while (!parser.tokenSource.match(tokens_1.TokenType.RightParenthesis)) {
             if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
                 const token = parser.tokenSource.next();
                 (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
@@ -92,12 +92,38 @@ class FunctionCallSubparser {
             if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
                 parser.tokenSource.next();
             }
-            else if (!parser.tokenSource.match(tokens_1.TokenType.RightParen)) {
+            else if (!parser.tokenSource.match(tokens_1.TokenType.RightParenthesis)) {
                 const token = parser.tokenSource.next();
                 (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
             }
         }
+        parser.tokenSource.next();
         return new FunctionCallExpression(callee, args);
+    }
+}
+class ElementAccessSubparser {
+    constructor(precedence) {
+        this.precedence = precedence;
+    }
+    parse(parser, object, _token) {
+        const indexes = [];
+        while (!parser.tokenSource.match(tokens_1.TokenType.RightBracket)) {
+            if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                const token = parser.tokenSource.next();
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
+            }
+            const index = parser.getExpression(this.precedence);
+            indexes.push(index);
+            if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                parser.tokenSource.next();
+            }
+            else if (!parser.tokenSource.match(tokens_1.TokenType.RightBracket)) {
+                const token = parser.tokenSource.next();
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
+            }
+        }
+        parser.tokenSource.next();
+        return new ElementAccessExpression(object, indexes);
     }
 }
 class Expression {
@@ -119,6 +145,16 @@ class FunctionCallExpression extends Expression {
     }
     toString() {
         return `FunctionCall::<${this.callee.toString()}${this.args.length > 0 ? ', ' + this.args.map(x => x.toString()).join(', ') : ''}>`;
+    }
+}
+class ElementAccessExpression extends Expression {
+    constructor(left, indexes) {
+        super();
+        this.left = left;
+        this.indexes = indexes;
+    }
+    toString() {
+        return `IndexingExpression::<${this.left.toString()}${this.indexes.length > 0 ? ', ' + this.indexes.map(x => x.toString()).join(', ') : ''}>`;
     }
 }
 class IdentifierExpression extends Expression {
@@ -204,7 +240,7 @@ class Parser {
         [tokens_1.TokenType.BooleanLiteral, tokens_1.TokenType.CharacterLiteral, tokens_1.TokenType.StringLiteral, tokens_1.TokenType.NumericLiteral].forEach(type => {
             self.registerPrefix(type, new LiteralSubparser());
         });
-        this.registerPrefix(tokens_1.TokenType.LeftParen, new GroupSubparser());
+        this.registerPrefix(tokens_1.TokenType.LeftParenthesis, new GroupSubparser());
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoubleAmpersand, Precedence.SUM],
@@ -226,7 +262,8 @@ class Parser {
             self.registerInfix(type, new InfixOperatorSubparser(precedence));
         });
         this.registerInfix(tokens_1.TokenType.Dot, new PropertyAccessSubparser(Precedence.PROPERTY_ACCESS));
-        this.registerInfix(tokens_1.TokenType.LeftParen, new FunctionCallSubparser(Precedence.CALL));
+        this.registerInfix(tokens_1.TokenType.LeftParenthesis, new FunctionCallSubparser(Precedence.CALL));
+        this.registerInfix(tokens_1.TokenType.LeftBracket, new ElementAccessSubparser(Precedence.POSTFIX));
     }
     registerPrefix(type, subparser) {
         this.prefixSubparsers.set(type, subparser);
@@ -247,7 +284,6 @@ class Parser {
             (0, utilities_1.panicAt)(this.tokenSource.reader, `[ESCE00011] Could not parse : '${token.getSource()}'`, token.line, token.char, token.getSource());
         }
         let left = this.prefixSubparsers.get(token.type).parse(this, token);
-        // console.log(`infix: ${next.getSource()} ${TokenType[next.type]}`);
         while (precedence < this.getPrecedence()) {
             token = this.tokenSource.next();
             const infix = this.infixSubparsers.get(token.type);

@@ -23,7 +23,7 @@ exports.tokenTypeExplanations = new Map();
     [tokens_1.TokenType.RightCurlyBracket, '\'}\''],
     [tokens_1.TokenType.LeftAngleBracket, '\'<\''],
     [tokens_1.TokenType.RightAngleBracket, '\'>\''],
-    [tokens_1.TokenType.LeftParen, '\'(\''],
-    [tokens_1.TokenType.RightParen, '\')\'']
+    [tokens_1.TokenType.LeftParenthesis, '\'(\''],
+    [tokens_1.TokenType.RightParenthesis, '\')\'']
 ].forEach(([type, explanation]) => exports.tokenTypeExplanations.set(type, explanation));
 //# sourceMappingURL=explanations.js.map

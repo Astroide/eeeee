@@ -1,7 +1,7 @@
 "use strict";
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.readFile = exports.Result = exports.StringReader = exports.warnAt = exports.panicAt = exports.warn = exports.print = exports.panic = void 0;
+exports.logCalls = exports.readFile = exports.Result = exports.StringReader = exports.warnAt = exports.panicAt = exports.warn = exports.print = exports.panic = void 0;
 const process_1 = require("process");
 const promises_1 = require("fs/promises");
 function panic(message) {
@@ -135,4 +135,17 @@ async function readFile(filename) {
     return contents;
 }
 exports.readFile = readFile;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function logCalls(target, propertyKey, descriptor) {
+    const originalMethod = descriptor.value; // save a reference to the original method
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    descriptor.value = function (...args) {
+        console.log(`${originalMethod.name} called with args ` + JSON.stringify(args));
+        const result = originalMethod.apply(this, args);
+        console.log(`${originalMethod.name} returned ` + result);
+        return result;
+    };
+    return descriptor;
+}
+exports.logCalls = logCalls;
 //# sourceMappingURL=utilities.js.map

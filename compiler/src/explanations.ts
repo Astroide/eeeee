@@ -22,8 +22,8 @@ export const tokenTypeExplanations: Map<TokenType, string> = new Map<TokenType, 
     [TokenType.RightCurlyBracket, '\'}\''],
     [TokenType.LeftAngleBracket, '\'<\''],
     [TokenType.RightAngleBracket, '\'>\''],
-    [TokenType.LeftParen, '\'(\''],
-    [TokenType.RightParen, '\')\'']
+    [TokenType.LeftParenthesis, '\'(\''],
+    [TokenType.RightParenthesis, '\')\'']
 ].forEach(
     ([type, explanation]) =>
         tokenTypeExplanations.set(<TokenType>type, <string>explanation));
