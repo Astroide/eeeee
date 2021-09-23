@@ -161,7 +161,7 @@ class GroupExpression extends Expression {
     }
 
     toString(): string {
-        return `GroupExpression::<${this.content.toString()}>`;
+        return `GroupExpression {${this.content.toString()}}`;
     }
 }
 
@@ -175,7 +175,7 @@ class FunctionCallExpression extends Expression {
     }
 
     toString(): string {
-        return `FunctionCall::<${this.callee.toString()}${this.args.length > 0 ? ', ' + this.args.map(x => x.toString()).join(', ') : ''}>`;
+        return `FunctionCall {${this.callee.toString()}${this.args.length > 0 ? ', ' + this.args.map(x => x.toString()).join(', ') : ''}}`;
     }
 }
 
@@ -188,7 +188,7 @@ class ElementAccessExpression extends Expression {
         this.indexes = indexes;
     }
     toString(): string {
-        return `IndexingExpression::<${this.left.toString()}${this.indexes.length > 0 ? ', ' + this.indexes.map(x => x.toString()).join(', ') : ''}>`;
+        return `IndexingExpression {${this.left.toString()}${this.indexes.length > 0 ? ', ' + this.indexes.map(x => x.toString()).join(', ') : ''}}`;
     }
 }
 
@@ -241,7 +241,7 @@ class PropertyAccessExpression extends Expression {
     }
 
     toString(): string {
-        return `PropertyAccess::<${this.object.toString()}, ${this.property}>`;
+        return `PropertyAccess {${this.object.toString()}, ${this.property}}`;
     }
 }
 
@@ -265,7 +265,7 @@ class PrefixOperatorExpression {
     }
 
     toString(): string {
-        return TokenType[this.operator] + '.prefix::<' + this.operand.toString() + '>';
+        return TokenType[this.operator] + '.prefix {' + this.operand.toString() + '}';
     }
 }
 
@@ -275,6 +275,30 @@ class Statement {
         this.content = content;
     }
 }
+
+class Block extends Expression {
+    statements: Statement[];
+    constructor(statements: Statement[]) {
+        super();
+        this.statements = statements;
+    }
+
+    toString(): string {
+        return this.statements.length == 0 ? 'Block {}' : `Block {${this.statements.map(s => `Statement {${s.content.toString()}}`).join(', ')}}`;
+    }
+}
+
+class BlockSubparser implements PrefixSubparser {
+    parse(parser: Parser, _token: Token): Expression {
+        const statements: Statement[] = [];
+        while (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
+            statements.push(parser.getStatement());
+        }
+        parser.tokenSource.next(); // Consume the '}'
+        return new Block(statements);
+    }
+}
+
 class InfixOperatorExpression extends Expression {
     operator: TokenType;
     leftOperand: Expression;
@@ -287,7 +311,7 @@ class InfixOperatorExpression extends Expression {
     }
 
     toString(): string {
-        return `${TokenType[this.operator]}.infix::<${this.leftOperand.toString()}, ${this.rightOperand.toString()}>`;
+        return `${TokenType[this.operator]}.infix {${this.leftOperand.toString()}, ${this.rightOperand.toString()}}`;
     }
 }
 export class Parser {
@@ -304,6 +328,7 @@ export class Parser {
         [TokenType.BooleanLiteral, TokenType.CharacterLiteral, TokenType.StringLiteral, TokenType.NumericLiteral].forEach(type => {
             self.registerPrefix(type, new LiteralSubparser());
         });
+        this.registerPrefix(TokenType.LeftCurlyBracket, new BlockSubparser());
         this.registerPrefix(TokenType.LeftParenthesis, new GroupSubparser());
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],

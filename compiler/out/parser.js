@@ -134,7 +134,7 @@ class GroupExpression extends Expression {
         this.content = content;
     }
     toString() {
-        return `GroupExpression::<${this.content.toString()}>`;
+        return `GroupExpression {${this.content.toString()}}`;
     }
 }
 class FunctionCallExpression extends Expression {
@@ -144,7 +144,7 @@ class FunctionCallExpression extends Expression {
         this.args = args;
     }
     toString() {
-        return `FunctionCall::<${this.callee.toString()}${this.args.length > 0 ? ', ' + this.args.map(x => x.toString()).join(', ') : ''}>`;
+        return `FunctionCall {${this.callee.toString()}${this.args.length > 0 ? ', ' + this.args.map(x => x.toString()).join(', ') : ''}}`;
     }
 }
 class ElementAccessExpression extends Expression {
@@ -154,7 +154,7 @@ class ElementAccessExpression extends Expression {
         this.indexes = indexes;
     }
     toString() {
-        return `IndexingExpression::<${this.left.toString()}${this.indexes.length > 0 ? ', ' + this.indexes.map(x => x.toString()).join(', ') : ''}>`;
+        return `IndexingExpression {${this.left.toString()}${this.indexes.length > 0 ? ', ' + this.indexes.map(x => x.toString()).join(', ') : ''}}`;
     }
 }
 class IdentifierExpression extends Expression {
@@ -195,7 +195,7 @@ class PropertyAccessExpression extends Expression {
         this.property = property;
     }
     toString() {
-        return `PropertyAccess::<${this.object.toString()}, ${this.property}>`;
+        return `PropertyAccess {${this.object.toString()}, ${this.property}}`;
     }
 }
 class PropertyAccessSubparser {
@@ -213,12 +213,31 @@ class PrefixOperatorExpression {
         this.operand = operand;
     }
     toString() {
-        return tokens_1.TokenType[this.operator] + '.prefix::<' + this.operand.toString() + '>';
+        return tokens_1.TokenType[this.operator] + '.prefix {' + this.operand.toString() + '}';
     }
 }
 class Statement {
     constructor(content) {
         this.content = content;
+    }
+}
+class Block extends Expression {
+    constructor(statements) {
+        super();
+        this.statements = statements;
+    }
+    toString() {
+        return this.statements.length == 0 ? 'Block {}' : `Block {${this.statements.map(s => `Statement {${s.content.toString()}}`).join(', ')}}`;
+    }
+}
+class BlockSubparser {
+    parse(parser, _token) {
+        const statements = [];
+        while (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
+            statements.push(parser.getStatement());
+        }
+        parser.tokenSource.next(); // Consume the '}'
+        return new Block(statements);
     }
 }
 class InfixOperatorExpression extends Expression {
@@ -229,7 +248,7 @@ class InfixOperatorExpression extends Expression {
         this.rightOperand = right;
     }
     toString() {
-        return `${tokens_1.TokenType[this.operator]}.infix::<${this.leftOperand.toString()}, ${this.rightOperand.toString()}>`;
+        return `${tokens_1.TokenType[this.operator]}.infix {${this.leftOperand.toString()}, ${this.rightOperand.toString()}}`;
     }
 }
 class Parser {
@@ -245,6 +264,7 @@ class Parser {
         [tokens_1.TokenType.BooleanLiteral, tokens_1.TokenType.CharacterLiteral, tokens_1.TokenType.StringLiteral, tokens_1.TokenType.NumericLiteral].forEach(type => {
             self.registerPrefix(type, new LiteralSubparser());
         });
+        this.registerPrefix(tokens_1.TokenType.LeftCurlyBracket, new BlockSubparser());
         this.registerPrefix(tokens_1.TokenType.LeftParenthesis, new GroupSubparser());
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
