@@ -216,6 +216,11 @@ class PrefixOperatorExpression {
         return tokens_1.TokenType[this.operator] + '.prefix::<' + this.operand.toString() + '>';
     }
 }
+class Statement {
+    constructor(content) {
+        this.content = content;
+    }
+}
 class InfixOperatorExpression extends Expression {
     constructor(operator, left, right) {
         super();
@@ -290,6 +295,11 @@ class Parser {
             left = infix.parse(this, left, token);
         }
         return left;
+    }
+    getStatement() {
+        const expression = this.getExpression(0);
+        this.tokenSource.consume(tokens_1.TokenType.Semicolon, '[ESCE00013] Expected a semicolon at the end of a statement.');
+        return new Statement(expression);
     }
 }
 exports.Parser = Parser;

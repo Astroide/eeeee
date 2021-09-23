@@ -1,4 +1,4 @@
-(list[0] + List[int]())
+(list[0] + List[int]());
 File.open("file.txt", "r").read().split('\n)[0]
 ('a * -0b10.01 & 0xFF..sign) + (2 / 3)
 0xFF00EE
