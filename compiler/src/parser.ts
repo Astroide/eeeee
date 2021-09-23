@@ -289,7 +289,7 @@ class Block extends Expression {
 }
 
 class BlockSubparser implements PrefixSubparser {
-    parse(parser: Parser, _token: Token): Expression {
+    parse(parser: Parser, _token: Token): Block {
         const statements: Statement[] = [];
         while (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
             statements.push(parser.getStatement());
@@ -314,6 +314,37 @@ class InfixOperatorExpression extends Expression {
         return `${TokenType[this.operator]}.infix {${this.leftOperand.toString()}, ${this.rightOperand.toString()}}`;
     }
 }
+
+class IfExpression {
+    condition: Expression;
+    thenBranch: Block;
+    elseBranch?: Block;
+    constructor(condition: Expression, thenBranch: Block, elseBranch?: Block) {
+        this.condition = condition;
+        this.thenBranch = thenBranch;
+        this.elseBranch = elseBranch;
+    }
+
+    toString(): string {
+        return `If {${this.condition.toString()}, ${this.thenBranch.toString()}${this.elseBranch ? ', ' + this.elseBranch.toString() : ''}}`;
+    }
+}
+
+class IfSubparser implements PrefixSubparser {
+    parse(parser: Parser, _token: Token): IfExpression {
+        const condition = parser.getExpression(0);
+        const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'a \'{\' was expected after an if\'s condition');
+        const thenBranch = (new BlockSubparser()).parse(parser, token);
+        let elseBranch = null;
+        if (parser.tokenSource.match(TokenType.Else)) {
+            parser.tokenSource.next(); // Consume 'else'
+            const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'a \'{\' was expected after an \'else\'');
+            elseBranch = (new BlockSubparser()).parse(parser, token);
+        }
+        return new IfExpression(condition, thenBranch, elseBranch);
+    }
+}
+
 export class Parser {
     tokenSource: PeekableTokenStream;
     prefixSubparsers: Map<TokenType, PrefixSubparser> = new Map();
@@ -330,6 +361,7 @@ export class Parser {
         });
         this.registerPrefix(TokenType.LeftCurlyBracket, new BlockSubparser());
         this.registerPrefix(TokenType.LeftParenthesis, new GroupSubparser());
+        this.registerPrefix(TokenType.If, new IfSubparser());
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],
             [TokenType.DoubleAmpersand, Precedence.SUM],

@@ -251,6 +251,30 @@ class InfixOperatorExpression extends Expression {
         return `${tokens_1.TokenType[this.operator]}.infix {${this.leftOperand.toString()}, ${this.rightOperand.toString()}}`;
     }
 }
+class IfExpression {
+    constructor(condition, thenBranch, elseBranch) {
+        this.condition = condition;
+        this.thenBranch = thenBranch;
+        this.elseBranch = elseBranch;
+    }
+    toString() {
+        return `If {${this.condition.toString()}, ${this.thenBranch.toString()}${this.elseBranch ? ', ' + this.elseBranch.toString() : ''}}`;
+    }
+}
+class IfSubparser {
+    parse(parser, _token) {
+        const condition = parser.getExpression(0);
+        const token = parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, 'a \'{\' was expected after an if\'s condition');
+        const thenBranch = (new BlockSubparser()).parse(parser, token);
+        let elseBranch = null;
+        if (parser.tokenSource.match(tokens_1.TokenType.Else)) {
+            parser.tokenSource.next(); // Consume 'else'
+            const token = parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, 'a \'{\' was expected after an \'else\'');
+            elseBranch = (new BlockSubparser()).parse(parser, token);
+        }
+        return new IfExpression(condition, thenBranch, elseBranch);
+    }
+}
 class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();
@@ -266,6 +290,7 @@ class Parser {
         });
         this.registerPrefix(tokens_1.TokenType.LeftCurlyBracket, new BlockSubparser());
         this.registerPrefix(tokens_1.TokenType.LeftParenthesis, new GroupSubparser());
+        this.registerPrefix(tokens_1.TokenType.If, new IfSubparser());
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoubleAmpersand, Precedence.SUM],
