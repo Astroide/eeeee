@@ -135,16 +135,17 @@ async function readFile(filename) {
     return contents;
 }
 exports.readFile = readFile;
+const DEBUG_SUBPARSER_CALLS = false;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function logCalls(target, propertyKey, descriptor) {
     const originalMethod = descriptor.value; // save a reference to the original method
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    descriptor.value = function (...args) {
-        console.log(`${originalMethod.name} called with args ` + JSON.stringify(args));
+    descriptor.value = DEBUG_SUBPARSER_CALLS ? function (...args) {
+        console.log(`<${target.constructor.name}>`);
         const result = originalMethod.apply(this, args);
-        console.log(`${originalMethod.name} returned ` + result);
+        console.log(`</${target.constructor.name}>`);
         return result;
-    };
+    } : originalMethod;
     return descriptor;
 }
 exports.logCalls = logCalls;

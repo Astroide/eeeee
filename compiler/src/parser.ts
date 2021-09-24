@@ -1,7 +1,7 @@
 import { tokenTypeExplanations } from './explanations';
 import { TokenStream } from './tokenizer';
 import { BooleanLiteral, CharLiteral, NumberLiteral, StringLiteral, Token, TokenType } from './tokens';
-import { panicAt, StringReader } from './utilities';
+import { logCalls, panicAt, StringReader } from './utilities';
 
 class PeekableTokenStream {
     private stream: TokenStream;
@@ -66,12 +66,14 @@ interface InfixSubparser {
 }
 
 class IdentifierSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, token: Token): Expression {
         return new IdentifierExpression(token.getSource());
     }
 }
 
 class PrefixOperatorSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, token: Token): Expression {
         const operand: Expression = parser.getExpression(Precedence.PREFIX);
         return new PrefixOperatorExpression(token.type, operand);
@@ -83,6 +85,7 @@ class InfixOperatorSubparser implements InfixSubparser {
     constructor(precedence: number) {
         this.precedence = precedence;
     }
+    @logCalls
     parse(parser: Parser, left: Expression, token: Token): Expression {
         const right = parser.getExpression(Precedence.SUM);
         return new InfixOperatorExpression(token.type, left, right);
@@ -90,6 +93,7 @@ class InfixOperatorSubparser implements InfixSubparser {
 }
 
 class GroupSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, _token: Token): Expression {
         const inside = parser.getExpression(0);
         parser.tokenSource.consume(TokenType.RightParenthesis, 'parenthesized expressions need to be closed');
@@ -103,6 +107,7 @@ class FunctionCallSubparser implements InfixSubparser {
     constructor(precedence: number) {
         this.precedence = precedence;
     }
+    @logCalls
     parse(parser: Parser, callee: Expression, _token: Token): Expression {
         const args: Expression[] = [];
         while (!parser.tokenSource.match(TokenType.RightParenthesis)) {
@@ -129,6 +134,7 @@ class ElementAccessSubparser implements InfixSubparser {
     constructor(precedence: number) {
         this.precedence = precedence;
     }
+    @logCalls
     parse(parser: Parser, object: Expression, _token: Token): Expression {
         const indexes: Expression[] = [];
         while (!parser.tokenSource.match(TokenType.RightBracket)) {
@@ -219,6 +225,7 @@ class LiteralExpression extends Expression {
 }
 
 class LiteralSubparser implements PrefixSubparser {
+    @logCalls
     parse(_parser: Parser, token: Token): Expression {
         if (token.type == TokenType.CharacterLiteral)
             return new LiteralExpression((<CharLiteral>token).content, TokenType.CharacterLiteral);
@@ -250,6 +257,7 @@ class PropertyAccessSubparser implements InfixSubparser {
     constructor(precedence: number) {
         this.precedence = precedence;
     }
+    @logCalls
     parse(parser: Parser, left: Expression, _token: Token): Expression {
         const propertyName = parser.tokenSource.consume(TokenType.Identifier, 'expected a property name after a dot').getSource();
         return new PropertyAccessExpression(left, propertyName);
@@ -269,33 +277,48 @@ class PrefixOperatorExpression {
     }
 }
 
-class Statement {
-    content: Expression;
-    constructor(content: Expression) {
-        this.content = content;
-    }
-}
-
-class Block extends Expression {
-    statements: Statement[];
-    constructor(statements: Statement[]) {
+class StatementExpression extends Expression {
+    left: Expression;
+    right: Expression;
+    constructor(left: Expression, right: Expression) {
         super();
-        this.statements = statements;
+        this.left = left;
+        this.right = right;
     }
 
     toString(): string {
-        return this.statements.length == 0 ? 'Block {}' : `Block {${this.statements.map(s => `Statement {${s.content.toString()}}`).join(', ')}}`;
+        return `${this.left} ; ${this.right}`;
+    }
+}
+
+class StatementSubparser implements InfixSubparser {
+    @logCalls
+    parse(parser: Parser, left: Expression, _token: Token): Expression {
+        const right = parser.getExpression(0);
+        return new StatementExpression(left, right);
+    }
+    precedence = 0.5;
+
+}
+
+class Block extends Expression {
+    expression: Expression;
+    constructor(expression: Expression) {
+        super();
+        this.expression = expression;
+    }
+
+    toString(): string {
+        return `Block {${this.expression.toString()}}`;
     }
 }
 
 class BlockSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, _token: Token): Block {
-        const statements: Statement[] = [];
-        while (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
-            statements.push(parser.getStatement());
-        }
-        parser.tokenSource.next(); // Consume the '}'
-        return new Block(statements);
+        const expression = parser.getExpression(0);
+        parser.tokenSource.consume(TokenType.RightCurlyBracket, 'a \'}\' was expected at the end of a block');
+        return new Block(expression);
     }
 }
 
@@ -331,6 +354,7 @@ class IfExpression {
 }
 
 class IfSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, _token: Token): IfExpression {
         const condition = parser.getExpression(0);
         const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'a \'{\' was expected after an if\'s condition');
@@ -385,6 +409,7 @@ export class Parser {
         this.registerInfix(TokenType.Dot, new PropertyAccessSubparser(Precedence.PROPERTY_ACCESS));
         this.registerInfix(TokenType.LeftParenthesis, new FunctionCallSubparser(Precedence.CALL));
         this.registerInfix(TokenType.LeftBracket, new ElementAccessSubparser(Precedence.POSTFIX));
+        this.registerInfix(TokenType.Semicolon, new StatementSubparser());
     }
 
     registerPrefix(type: TokenType, subparser: PrefixSubparser): void {
@@ -412,15 +437,13 @@ export class Parser {
         while (precedence < this.getPrecedence()) {
             token = this.tokenSource.next();
             const infix = this.infixSubparsers.get(token.type);
-            left = infix.parse(this, left, token);
+            try {
+                left = infix.parse(this, left, token);
+            } catch (e) {
+                panicAt(this.tokenSource.reader, `[ESCE99999] [[Failure]] ${TokenType[token.type]}`, token.line, token.char, token.getSource());
+            }
         }
 
         return left;
-    }
-
-    getStatement(): Statement {
-        const expression = this.getExpression(0);
-        this.tokenSource.consume(TokenType.Semicolon, '[ESCE00013] Expected a semicolon at the end of a statement.');
-        return new Statement(expression);
     }
 }

@@ -1,4 +1,10 @@
 "use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Parser = void 0;
 const explanations_1 = require("./explanations");
@@ -54,12 +60,18 @@ class IdentifierSubparser {
         return new IdentifierExpression(token.getSource());
     }
 }
+__decorate([
+    utilities_1.logCalls
+], IdentifierSubparser.prototype, "parse", null);
 class PrefixOperatorSubparser {
     parse(parser, token) {
         const operand = parser.getExpression(Precedence.PREFIX);
         return new PrefixOperatorExpression(token.type, operand);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], PrefixOperatorSubparser.prototype, "parse", null);
 class InfixOperatorSubparser {
     constructor(precedence) {
         this.precedence = precedence;
@@ -69,6 +81,9 @@ class InfixOperatorSubparser {
         return new InfixOperatorExpression(token.type, left, right);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], InfixOperatorSubparser.prototype, "parse", null);
 class GroupSubparser {
     parse(parser, _token) {
         const inside = parser.getExpression(0);
@@ -76,6 +91,9 @@ class GroupSubparser {
         return new GroupExpression(inside);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], GroupSubparser.prototype, "parse", null);
 class FunctionCallSubparser {
     constructor(precedence) {
         this.precedence = precedence;
@@ -101,6 +119,9 @@ class FunctionCallSubparser {
         return new FunctionCallExpression(callee, args);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], FunctionCallSubparser.prototype, "parse", null);
 class ElementAccessSubparser {
     constructor(precedence) {
         this.precedence = precedence;
@@ -126,6 +147,9 @@ class ElementAccessSubparser {
         return new ElementAccessExpression(object, indexes);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], ElementAccessSubparser.prototype, "parse", null);
 class Expression {
 }
 class GroupExpression extends Expression {
@@ -188,6 +212,9 @@ class LiteralSubparser {
             return new LiteralExpression(token.content, tokens_1.TokenType.BooleanLiteral);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], LiteralSubparser.prototype, "parse", null);
 class PropertyAccessExpression extends Expression {
     constructor(object, property) {
         super();
@@ -207,6 +234,9 @@ class PropertyAccessSubparser {
         return new PropertyAccessExpression(left, propertyName);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], PropertyAccessSubparser.prototype, "parse", null);
 class PrefixOperatorExpression {
     constructor(operator, operand) {
         this.operator = operator;
@@ -216,30 +246,47 @@ class PrefixOperatorExpression {
         return tokens_1.TokenType[this.operator] + '.prefix {' + this.operand.toString() + '}';
     }
 }
-class Statement {
-    constructor(content) {
-        this.content = content;
-    }
-}
-class Block extends Expression {
-    constructor(statements) {
+class StatementExpression extends Expression {
+    constructor(left, right) {
         super();
-        this.statements = statements;
+        this.left = left;
+        this.right = right;
     }
     toString() {
-        return this.statements.length == 0 ? 'Block {}' : `Block {${this.statements.map(s => `Statement {${s.content.toString()}}`).join(', ')}}`;
+        return `${this.left} ; ${this.right}`;
+    }
+}
+class StatementSubparser {
+    constructor() {
+        this.precedence = 0.5;
+    }
+    parse(parser, left, _token) {
+        const right = parser.getExpression(0);
+        return new StatementExpression(left, right);
+    }
+}
+__decorate([
+    utilities_1.logCalls
+], StatementSubparser.prototype, "parse", null);
+class Block extends Expression {
+    constructor(expression) {
+        super();
+        this.expression = expression;
+    }
+    toString() {
+        return `Block {${this.expression.toString()}}`;
     }
 }
 class BlockSubparser {
     parse(parser, _token) {
-        const statements = [];
-        while (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
-            statements.push(parser.getStatement());
-        }
-        parser.tokenSource.next(); // Consume the '}'
-        return new Block(statements);
+        const expression = parser.getExpression(0);
+        parser.tokenSource.consume(tokens_1.TokenType.RightCurlyBracket, 'a \'}\' was expected at the end of a block');
+        return new Block(expression);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], BlockSubparser.prototype, "parse", null);
 class InfixOperatorExpression extends Expression {
     constructor(operator, left, right) {
         super();
@@ -275,6 +322,9 @@ class IfSubparser {
         return new IfExpression(condition, thenBranch, elseBranch);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], IfSubparser.prototype, "parse", null);
 class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();
@@ -314,6 +364,7 @@ class Parser {
         this.registerInfix(tokens_1.TokenType.Dot, new PropertyAccessSubparser(Precedence.PROPERTY_ACCESS));
         this.registerInfix(tokens_1.TokenType.LeftParenthesis, new FunctionCallSubparser(Precedence.CALL));
         this.registerInfix(tokens_1.TokenType.LeftBracket, new ElementAccessSubparser(Precedence.POSTFIX));
+        this.registerInfix(tokens_1.TokenType.Semicolon, new StatementSubparser());
     }
     registerPrefix(type, subparser) {
         this.prefixSubparsers.set(type, subparser);
@@ -337,14 +388,14 @@ class Parser {
         while (precedence < this.getPrecedence()) {
             token = this.tokenSource.next();
             const infix = this.infixSubparsers.get(token.type);
-            left = infix.parse(this, left, token);
+            try {
+                left = infix.parse(this, left, token);
+            }
+            catch (e) {
+                (0, utilities_1.panicAt)(this.tokenSource.reader, `[ESCE99999] [[Failure]] ${tokens_1.TokenType[token.type]}`, token.line, token.char, token.getSource());
+            }
         }
         return left;
-    }
-    getStatement() {
-        const expression = this.getExpression(0);
-        this.tokenSource.consume(tokens_1.TokenType.Semicolon, '[ESCE00013] Expected a semicolon at the end of a statement.');
-        return new Statement(expression);
     }
 }
 exports.Parser = Parser;

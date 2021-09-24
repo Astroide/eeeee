@@ -1,10 +1,10 @@
 if 1 {
-    (list[{0;}] + List[int]());
+    (list[{0}] + List[int]());
     File.open("file.txt", "r").read().split('\n)[0];
-    ('a * -0b10.01 & 0xFF..sign) + (2 / 3);
+    ('a * -0b10.01 & 0xFF..sign) + (2 / 3)
 } else {
-    0;
-};
+    0
+}
 0xFF00EE
 // 0x$T 
 0xabc.def
