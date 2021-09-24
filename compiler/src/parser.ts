@@ -1,6 +1,6 @@
 import { tokenTypeExplanations } from './explanations';
 import { TokenStream } from './tokenizer';
-import { BooleanLiteral, CharLiteral, NumberLiteral, StringLiteral, Token, TokenType } from './tokens';
+import { BooleanLiteral, CharLiteral, Identifier, NumberLiteral, StringLiteral, Token, TokenType } from './tokens';
 import { logCalls, panicAt, StringReader } from './utilities';
 
 class PeekableTokenStream {
@@ -369,6 +369,36 @@ class IfSubparser implements PrefixSubparser {
     }
 }
 
+class TypeCastingExpression extends Expression {
+    value: Expression;
+    type: Type;
+    constructor(type: Type, value: Expression) {
+        super();
+        this.value = value;
+        this.type = type;
+    }
+
+    toString(): string {
+        return `Typecast {${typeToString(this.type)}, ${this.value.toString()}}`;
+    }
+}
+
+class TypeCastingSubparser implements PrefixSubparser {
+    parse(parser: Parser, _token: Token): Expression {
+        const type = parser.getType();
+        parser.tokenSource.consume(TokenType.RightAngleBracket, 'expected a \'>\' after a type cast');
+        const expression = parser.getExpression(Precedence.PREFIX);
+        return new TypeCastingExpression(type, expression);
+    }
+}
+
+type Type = { plain: true, value: Identifier } | { plain: false, value: Identifier, typeParameters: Type[] };
+
+function typeToString(type: Type): string {
+    if (type.plain) return type.value.getSource();
+    else return `${type.value.getSource()}[${(<{ plain: false, value: Identifier, typeParameters: Type[] }>type).typeParameters.map(x => typeToString(x)).join(', ')}]`;
+}
+
 export class Parser {
     tokenSource: PeekableTokenStream;
     prefixSubparsers: Map<TokenType, PrefixSubparser> = new Map();
@@ -386,6 +416,7 @@ export class Parser {
         this.registerPrefix(TokenType.LeftCurlyBracket, new BlockSubparser());
         this.registerPrefix(TokenType.LeftParenthesis, new GroupSubparser());
         this.registerPrefix(TokenType.If, new IfSubparser());
+        this.registerPrefix(TokenType.LeftAngleBracket, new TypeCastingSubparser());
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],
             [TokenType.DoubleAmpersand, Precedence.SUM],
@@ -445,5 +476,37 @@ export class Parser {
         }
 
         return left;
+    }
+
+    getType(): Type {
+        let T: Type = {
+            plain: true,
+            value: <Identifier>this.tokenSource.consume(TokenType.Identifier, 'expected a type name')
+        };
+        if (this.tokenSource.match(TokenType.LeftBracket)) {
+            this.tokenSource.next();
+            T = {
+                plain: false,
+                value: T.value,
+                typeParameters: []
+            };
+            if (this.tokenSource.match(TokenType.RightBracket)) {
+                const token = this.tokenSource.next();
+                panicAt(this.tokenSource.reader, '[ESCE00014] Unexpected empty type parameters', token.line, token.char, token.getSource());
+            }
+            while (!this.tokenSource.match(TokenType.RightBracket)) {
+                if (this.tokenSource.match(TokenType.Comma)) {
+                    const token = this.tokenSource.next();
+                    panicAt(this.tokenSource.reader, '[ESCE00011] Only commas to separate type parameters and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
+                }
+                const parameter = this.getType();
+                T.typeParameters.push(parameter);
+                if (this.tokenSource.match(TokenType.Comma)) {
+                    this.tokenSource.next(); // Consume the comma
+                }
+            }
+            this.tokenSource.next(); // Consume the ']'
+        }
+        return T;
     }
 }

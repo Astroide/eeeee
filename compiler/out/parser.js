@@ -325,6 +325,30 @@ class IfSubparser {
 __decorate([
     utilities_1.logCalls
 ], IfSubparser.prototype, "parse", null);
+class TypeCastingExpression extends Expression {
+    constructor(type, value) {
+        super();
+        this.value = value;
+        this.type = type;
+    }
+    toString() {
+        return `Typecast {${typeToString(this.type)}, ${this.value.toString()}}`;
+    }
+}
+class TypeCastingSubparser {
+    parse(parser, _token) {
+        const type = parser.getType();
+        parser.tokenSource.consume(tokens_1.TokenType.RightAngleBracket, 'expected a \'>\' after a type cast');
+        const expression = parser.getExpression(Precedence.PREFIX);
+        return new TypeCastingExpression(type, expression);
+    }
+}
+function typeToString(type) {
+    if (type.plain)
+        return type.value.getSource();
+    else
+        return `${type.value.getSource()}[${type.typeParameters.map(x => typeToString(x)).join(', ')}]`;
+}
 class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();
@@ -341,6 +365,7 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.LeftCurlyBracket, new BlockSubparser());
         this.registerPrefix(tokens_1.TokenType.LeftParenthesis, new GroupSubparser());
         this.registerPrefix(tokens_1.TokenType.If, new IfSubparser());
+        this.registerPrefix(tokens_1.TokenType.LeftAngleBracket, new TypeCastingSubparser());
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoubleAmpersand, Precedence.SUM],
@@ -396,6 +421,37 @@ class Parser {
             }
         }
         return left;
+    }
+    getType() {
+        let T = {
+            plain: true,
+            value: this.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected a type name')
+        };
+        if (this.tokenSource.match(tokens_1.TokenType.LeftBracket)) {
+            this.tokenSource.next();
+            T = {
+                plain: false,
+                value: T.value,
+                typeParameters: []
+            };
+            if (this.tokenSource.match(tokens_1.TokenType.RightBracket)) {
+                const token = this.tokenSource.next();
+                (0, utilities_1.panicAt)(this.tokenSource.reader, '[ESCE00014] Unexpected empty type parameters', token.line, token.char, token.getSource());
+            }
+            while (!this.tokenSource.match(tokens_1.TokenType.RightBracket)) {
+                if (this.tokenSource.match(tokens_1.TokenType.Comma)) {
+                    const token = this.tokenSource.next();
+                    (0, utilities_1.panicAt)(this.tokenSource.reader, '[ESCE00011] Only commas to separate type parameters and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
+                }
+                const parameter = this.getType();
+                T.typeParameters.push(parameter);
+                if (this.tokenSource.match(tokens_1.TokenType.Comma)) {
+                    this.tokenSource.next(); // Consume the comma
+                }
+            }
+            this.tokenSource.next(); // Consume the ']'
+        }
+        return T;
     }
 }
 exports.Parser = Parser;
