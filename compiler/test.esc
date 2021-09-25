@@ -1,4 +1,7 @@
 <number>if 1 {
+    let x = 0;
+    let y;
+    const z = let w = 0;
     (list[{0}] + List[int]());
     File.open("file.txt", "r").read().split('\n)[0];
     ('a * -0b10.01 & 0xFF..sign) + (2 / 3)

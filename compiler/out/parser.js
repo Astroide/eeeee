@@ -343,6 +343,29 @@ class TypeCastingSubparser {
         return new TypeCastingExpression(type, expression);
     }
 }
+class LetOrConstDeclarationSubparser {
+    parse(parser, token) {
+        const type = token.type == tokens_1.TokenType.Let ? 'let' : 'const';
+        const name = parser.tokenSource.consume(tokens_1.TokenType.Identifier, `expected an identifier after ${type}`);
+        let value = null;
+        if (parser.tokenSource.match(tokens_1.TokenType.Equals)) {
+            parser.tokenSource.next();
+            value = parser.getExpression(0);
+        }
+        return new LetOrConstDeclarationExpression(type, name, value);
+    }
+}
+class LetOrConstDeclarationExpression extends Expression {
+    constructor(type, name, value) {
+        super();
+        this.type = type;
+        this.name = name;
+        this.value = value;
+    }
+    toString() {
+        return `${this.type} {${(new IdentifierExpression(this.name.getSource())).toString()}${this.value ? ', ' + this.value.toString() : ''}}`;
+    }
+}
 function typeToString(type) {
     if (type.plain)
         return type.value.getSource();
@@ -366,6 +389,8 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.LeftParenthesis, new GroupSubparser());
         this.registerPrefix(tokens_1.TokenType.If, new IfSubparser());
         this.registerPrefix(tokens_1.TokenType.LeftAngleBracket, new TypeCastingSubparser());
+        this.registerPrefix(tokens_1.TokenType.Let, new LetOrConstDeclarationSubparser());
+        this.registerPrefix(tokens_1.TokenType.Const, new LetOrConstDeclarationSubparser());
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoubleAmpersand, Precedence.SUM],
