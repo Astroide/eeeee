@@ -1,4 +1,9 @@
 <number>if 1 {
+    let i = 10;
+    while i < 0 {
+        stdout.writeln("Hello World");
+        i--
+    };
     let x = 0;
     let y;
     const z = let w = 0;

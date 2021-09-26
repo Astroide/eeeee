@@ -353,6 +353,19 @@ class IfExpression {
     }
 }
 
+class WhileExpression {
+    condition: Expression;
+    body: Block;
+    constructor(condition: Expression, body: Block) {
+        this.condition = condition;
+        this.body = body;
+    }
+
+    toString(): string {
+        return `While {${this.condition.toString()}, ${this.body.toString()}}`;
+    }
+}
+
 class IfSubparser implements PrefixSubparser {
     @logCalls
     parse(parser: Parser, _token: Token): IfExpression {
@@ -366,6 +379,16 @@ class IfSubparser implements PrefixSubparser {
             elseBranch = (new BlockSubparser()).parse(parser, token);
         }
         return new IfExpression(condition, thenBranch, elseBranch);
+    }
+}
+
+class WhileSubparser implements PrefixSubparser {
+    @logCalls
+    parse(parser: Parser, _token: Token): WhileExpression {
+        const condition = parser.getExpression(0);
+        const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'a \'{\' was expected after an while\'s condition');
+        const body = (new BlockSubparser()).parse(parser, token);
+        return new WhileExpression(condition, body);
     }
 }
 
@@ -428,6 +451,31 @@ function typeToString(type: Type): string {
     else return `${type.value.getSource()}[${(<{ plain: false, value: Identifier, typeParameters: Type[] }>type).typeParameters.map(x => typeToString(x)).join(', ')}]`;
 }
 
+class PostfixOperatorExpression extends Expression {
+    operator: TokenType;
+    operand: Expression;
+    constructor(operator: TokenType, operand: Expression) {
+        super();
+        this.operator = operator;
+        this.operand = operand;
+    }
+
+    toString(): string {
+        return `${TokenType[this.operator]}.postfix {${this.operand.toString()}}`;
+    }
+}
+
+class PostfixOperatorSubparser implements InfixSubparser {
+    precedence: number;
+    constructor() {
+        this.precedence = Precedence.POSTFIX;
+    }
+    @logCalls
+    parse(parser: Parser, left: Expression, token: Token): Expression {
+        return new PostfixOperatorExpression(token.type, left);
+    }
+}
+
 export class Parser {
     tokenSource: PeekableTokenStream;
     prefixSubparsers: Map<TokenType, PrefixSubparser> = new Map();
@@ -448,6 +496,7 @@ export class Parser {
         this.registerPrefix(TokenType.LeftAngleBracket, new TypeCastingSubparser());
         this.registerPrefix(TokenType.Let, new LetOrConstDeclarationSubparser());
         this.registerPrefix(TokenType.Const, new LetOrConstDeclarationSubparser());
+        this.registerPrefix(TokenType.While, new WhileSubparser());
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],
             [TokenType.DoubleAmpersand, Precedence.SUM],
@@ -464,7 +513,9 @@ export class Parser {
             [TokenType.SmallerOrEqual, Precedence.CONDITIONAL],
             [TokenType.NotEquals, Precedence.CONDITIONAL],
             [TokenType.LeftShift, Precedence.SUM],
-            [TokenType.RightShift, Precedence.SUM]
+            [TokenType.RightShift, Precedence.SUM],
+            [TokenType.LeftAngleBracket, Precedence.CONDITIONAL],
+            [TokenType.RightAngleBracket, Precedence.CONDITIONAL]
         ]).forEach(([type, precedence]) => {
             self.registerInfix(type, new InfixOperatorSubparser(precedence));
         });
@@ -472,6 +523,8 @@ export class Parser {
         this.registerInfix(TokenType.LeftParenthesis, new FunctionCallSubparser(Precedence.CALL));
         this.registerInfix(TokenType.LeftBracket, new ElementAccessSubparser(Precedence.POSTFIX));
         this.registerInfix(TokenType.Semicolon, new StatementSubparser());
+        this.registerInfix(TokenType.DoubleMinus, new PostfixOperatorSubparser());
+        this.registerInfix(TokenType.DoublePlus, new PostfixOperatorSubparser());
     }
 
     registerPrefix(type: TokenType, subparser: PrefixSubparser): void {

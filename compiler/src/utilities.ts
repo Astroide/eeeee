@@ -138,7 +138,7 @@ export async function readFile(filename: string): Promise<Result<string>> {
     return <Result<string>>contents;
 }
 
-const DEBUG_SUBPARSER_CALLS = false;
+const DEBUG_SUBPARSER_CALLS = true;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function logCalls(target: unknown, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> {
     const originalMethod = descriptor.value; // save a reference to the original method
