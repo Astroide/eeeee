@@ -1,4 +1,10 @@
-<number>if 1 {
+for ,,{
+    stdout.writeln(i)
+}
+/* for let i = 0, i < 100, i++ {
+    stdout.writeln("%d".format(i))
+} */
+/* <number>if 1 {
     let i = 10;
     while i < 0 {
         stdout.writeln("Hello World");
@@ -12,7 +18,7 @@
     ('a * -0b10.01 & 0xFF..sign) + (2 / 3)
 } else {
     0
-}
+} */
 0xFF00EE
 // 0x$T 
 0xabc.def

@@ -413,6 +413,39 @@ class PostfixOperatorSubparser {
 __decorate([
     utilities_1.logCalls
 ], PostfixOperatorSubparser.prototype, "parse", null);
+class ForExpression extends Expression {
+    constructor(init, condition, repeat, body) {
+        super();
+        this.init = init;
+        this.condition = condition;
+        this.repeat = repeat;
+        this.body = body;
+    }
+    toString() {
+        return `ForExpression {${this.init.toString()}, ${this.condition.toString()}, ${this.repeat.toString()}, ${this.body.toString()}}`;
+    }
+}
+class ForSubparser {
+    parse(parser, _token) {
+        let init = new LiteralExpression(true, tokens_1.TokenType.BooleanLiteral);
+        let condition = new LiteralExpression(true, tokens_1.TokenType.BooleanLiteral);
+        let repeat = new LiteralExpression(true, tokens_1.TokenType.BooleanLiteral);
+        if (!parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+            init = parser.getExpression(0);
+        }
+        parser.tokenSource.consume(tokens_1.TokenType.Comma, 'expected a comma after a for loop\'s initialization expression');
+        if (!parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+            condition = parser.getExpression(0);
+        }
+        parser.tokenSource.consume(tokens_1.TokenType.Comma, 'expected a comma after a for loop\'s condition');
+        if (!parser.tokenSource.match(tokens_1.TokenType.LeftCurlyBracket)) {
+            repeat = parser.getExpression(0);
+        }
+        const token = parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, 'expected a block start after a for loop\'s repeating expression');
+        const loopBody = (new BlockSubparser()).parse(parser, token);
+        return new ForExpression(init, condition, repeat, loopBody);
+    }
+}
 class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();
@@ -433,6 +466,7 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.Let, new LetOrConstDeclarationSubparser());
         this.registerPrefix(tokens_1.TokenType.Const, new LetOrConstDeclarationSubparser());
         this.registerPrefix(tokens_1.TokenType.While, new WhileSubparser());
+        this.registerPrefix(tokens_1.TokenType.For, new ForSubparser());
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoubleAmpersand, Precedence.SUM],

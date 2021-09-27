@@ -476,6 +476,47 @@ class PostfixOperatorSubparser implements InfixSubparser {
     }
 }
 
+class ForExpression extends Expression {
+    init: Expression;
+    condition: Expression;
+    repeat: Expression;
+    body: Block;
+
+    constructor(init: Expression, condition: Expression, repeat: Expression, body: Block) {
+        super();
+        this.init = init;
+        this.condition = condition;
+        this.repeat = repeat;
+        this.body = body;
+    }
+
+    toString(): string {
+        return `ForExpression {${this.init.toString()}, ${this.condition.toString()}, ${this.repeat.toString()}, ${this.body.toString()}}`;
+    }
+}
+
+class ForSubparser implements PrefixSubparser {
+    parse(parser: Parser, _token: Token): ForExpression {
+        let init: Expression = new LiteralExpression(true, TokenType.BooleanLiteral);
+        let condition: Expression = new LiteralExpression(true, TokenType.BooleanLiteral);
+        let repeat: Expression = new LiteralExpression(true, TokenType.BooleanLiteral);
+        if (!parser.tokenSource.match(TokenType.Comma)) {
+            init = parser.getExpression(0);
+        }
+        parser.tokenSource.consume(TokenType.Comma, 'expected a comma after a for loop\'s initialization expression');
+        if (!parser.tokenSource.match(TokenType.Comma)) {
+            condition = parser.getExpression(0);
+        }
+        parser.tokenSource.consume(TokenType.Comma, 'expected a comma after a for loop\'s condition');
+        if (!parser.tokenSource.match(TokenType.LeftCurlyBracket)) {
+            repeat = parser.getExpression(0);
+        }
+        const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'expected a block start after a for loop\'s repeating expression');
+        const loopBody = (new BlockSubparser()).parse(parser, token);
+        return new ForExpression(init, condition, repeat, loopBody);
+    }
+}
+
 export class Parser {
     tokenSource: PeekableTokenStream;
     prefixSubparsers: Map<TokenType, PrefixSubparser> = new Map();
@@ -497,6 +538,7 @@ export class Parser {
         this.registerPrefix(TokenType.Let, new LetOrConstDeclarationSubparser());
         this.registerPrefix(TokenType.Const, new LetOrConstDeclarationSubparser());
         this.registerPrefix(TokenType.While, new WhileSubparser());
+        this.registerPrefix(TokenType.For, new ForSubparser());
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],
             [TokenType.DoubleAmpersand, Precedence.SUM],
