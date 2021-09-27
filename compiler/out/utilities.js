@@ -1,7 +1,7 @@
 "use strict";
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logCalls = exports.readFile = exports.Result = exports.StringReader = exports.warnAt = exports.panicAt = exports.warn = exports.print = exports.panic = void 0;
+exports.zip = exports.logCalls = exports.readFile = exports.Result = exports.StringReader = exports.warnAt = exports.panicAt = exports.warn = exports.print = exports.panic = void 0;
 const process_1 = require("process");
 const promises_1 = require("fs/promises");
 function panic(message) {
@@ -149,4 +149,8 @@ function logCalls(target, propertyKey, descriptor) {
     return descriptor;
 }
 exports.logCalls = logCalls;
+function zip(a, b) {
+    return a.map((_, c) => [a, b].map(row => row[c]));
+}
+exports.zip = zip;
 //# sourceMappingURL=utilities.js.map

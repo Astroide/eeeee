@@ -153,3 +153,7 @@ export function logCalls(target: unknown, propertyKey: string, descriptor: Typed
 
     return descriptor;
 }
+
+export function zip<A, B>(a: A[], b: B[]): [A, B][] {
+    return <[A, B][]>a.map((_, c) => [a, b].map(row => row[c]));
+}

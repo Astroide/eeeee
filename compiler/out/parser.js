@@ -453,18 +453,20 @@ class ForSubparser {
     }
 }
 class LambdaFunctionExpression extends Expression {
-    constructor(args, body) {
+    constructor(args, typesOfArguments, body) {
         super();
         this.args = args;
         this.body = body;
+        this.typesOfArguments = typesOfArguments;
     }
     toString() {
-        return `LambdaFunction {[${this.args.map(x => x.toString()).join(', ')}], ${this.body.toString()}]`;
+        return `LambdaFunction {[${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + (type ? typeToString(type) : '<inferred type>')).join(', ')}], ${this.body.toString()}]`;
     }
 }
 class LambdaFunctionSubparser {
     parse(parser, token) {
         const args = [];
+        const typesOfArguments = [];
         if (token.type == tokens_1.TokenType.Pipe) {
             // Function potentially has arguments
             while (!parser.tokenSource.match(tokens_1.TokenType.Pipe)) {
@@ -473,6 +475,13 @@ class LambdaFunctionSubparser {
                     (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
                 }
                 args.push(parser.getNamePattern());
+                if (parser.tokenSource.match(tokens_1.TokenType.Colon)) {
+                    parser.tokenSource.next();
+                    typesOfArguments.push(parser.getType());
+                }
+                else {
+                    typesOfArguments.push(null);
+                }
                 if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
                     parser.tokenSource.next();
                 }
@@ -484,7 +493,7 @@ class LambdaFunctionSubparser {
             parser.tokenSource.next(); // Consume the '|'
         }
         const body = parser.getExpression(0);
-        return new LambdaFunctionExpression(args, body);
+        return new LambdaFunctionExpression(args, typesOfArguments, body);
     }
 }
 __decorate([

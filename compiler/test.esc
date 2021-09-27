@@ -1,6 +1,7 @@
 for ,, {
     let x: List[string] = 0;
-    (|x, y, z| stdout.writeln(x); stdout.writeln(y); stdout.writeln(z))("meow", 1, 2)
+    let y = 1;
+    (|x: string, y: int, z| stdout.writeln(x); stdout.writeln(y); stdout.writeln(z))("meow", x, y)
 }
 /* for let i = 0, i < 100, i++ {
     stdout.writeln("%d".format(i))

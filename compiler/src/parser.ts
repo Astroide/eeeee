@@ -1,7 +1,7 @@
 import { tokenTypeExplanations } from './explanations';
 import { TokenStream } from './tokenizer';
 import { BooleanLiteral, CharLiteral, Identifier, NumberLiteral, StringLiteral, Token, TokenType } from './tokens';
-import { logCalls, panicAt, StringReader } from './utilities';
+import { logCalls, panicAt, StringReader, zip } from './utilities';
 
 class PeekableTokenStream {
     private stream: TokenStream;
@@ -527,22 +527,24 @@ class ForSubparser implements PrefixSubparser {
 class LambdaFunctionExpression extends Expression {
     args: IdentifierExpression[];
     body: Expression;
-    constructor(args: IdentifierExpression[], body: Expression) {
+    typesOfArguments: Type[];
+    constructor(args: IdentifierExpression[], typesOfArguments: Type[], body: Expression) {
         super();
         this.args = args;
         this.body = body;
+        this.typesOfArguments = typesOfArguments;
     }
 
     toString(): string {
-        return `LambdaFunction {[${this.args.map(x => x.toString()).join(', ')}], ${this.body.toString()}]`;
+        return `LambdaFunction {[${zip(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + (type ? typeToString(type) : '<inferred type>')).join(', ')}], ${this.body.toString()}]`;
     }
 }
-
 
 class LambdaFunctionSubparser implements PrefixSubparser {
     @logCalls
     parse(parser: Parser, token: Token): LambdaFunctionExpression {
         const args: IdentifierExpression[] = [];
+        const typesOfArguments: Type[] = [];
         if (token.type == TokenType.Pipe) {
             // Function potentially has arguments
             while (!parser.tokenSource.match(TokenType.Pipe)) {
@@ -551,6 +553,12 @@ class LambdaFunctionSubparser implements PrefixSubparser {
                     panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
                 }
                 args.push(parser.getNamePattern());
+                if (parser.tokenSource.match(TokenType.Colon)) {
+                    parser.tokenSource.next();
+                    typesOfArguments.push(parser.getType());
+                } else {
+                    typesOfArguments.push(null);
+                }
                 if (parser.tokenSource.match(TokenType.Comma)) {
                     parser.tokenSource.next();
                 } else if (!parser.tokenSource.match(TokenType.Pipe)) {
@@ -561,7 +569,7 @@ class LambdaFunctionSubparser implements PrefixSubparser {
             parser.tokenSource.next(); // Consume the '|'
         }
         const body = parser.getExpression(0);
-        return new LambdaFunctionExpression(args, body);
+        return new LambdaFunctionExpression(args, typesOfArguments, body);
     }
 
 }
