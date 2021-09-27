@@ -10,7 +10,7 @@ export function print(message: string): void {
 export function warn(message: string): void {
     console.error(`\u001b[33mWarning\u001b[0m: ${message}`);
 }
-function doSomethingAt(fn: (message: string) => void, source: StringReader, message: string, line: number, char: number, text: string) {
+function doSomethingAt<T>(fn: (message: string) => T, source: StringReader, message: string, line: number, char: number, text: string): T {
     const lineCount = source.lineCount();
     let lineText: string;
     if (char != -1 && text != '\n') {
@@ -24,7 +24,7 @@ function doSomethingAt(fn: (message: string) => void, source: StringReader, mess
     }
     let currentLine = '';
     const errorOrWarningId = message.match(/\[ESC(W|E)\d\d\d\d\d\]/)[0].slice(1, -1);
-    fn(`\n${message}
+    return fn(`\n${message}
 On line ${line + 1} at character ${char + 1}:
  \u001b[34m${(line - 1).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 2 >= 0 ? (currentLine = source.getLine(line - 2)).slice(0, currentLine.length - 1) : ''}
  \u001b[34m${(line).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 1 >= 0 ? (currentLine = source.getLine(line - 1)).slice(0, currentLine.length - 1) : ''}
@@ -34,7 +34,7 @@ On line ${line + 1} at character ${char + 1}:
 Run escurieux -e ${errorOrWarningId} or escurieux --explain ${errorOrWarningId} for more informations about this error.\n----------\n`);
 }
 
-export const panicAt = (source: StringReader, message: string, line: number, char: number, text: string): void => doSomethingAt(panic, source, message, line, char, text);
+export const panicAt = (source: StringReader, message: string, line: number, char: number, text: string): never => doSomethingAt(panic, source, message, line, char, text);
 
 export const warnAt = (source: StringReader, message: string, line: number, char: number, text: string): void => doSomethingAt(warn, source, message, line, char, text);
 

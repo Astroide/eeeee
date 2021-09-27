@@ -30,7 +30,7 @@ function doSomethingAt(fn, source, message, line, char, text) {
     }
     let currentLine = '';
     const errorOrWarningId = message.match(/\[ESC(W|E)\d\d\d\d\d\]/)[0].slice(1, -1);
-    fn(`\n${message}
+    return fn(`\n${message}
 On line ${line + 1} at character ${char + 1}:
  \u001b[34m${(line - 1).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 2 >= 0 ? (currentLine = source.getLine(line - 2)).slice(0, currentLine.length - 1) : ''}
  \u001b[34m${(line).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 1 >= 0 ? (currentLine = source.getLine(line - 1)).slice(0, currentLine.length - 1) : ''}

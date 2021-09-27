@@ -540,6 +540,83 @@ class LambdaFunctionExpression extends Expression {
     }
 }
 
+class FunctionExpression extends Expression {
+    typeParameters: IdentifierExpression[];
+    args: IdentifierExpression[];
+    typesOfArguments: Type[];
+    body: Block;
+    name: IdentifierExpression;
+    returnType?: Type;
+
+    constructor(typeParameters: IdentifierExpression[], args: IdentifierExpression[], typesOfArguments: Type[], body: Block, name: IdentifierExpression, returnType?: Type) {
+        super();
+        this.typeParameters = typeParameters;
+        this.args = args;
+        this.typesOfArguments = typesOfArguments;
+        this.body = body;
+        this.name = name;
+        this.returnType = returnType;
+    }
+
+    toString(): string {
+        return `Function<${this.typeParameters.map(x => x.id).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {[${zip(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
+    }
+}
+
+class FunctionSubparser implements PrefixSubparser {
+    parse(parser: Parser, _token: Token): FunctionExpression {
+        const functionName = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(TokenType.Identifier, 'a function name is required'));
+        const typeParameters: IdentifierExpression[] = [];
+        if (parser.tokenSource.match(TokenType.LeftAngleBracket)) {
+            parser.tokenSource.next(); // Consume the <
+            while (!parser.tokenSource.match(TokenType.RightAngleBracket)) {
+                if (parser.tokenSource.match(TokenType.Comma)) {
+                    const token = parser.tokenSource.next();
+                    panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate type parameters and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
+                }
+                typeParameters.push((new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(TokenType.Identifier, 'a type parameter name was expected')));
+                if (parser.tokenSource.match(TokenType.Comma)) {
+                    parser.tokenSource.next();
+                } else if (!parser.tokenSource.match(TokenType.RightAngleBracket)) {
+                    const token = parser.tokenSource.next();
+                    panicAt(parser.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
+                }
+            }
+            parser.tokenSource.next(); // Consume the '>'
+        }
+        parser.tokenSource.consume(TokenType.LeftParenthesis, '[ESCE00015] A left parenthesis is required to start a function\'s argument list');
+        const args: IdentifierExpression[] = [];
+        const typesOfArguments: Type[] = [];
+        while (!parser.tokenSource.match(TokenType.RightParenthesis)) {
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                const token = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
+            }
+            args.push(parser.getNamePattern());
+            if (!parser.tokenSource.match(TokenType.Colon)) {
+                const wrongToken = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00016] Function arguments MUST be typed (e.g. fn func(a: int, b: int) {})', wrongToken.line, wrongToken.char, wrongToken.getSource());
+            } else {
+                parser.tokenSource.next();
+                typesOfArguments.push(parser.getType());
+            }
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                parser.tokenSource.next();
+            } else if (!parser.tokenSource.match(TokenType.RightParenthesis)) {
+                const token = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
+            }
+        }
+        parser.tokenSource.next(); // Consume the ')'
+        let returnType: Type = null;
+        if (!parser.tokenSource.match(TokenType.LeftCurlyBracket)) {
+            returnType = parser.getType();
+        }
+        const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'expected a block start');
+        const body = (new BlockSubparser()).parse(parser, token);
+        return new FunctionExpression(typeParameters, args, typesOfArguments, body, functionName, returnType);
+    }
+}
 class LambdaFunctionSubparser implements PrefixSubparser {
     @logCalls
     parse(parser: Parser, token: Token): LambdaFunctionExpression {
@@ -597,6 +674,7 @@ export class Parser {
         this.registerPrefix(TokenType.For, new ForSubparser());
         this.registerPrefix(TokenType.Pipe, new LambdaFunctionSubparser());
         this.registerPrefix(TokenType.DoublePipe, new LambdaFunctionSubparser());
+        this.registerPrefix(TokenType.Fn, new FunctionSubparser());
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],
             [TokenType.DoubleAmpersand, Precedence.SUM],

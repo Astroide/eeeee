@@ -1,7 +1,14 @@
-for ,, {
-    let x: List[string] = 0;
-    let y = 1;
-    (|x: string, y: int, z| stdout.writeln(x); stdout.writeln(y); stdout.writeln(z))("meow", x, y)
+fn main() {
+    for ,, {
+        let x: List[string] = 0;
+        let y = 1;
+        (|x: string, y: int, z| stdout.writeln(x); stdout.writeln(y); stdout.writeln(z))("meow", x, y)
+    }
+}
+
+enum Result<T, E> {
+    Ok(T),
+    Err(E)
 }
 /* for let i = 0, i < 100, i++ {
     stdout.writeln("%d".format(i))
