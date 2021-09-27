@@ -135,7 +135,7 @@ async function readFile(filename) {
     return contents;
 }
 exports.readFile = readFile;
-const DEBUG_SUBPARSER_CALLS = true;
+const DEBUG_SUBPARSER_CALLS = false;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function logCalls(target, propertyKey, descriptor) {
     const originalMethod = descriptor.value; // save a reference to the original method

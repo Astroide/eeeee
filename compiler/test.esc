@@ -1,5 +1,5 @@
 for ,,{
-    stdout.writeln(i)
+    (|x, y, z| stdout.writeln(x); stdout.writeln(y); stdout.writeln(z))("meow", 1, 2)
 }
 /* for let i = 0, i < 100, i++ {
     stdout.writeln("%d".format(i))

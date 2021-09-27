@@ -151,7 +151,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
                     (0, utilities_1.print)(`Token Identifier <${num}>`);
                 }
                 else if (token instanceof tokens_1.Token) {
-                    (0, utilities_1.print)(`Token BaseToken <${token.getSource()}>`);
+                    (0, utilities_1.print)(`Token BaseToken (${tokens_1.TokenType[token.type]}) <${token.getSource()}>`);
                 }
             });
         }

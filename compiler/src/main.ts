@@ -2,7 +2,7 @@ import { argv, exit } from 'process';
 import { errorAndWarningExplanations } from './explanations';
 import { Parser } from './parser';
 import { Tokenizer } from './tokenizer';
-import { Identifier, Keyword, NumberLiteral, StringLiteral, Token } from './tokens';
+import { Identifier, Keyword, NumberLiteral, StringLiteral, Token, TokenType } from './tokens';
 import { panic, print, readFile } from './utilities';
 
 async function main() {
@@ -140,7 +140,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
                     const num = (<Identifier>token).identifier;
                     print(`Token Identifier <${num}>`);
                 } else if (token instanceof Token) {
-                    print(`Token BaseToken <${token.getSource()}>`);
+                    print(`Token BaseToken (${TokenType[token.type]}) <${token.getSource()}>`);
                 }
             });
         }

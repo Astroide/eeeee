@@ -131,7 +131,7 @@ class ElementAccessSubparser {
         while (!parser.tokenSource.match(tokens_1.TokenType.RightBracket)) {
             if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
                 const token = parser.tokenSource.next();
-                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate indexes and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
             const index = parser.getExpression(this.precedence);
             indexes.push(index);
@@ -446,6 +446,44 @@ class ForSubparser {
         return new ForExpression(init, condition, repeat, loopBody);
     }
 }
+class LambdaFunctionExpression extends Expression {
+    constructor(args, body) {
+        super();
+        this.args = args;
+        this.body = body;
+    }
+    toString() {
+        return `LambdaFunction {[${this.args.map(x => x.toString()).join(', ')}], ${this.body.toString()}]`;
+    }
+}
+class LambdaFunctionSubparser {
+    parse(parser, token) {
+        const args = [];
+        if (token.type == tokens_1.TokenType.Pipe) {
+            // Function potentially has arguments
+            while (!parser.tokenSource.match(tokens_1.TokenType.Pipe)) {
+                if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                    const token = parser.tokenSource.next();
+                    (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
+                }
+                args.push(parser.getNamePattern());
+                if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                    parser.tokenSource.next();
+                }
+                else if (!parser.tokenSource.match(tokens_1.TokenType.Pipe)) {
+                    const token = parser.tokenSource.next();
+                    (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
+                }
+            }
+            parser.tokenSource.next(); // Consume the '|'
+        }
+        const body = parser.getExpression(0);
+        return new LambdaFunctionExpression(args, body);
+    }
+}
+__decorate([
+    utilities_1.logCalls
+], LambdaFunctionSubparser.prototype, "parse", null);
 class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();
@@ -467,6 +505,8 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.Const, new LetOrConstDeclarationSubparser());
         this.registerPrefix(tokens_1.TokenType.While, new WhileSubparser());
         this.registerPrefix(tokens_1.TokenType.For, new ForSubparser());
+        this.registerPrefix(tokens_1.TokenType.Pipe, new LambdaFunctionSubparser());
+        this.registerPrefix(tokens_1.TokenType.DoublePipe, new LambdaFunctionSubparser());
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoubleAmpersand, Precedence.SUM],
@@ -526,6 +566,9 @@ class Parser {
             }
         }
         return left;
+    }
+    getNamePattern() {
+        return (new IdentifierSubparser()).parse(this, this.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected an identifier'));
     }
     getType() {
         let T = {

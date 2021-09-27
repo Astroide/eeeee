@@ -67,14 +67,14 @@ interface InfixSubparser {
 
 class IdentifierSubparser implements PrefixSubparser {
     @logCalls
-    parse(parser: Parser, token: Token): Expression {
+    parse(parser: Parser, token: Token): IdentifierExpression {
         return new IdentifierExpression(token.getSource());
     }
 }
 
 class PrefixOperatorSubparser implements PrefixSubparser {
     @logCalls
-    parse(parser: Parser, token: Token): Expression {
+    parse(parser: Parser, token: Token): PrefixOperatorExpression {
         const operand: Expression = parser.getExpression(Precedence.PREFIX);
         return new PrefixOperatorExpression(token.type, operand);
     }
@@ -86,7 +86,7 @@ class InfixOperatorSubparser implements InfixSubparser {
         this.precedence = precedence;
     }
     @logCalls
-    parse(parser: Parser, left: Expression, token: Token): Expression {
+    parse(parser: Parser, left: Expression, token: Token): InfixOperatorExpression {
         const right = parser.getExpression(Precedence.SUM);
         return new InfixOperatorExpression(token.type, left, right);
     }
@@ -94,7 +94,7 @@ class InfixOperatorSubparser implements InfixSubparser {
 
 class GroupSubparser implements PrefixSubparser {
     @logCalls
-    parse(parser: Parser, _token: Token): Expression {
+    parse(parser: Parser, _token: Token): GroupExpression {
         const inside = parser.getExpression(0);
         parser.tokenSource.consume(TokenType.RightParenthesis, 'parenthesized expressions need to be closed');
         return new GroupExpression(inside);
@@ -108,7 +108,7 @@ class FunctionCallSubparser implements InfixSubparser {
         this.precedence = precedence;
     }
     @logCalls
-    parse(parser: Parser, callee: Expression, _token: Token): Expression {
+    parse(parser: Parser, callee: Expression, _token: Token): FunctionCallExpression {
         const args: Expression[] = [];
         while (!parser.tokenSource.match(TokenType.RightParenthesis)) {
             if (parser.tokenSource.match(TokenType.Comma)) {
@@ -135,12 +135,12 @@ class ElementAccessSubparser implements InfixSubparser {
         this.precedence = precedence;
     }
     @logCalls
-    parse(parser: Parser, object: Expression, _token: Token): Expression {
+    parse(parser: Parser, object: Expression, _token: Token): ElementAccessExpression {
         const indexes: Expression[] = [];
         while (!parser.tokenSource.match(TokenType.RightBracket)) {
             if (parser.tokenSource.match(TokenType.Comma)) {
                 const token = parser.tokenSource.next();
-                panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
+                panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate indexes and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
             const index = parser.getExpression(this.precedence);
             indexes.push(index);
@@ -517,6 +517,47 @@ class ForSubparser implements PrefixSubparser {
     }
 }
 
+class LambdaFunctionExpression extends Expression {
+    args: IdentifierExpression[];
+    body: Expression;
+    constructor(args: IdentifierExpression[], body: Expression) {
+        super();
+        this.args = args;
+        this.body = body;
+    }
+
+    toString(): string {
+        return `LambdaFunction {[${this.args.map(x => x.toString()).join(', ')}], ${this.body.toString()}]`;
+    }
+}
+
+
+class LambdaFunctionSubparser implements PrefixSubparser {
+    @logCalls
+    parse(parser: Parser, token: Token): LambdaFunctionExpression {
+        const args: IdentifierExpression[] = [];
+        if (token.type == TokenType.Pipe) {
+            // Function potentially has arguments
+            while (!parser.tokenSource.match(TokenType.Pipe)) {
+                if (parser.tokenSource.match(TokenType.Comma)) {
+                    const token = parser.tokenSource.next();
+                    panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
+                }
+                args.push(parser.getNamePattern());
+                if (parser.tokenSource.match(TokenType.Comma)) {
+                    parser.tokenSource.next();
+                } else if (!parser.tokenSource.match(TokenType.Pipe)) {
+                    const token = parser.tokenSource.next();
+                    panicAt(parser.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
+                }
+            }
+            parser.tokenSource.next(); // Consume the '|'
+        }
+        const body = parser.getExpression(0);
+        return new LambdaFunctionExpression(args, body);
+    }
+
+}
 export class Parser {
     tokenSource: PeekableTokenStream;
     prefixSubparsers: Map<TokenType, PrefixSubparser> = new Map();
@@ -539,6 +580,8 @@ export class Parser {
         this.registerPrefix(TokenType.Const, new LetOrConstDeclarationSubparser());
         this.registerPrefix(TokenType.While, new WhileSubparser());
         this.registerPrefix(TokenType.For, new ForSubparser());
+        this.registerPrefix(TokenType.Pipe, new LambdaFunctionSubparser());
+        this.registerPrefix(TokenType.DoublePipe, new LambdaFunctionSubparser());
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],
             [TokenType.DoubleAmpersand, Precedence.SUM],
@@ -602,6 +645,10 @@ export class Parser {
         }
 
         return left;
+    }
+
+    getNamePattern(): IdentifierExpression {
+        return (new IdentifierSubparser()).parse(this, this.tokenSource.consume(TokenType.Identifier, 'expected an identifier'));
     }
 
     getType(): Type {
