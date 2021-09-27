@@ -367,23 +367,29 @@ class LetOrConstDeclarationSubparser {
     parse(parser, token) {
         const type = token.type == tokens_1.TokenType.Let ? 'let' : 'const';
         const name = parser.tokenSource.consume(tokens_1.TokenType.Identifier, `expected an identifier after ${type}`);
+        let variableType = null;
+        if (parser.tokenSource.match(tokens_1.TokenType.Colon)) {
+            parser.tokenSource.next();
+            variableType = parser.getType();
+        }
         let value = null;
         if (parser.tokenSource.match(tokens_1.TokenType.Equals)) {
             parser.tokenSource.next();
             value = parser.getExpression(0);
         }
-        return new LetOrConstDeclarationExpression(type, name, value);
+        return new LetOrConstDeclarationExpression(type, name, value, variableType);
     }
 }
 class LetOrConstDeclarationExpression extends Expression {
-    constructor(type, name, value) {
+    constructor(type, name, value, variableType) {
         super();
         this.type = type;
         this.name = name;
         this.value = value;
+        this.variableType = variableType;
     }
     toString() {
-        return `${this.type} {${(new IdentifierExpression(this.name.getSource())).toString()}${this.value ? ', ' + this.value.toString() : ''}}`;
+        return `${this.type} {${(new IdentifierExpression(this.name.getSource())).toString()}, ${this.variableType ? typeToString(this.variableType) : '<inferred type>'}${this.value ? ', ' + this.value.toString() : ''}}`;
     }
 }
 function typeToString(type) {

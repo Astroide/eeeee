@@ -1,4 +1,5 @@
-for ,,{
+for ,, {
+    let x: List[string] = 0;
     (|x, y, z| stdout.writeln(x); stdout.writeln(y); stdout.writeln(z))("meow", 1, 2)
 }
 /* for let i = 0, i < 100, i++ {
