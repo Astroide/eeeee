@@ -20,17 +20,13 @@ async function main() {
             short: 'h',
             long: 'help'
         },
-        bytecode: {
-            short: 'b',
-            long: 'bytecode'
-        },
-        compileOnly: {
-            short: 'c',
-            long: 'compile-only'
-        },
         explain: {
             short: 'e',
             long: 'explain'
+        },
+        transpileOnly: {
+            short: 't',
+            long: 'transpile-only'
         }
     };
     let filename = '';
@@ -86,9 +82,8 @@ Options:
 * -v, --verbose : Verbose mode. Print extra informations about what the compiler is doing.
 * -h, --help : Show this message.
 * -e errorid, --explain errorid : Show the explanation for the error or warning 'errorid'.
-* -o=filename, --out=filename : Specify where should bytecode be output.
-* -b, --bytecode : Run from bytecode instead of source.
-* -c, --compile-only : Compile to bytecode without running that bytecode.
+* -o=filename, --out=filename : Specify where should the final executable (or C code when -t / --transpile-only is passed) be output.
+* -t, --transpile-only : Do not compile the produced C code, instead write it to the directory specified by the -o / --out option.
 
 Report any errors / bugs / whatever to this page : https://github.com/Astroide/escurieux/issues .`);
         exit(0);
@@ -108,12 +103,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
         }
         exit(0);
     }
-    if (getOption('bytecode') && getOption('compileOnly')) {
-        panic('--bytecode / -b and --compile-only / -c cannot be used together.');
-    }
-    if (getOption('bytecode')) {
-        panic('The VM has not been implemented yet.');
-    } else {
+    {
         const verbose = !!getOption('verbose');
         const result = await readFile(filename);
         if (result.err()) {
