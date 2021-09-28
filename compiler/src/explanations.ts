@@ -10,6 +10,12 @@ export const errorAndWarningExplanations: { [x: string]: string } = {
     E00007: 'Binary numbers must contain at least one digit: This error happens because there is a binary number start \'0b\' that is not followed by a dot or at least one binary digit (0, 1).',
     E00008: 'Invalid character : This error is raised when an unrecognized character is read in the source code.',
     E00009: 'Cannot escape a newline in a character literal : This error is raised when a newline is escaped within a character literal, which makes no sense because character literals are supposed to be one character long.',
+    E00010: 'Expected TokenType.<token type>, got <text> : <explanation> : This means the compiler expected a particular token (e.g. a closing parenthesis) but another token was found instead.',
+    E00011: 'Only commas to separate (function arguments | type parameters | indexes | arguments) and an optional trailing comma are allowed : this error is show when either there is a leading comma (e.g. Map[,string, int]) or a double comma (e.g. fn(1,, 8)).',
+    E00012: '(Arguments | Indices) should be separated by commas : This happens when a function is called / something is indexed with multiple arguments / indices that aren\'t separated with commas (e.g. func(1 2)). Arguments (or indices) should always be comma-separated.',
+    E00014: 'Unexpected empty type parameters : This error is shown when a type has empty type parameters (e.g. Map[]). This means you need to add the missing type parameters or remove the [] if the type requires no type parameters.',
+    E00015: 'A left parenthesis is required to start a function\'s argument list : function expressions (fn funcName(arg1: int, arg2: int) int {}) are required to have an argument list (the (arg1: int, arg2: int) part) enclosed in parentheses.',
+    E00016: 'Function arguments must be typed : This error is shown when a function\'s argument is untyped. Function arguments always need to be typed (e.g. fn funcName(argName: Type) {}) to make work easier for the type inference system (and because it is very hard for it to guess the types of the arguments from function usage).',
     W00001: 'Leading zero in number literal: This warning is shown when a number literal starts with one or more extra zeroes, as in 0123, 0893.034 or 0023. If this was intended to be an octal literal, it should have been written like this : 0o123 instead of 0123 or 00123.',
 };
 

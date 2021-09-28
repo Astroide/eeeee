@@ -1,6 +1,6 @@
 fn main() {
     for ,, {
-        let x: List[string] = 0;
+        let x: List[] = 0;
         let y = 1;
         (|x: string, y: int, z| stdout.writeln(x); stdout.writeln(y); stdout.writeln(z))("meow", x, y)
     }

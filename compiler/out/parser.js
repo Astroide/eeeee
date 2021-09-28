@@ -127,24 +127,24 @@ class ElementAccessSubparser {
         this.precedence = precedence;
     }
     parse(parser, object, _token) {
-        const indexes = [];
+        const indices = [];
         while (!parser.tokenSource.match(tokens_1.TokenType.RightBracket)) {
             if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
                 const token = parser.tokenSource.next();
-                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate indexes and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate indices and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
             const index = parser.getExpression(this.precedence);
-            indexes.push(index);
+            indices.push(index);
             if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
                 parser.tokenSource.next();
             }
             else if (!parser.tokenSource.match(tokens_1.TokenType.RightBracket)) {
                 const token = parser.tokenSource.next();
-                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00012] Indices should be separated by commas', token.line, token.char, token.getSource());
             }
         }
         parser.tokenSource.next();
-        return new ElementAccessExpression(object, indexes);
+        return new ElementAccessExpression(object, indices);
     }
 }
 __decorate([
@@ -172,13 +172,13 @@ class FunctionCallExpression extends Expression {
     }
 }
 class ElementAccessExpression extends Expression {
-    constructor(left, indexes) {
+    constructor(left, indices) {
         super();
         this.left = left;
-        this.indexes = indexes;
+        this.indices = indices;
     }
     toString() {
-        return `IndexingExpression {${this.left.toString()}${this.indexes.length > 0 ? ', ' + this.indexes.map(x => x.toString()).join(', ') : ''}}`;
+        return `IndexingExpression {${this.left.toString()}${this.indices.length > 0 ? ', ' + this.indices.map(x => x.toString()).join(', ') : ''}}`;
     }
 }
 class IdentifierExpression extends Expression {
@@ -510,7 +510,7 @@ class FunctionSubparser {
             args.push(parser.getNamePattern());
             if (!parser.tokenSource.match(tokens_1.TokenType.Colon)) {
                 const wrongToken = parser.tokenSource.next();
-                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00016] Function arguments MUST be typed (e.g. fn func(a: int, b: int) {})', wrongToken.line, wrongToken.char, wrongToken.getSource());
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00016] Function arguments must be typed', wrongToken.line, wrongToken.char, wrongToken.getSource());
             }
             else {
                 parser.tokenSource.next();

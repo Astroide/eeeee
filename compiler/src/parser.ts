@@ -136,24 +136,24 @@ class ElementAccessSubparser implements InfixSubparser {
     }
     @logCalls
     parse(parser: Parser, object: Expression, _token: Token): ElementAccessExpression {
-        const indexes: Expression[] = [];
+        const indices: Expression[] = [];
         while (!parser.tokenSource.match(TokenType.RightBracket)) {
             if (parser.tokenSource.match(TokenType.Comma)) {
                 const token = parser.tokenSource.next();
-                panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate indexes and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
+                panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate indices and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
             const index = parser.getExpression(this.precedence);
-            indexes.push(index);
+            indices.push(index);
             if (parser.tokenSource.match(TokenType.Comma)) {
                 parser.tokenSource.next();
             } else if (!parser.tokenSource.match(TokenType.RightBracket)) {
                 const token = parser.tokenSource.next();
-                panicAt(parser.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
+                panicAt(parser.tokenSource.reader, '[ESCE00012] Indices should be separated by commas', token.line, token.char, token.getSource());
             }
         }
         parser.tokenSource.next();
 
-        return new ElementAccessExpression(object, indexes);
+        return new ElementAccessExpression(object, indices);
     }
 }
 
@@ -187,14 +187,14 @@ class FunctionCallExpression extends Expression {
 
 class ElementAccessExpression extends Expression {
     left: Expression;
-    indexes: Expression[];
-    constructor(left: Expression, indexes: Expression[]) {
+    indices: Expression[];
+    constructor(left: Expression, indices: Expression[]) {
         super();
         this.left = left;
-        this.indexes = indexes;
+        this.indices = indices;
     }
     toString(): string {
-        return `IndexingExpression {${this.left.toString()}${this.indexes.length > 0 ? ', ' + this.indexes.map(x => x.toString()).join(', ') : ''}}`;
+        return `IndexingExpression {${this.left.toString()}${this.indices.length > 0 ? ', ' + this.indices.map(x => x.toString()).join(', ') : ''}}`;
     }
 }
 
@@ -595,7 +595,7 @@ class FunctionSubparser implements PrefixSubparser {
             args.push(parser.getNamePattern());
             if (!parser.tokenSource.match(TokenType.Colon)) {
                 const wrongToken = parser.tokenSource.next();
-                panicAt(parser.tokenSource.reader, '[ESCE00016] Function arguments MUST be typed (e.g. fn func(a: int, b: int) {})', wrongToken.line, wrongToken.char, wrongToken.getSource());
+                panicAt(parser.tokenSource.reader, '[ESCE00016] Function arguments must be typed', wrongToken.line, wrongToken.char, wrongToken.getSource());
             } else {
                 parser.tokenSource.next();
                 typesOfArguments.push(parser.getType());
