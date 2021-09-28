@@ -1,6 +1,6 @@
 fn main() {
     for ,, {
-        let x: List[] = 0;
+        let x: List[int] = 0;
         let y = 1;
         (|x: string, y: int, z| stdout.writeln(x); stdout.writeln(y); stdout.writeln(z))("meow", x, y)
     }
@@ -29,7 +29,7 @@ enum Result<T, E> {
     0
 } */
 0xFF00EE
-// 0x$T 
+// 0x$T
 0xabc.def
 24982
 23903290.4893
