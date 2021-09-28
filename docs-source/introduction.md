@@ -6,7 +6,7 @@
 This is the simplest §Hello, World!§ Escurieux program :
 
 «
-stdout.writeln('Hello, World!');
+stdout.writeln('Hello, World!')
 »
 
 #### Breakdown of the §Hello, World!§
@@ -14,7 +14,6 @@ stdout.writeln('Hello, World!');
 stdout                           // Standard Output
       .writeln                   // writeln - write with trailing newline
               ('Hello, World!')  // Call the method with as argument the string 'Hello, World!'
-                               ; // The semicolon marks the end of an expression
 »
 
 {
