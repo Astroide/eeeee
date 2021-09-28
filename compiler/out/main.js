@@ -28,6 +28,10 @@ async function main() {
         transpileOnly: {
             short: 't',
             long: 'transpile-only'
+        },
+        longErrorMessages: {
+            short: 'l',
+            long: 'long-errors'
         }
     };
     let filename = '';
@@ -90,6 +94,7 @@ Options:
 * -e errorid, --explain errorid : Show the explanation for the error or warning 'errorid'.
 * -o=filename, --out=filename : Specify where should the final executable (or C code when -t / --transpile-only is passed) be output.
 * -t, --transpile-only : Do not compile the produced C code, instead write it to the directory specified by the -o / --out option.
+* -l, --long-errors : Show the error explanations produced by --explain instead of showing an invitation to run --explain
 
 Report any errors / bugs / whatever to this page : https://github.com/Astroide/escurieux/issues .`);
         (0, process_1.exit)(0);
@@ -108,6 +113,9 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
             (0, utilities_1.panic)(`Error id ${errorID} is invalid.`);
         }
         (0, process_1.exit)(0);
+    }
+    if (getOption('longErrorMessages')) {
+        (0, utilities_1.showLongErrorMessages)(true);
     }
     {
         const verbose = !!getOption('verbose');

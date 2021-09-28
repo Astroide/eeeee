@@ -1,5 +1,7 @@
 import { exit } from 'process';
 import { readFile as fsReadFile } from 'fs/promises';
+import { errorAndWarningExplanations } from './explanations';
+let showLongErrors = false;
 export function panic(message: string): never {
     console.error('\u001b[31mFatal error\u001b[0m: ' + message + '');
     exit(1);
@@ -31,7 +33,7 @@ On line ${line + 1} at character ${char + 1}:
  \u001b[34m${(line + 1).toString().padEnd(6, ' ')} here >\u001b[0m ${lineText.slice(0, lineText.length - 1)}
  \u001b[34m${(line + 2).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 1 < lineCount ? (currentLine = source.getLine(line + 1)).slice(0, currentLine.length - 1) : ''}
  \u001b[34m${(line + 3).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : ''}
-Run escurieux -e ${errorOrWarningId} or escurieux --explain ${errorOrWarningId} for more informations about this error.\n----------\n`);
+${showLongErrors ? `Explanation of error ${errorOrWarningId}:\n  ${errorAndWarningExplanations[errorOrWarningId.slice(3)]}` : `Run escurieux -e ${errorOrWarningId} or escurieux --explain ${errorOrWarningId} for more informations about this error.`}\n----------\n`);
 }
 
 export const panicAt = (source: StringReader, message: string, line: number, char: number, text: string): never => doSomethingAt(panic, source, message, line, char, text);
@@ -156,4 +158,8 @@ export function logCalls(target: unknown, propertyKey: string, descriptor: Typed
 
 export function zip<A, B>(a: A[], b: B[]): [A, B][] {
     return <[A, B][]>a.map((_, c) => [a, b].map(row => row[c]));
+}
+
+export function showLongErrorMessages(value: boolean): void {
+    showLongErrors = value;
 }

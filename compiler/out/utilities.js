@@ -1,9 +1,11 @@
 "use strict";
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.zip = exports.logCalls = exports.readFile = exports.Result = exports.StringReader = exports.warnAt = exports.panicAt = exports.warn = exports.print = exports.panic = void 0;
+exports.showLongErrorMessages = exports.zip = exports.logCalls = exports.readFile = exports.Result = exports.StringReader = exports.warnAt = exports.panicAt = exports.warn = exports.print = exports.panic = void 0;
 const process_1 = require("process");
 const promises_1 = require("fs/promises");
+const explanations_1 = require("./explanations");
+let showLongErrors = false;
 function panic(message) {
     console.error('\u001b[31mFatal error\u001b[0m: ' + message + '');
     (0, process_1.exit)(1);
@@ -37,7 +39,7 @@ On line ${line + 1} at character ${char + 1}:
  \u001b[34m${(line + 1).toString().padEnd(6, ' ')} here >\u001b[0m ${lineText.slice(0, lineText.length - 1)}
  \u001b[34m${(line + 2).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 1 < lineCount ? (currentLine = source.getLine(line + 1)).slice(0, currentLine.length - 1) : ''}
  \u001b[34m${(line + 3).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : ''}
-Run escurieux -e ${errorOrWarningId} or escurieux --explain ${errorOrWarningId} for more informations about this error.\n----------\n`);
+${showLongErrors ? `Explanation of error ${errorOrWarningId}:\n  ${explanations_1.errorAndWarningExplanations[errorOrWarningId.slice(3)]}` : `Run escurieux -e ${errorOrWarningId} or escurieux --explain ${errorOrWarningId} for more informations about this error.`}\n----------\n`);
 }
 const panicAt = (source, message, line, char, text) => doSomethingAt(panic, source, message, line, char, text);
 exports.panicAt = panicAt;
@@ -153,4 +155,8 @@ function zip(a, b) {
     return a.map((_, c) => [a, b].map(row => row[c]));
 }
 exports.zip = zip;
+function showLongErrorMessages(value) {
+    showLongErrors = value;
+}
+exports.showLongErrorMessages = showLongErrorMessages;
 //# sourceMappingURL=utilities.js.map
