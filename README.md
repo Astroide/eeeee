@@ -6,7 +6,7 @@
 A statically typed programming language, transpiled to C.
 
 ### Current State
-As of now, the parser is written (and the compiler will be) in [TypeScript](https://typescriptlang.org), but once Escurieux will be in an appropriate state, they will be rewritten in Escurieux to remove the TypeScript/Node.js dependencies.
+As of now, the parser and the tokenizer are written (and the compiler will be) in [TypeScript](https://typescriptlang.org), but once Escurieux will be in an appropriate state, they will be rewritten in Escurieux to remove the TypeScript/Node.js dependencies.
 
 ```
              _
