@@ -733,7 +733,7 @@ export class Parser {
             try {
                 left = infix.parse(this, left, token);
             } catch (e) {
-                panicAt(this.tokenSource.reader, `[ESCE99999] [[Failure]] ${TokenType[token.type]}`, token.line, token.char, token.getSource());
+                panicAt(this.tokenSource.reader, `[ESCE99999] [[Failure]] ${TokenType[token.type]} - please report this error to https://github.com/Astroide/escurieux/issues`, token.line, token.char, token.getSource());
             }
         }
 
