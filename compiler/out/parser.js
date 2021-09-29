@@ -464,7 +464,7 @@ class LambdaFunctionExpression extends Expression {
     }
 }
 class FunctionExpression extends Expression {
-    constructor(typeParameters, args, typesOfArguments, body, name, returnType) {
+    constructor(typeParameters, args, typesOfArguments, body, name, typeConstraints, returnType) {
         super();
         this.typeParameters = typeParameters;
         this.args = args;
@@ -472,32 +472,19 @@ class FunctionExpression extends Expression {
         this.body = body;
         this.name = name;
         this.returnType = returnType;
+        this.typeConstraints = typeConstraints;
     }
     toString() {
-        return `Function<${this.typeParameters.map(x => x.id).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {[${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
+        return `Function<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(x => `${x[0].id} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {[${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
     }
 }
 class FunctionSubparser {
     parse(parser, _token) {
         const functionName = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'a function name is required'));
-        const typeParameters = [];
+        let typeParameters = [];
+        let typeConstraints = [];
         if (parser.tokenSource.match(tokens_1.TokenType.LeftBracket)) {
-            parser.tokenSource.next(); // Consume the '['
-            while (!parser.tokenSource.match(tokens_1.TokenType.RightBracket)) {
-                if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
-                    const token = parser.tokenSource.next();
-                    (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate type parameters and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
-                }
-                typeParameters.push((new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'a type parameter name was expected')));
-                if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
-                    parser.tokenSource.next();
-                }
-                else if (!parser.tokenSource.match(tokens_1.TokenType.RightBracket)) {
-                    const token = parser.tokenSource.next();
-                    (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
-                }
-            }
-            parser.tokenSource.next(); // Consume the ']'
+            [typeParameters, typeConstraints] = parser.getTypeParameters();
         }
         parser.tokenSource.consume(tokens_1.TokenType.LeftParenthesis, '[ESCE00015] A left parenthesis is required to start a function\'s argument list');
         const args = [];
@@ -531,7 +518,7 @@ class FunctionSubparser {
         }
         const token = parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, 'expected a block start');
         const body = (new BlockSubparser()).parse(parser, token);
-        return new FunctionExpression(typeParameters, args, typesOfArguments, body, functionName, returnType);
+        return new FunctionExpression(typeParameters, args, typesOfArguments, body, functionName, typeConstraints, returnType);
     }
 }
 class LambdaFunctionSubparser {
@@ -570,6 +557,13 @@ class LambdaFunctionSubparser {
 __decorate([
     utilities_1.logCalls
 ], LambdaFunctionSubparser.prototype, "parse", null);
+function typeConstraintToString(t) {
+    if (t == 'unconstrained')
+        return t;
+    else {
+        return `${t.kind == 'extends' ? '>=' : ':'} ${typeToString(t.type)}${t.and ? ` & ${typeConstraintToString(t.and)}` : ''}`;
+    }
+}
 class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();
@@ -654,9 +648,86 @@ class Parser {
         }
         return left;
     }
-    // getTypeParameters(): [Type[], TypeConstraint[]] {
-    // this.tokenSource.next(); // Consume the '['
-    // }
+    getTypeParameters() {
+        this.tokenSource.next(); // Consume the '['
+        const names = [];
+        const constraints = [];
+        while (!this.tokenSource.match(tokens_1.TokenType.RightBracket)) {
+            if (this.tokenSource.match(tokens_1.TokenType.Comma)) {
+                const token = this.tokenSource.next();
+                (0, utilities_1.panicAt)(this.tokenSource.reader, '[ESCE00011] Only commas to separate type parameters and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
+            }
+            names.push((new IdentifierSubparser()).parse(this, this.tokenSource.consume(tokens_1.TokenType.Identifier, 'a type parameter name was expected')));
+            const innerConstraints = [];
+            if (this.tokenSource.match(tokens_1.TokenType.SmallerOrEqual)) {
+                this.tokenSource.next();
+                innerConstraints.push({
+                    kind: 'extends',
+                    type: this.getType()
+                });
+            }
+            if (this.tokenSource.match(tokens_1.TokenType.Colon)) {
+                this.tokenSource.next();
+                if (this.tokenSource.match(tokens_1.TokenType.LeftParenthesis)) {
+                    this.tokenSource.next();
+                    if (this.tokenSource.match(tokens_1.TokenType.RightParenthesis)) {
+                        const wrongToken = this.tokenSource.next();
+                        (0, utilities_1.panicAt)(this.tokenSource.reader, '[ESCE00017] Parentheses in \':\' type constraints must contain something', wrongToken.line, wrongToken.char, wrongToken.getSource());
+                    }
+                    while (!this.tokenSource.match(tokens_1.TokenType.RightParenthesis)) {
+                        if (this.tokenSource.match(tokens_1.TokenType.Comma)) {
+                            const token = this.tokenSource.next();
+                            (0, utilities_1.panicAt)(this.tokenSource.reader, '[ESCE00011] Only commas to separate type parameters and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
+                        }
+                        innerConstraints.push({
+                            kind: 'implements',
+                            type: this.getType()
+                        });
+                        if (this.tokenSource.match(tokens_1.TokenType.Comma)) {
+                            this.tokenSource.next();
+                        }
+                        else if (!this.tokenSource.match(tokens_1.TokenType.RightParenthesis)) {
+                            const token = this.tokenSource.next();
+                            (0, utilities_1.panicAt)(this.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
+                        }
+                    }
+                    this.tokenSource.next();
+                }
+                else {
+                    const type = this.getType();
+                    innerConstraints.push({
+                        kind: 'implements',
+                        type: type
+                    });
+                }
+            }
+            if (this.tokenSource.match(tokens_1.TokenType.Comma)) {
+                this.tokenSource.next();
+            }
+            else if (!this.tokenSource.match(tokens_1.TokenType.RightBracket)) {
+                const token = this.tokenSource.next();
+                (0, utilities_1.panicAt)(this.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
+            }
+            if (innerConstraints.length == 0) {
+                constraints.push('unconstrained');
+            }
+            else {
+                const originalConstraint = innerConstraints[0];
+                let constraint = originalConstraint;
+                let index = 1;
+                while (index < innerConstraints.length) {
+                    if (constraint != 'unconstrained') {
+                        constraint.and = innerConstraints[index];
+                        constraint = constraint.and;
+                    }
+                    index++;
+                }
+                constraints.push(originalConstraint);
+            }
+        }
+        this.tokenSource.next(); // Consume the ']'
+        return [names, constraints];
+    }
     getNamePattern() {
         return (new IdentifierSubparser()).parse(this, this.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected an identifier'));
     }

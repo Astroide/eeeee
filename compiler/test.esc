@@ -1,4 +1,4 @@
-fn main[T](x: T) T {
+fn main[I, K, V <= K : (I, J)](x: T) T {
     for ,, {
         let x: List[int] = 0;
         let y = 1;
