@@ -649,7 +649,7 @@ type TypeConstraint = {
 function typeConstraintToString(t: TypeConstraint): string {
     if (t == 'unconstrained') return t;
     else {
-        return `${t.kind == 'extends' ? '>=' : ':'} ${typeToString(t.type)}${t.and ? ` & ${typeConstraintToString(t.and)}` : ''}`;
+        return `${t.kind == 'extends' ? '<=' : ':'} ${typeToString(t.type)}${t.and ? ` & ${typeConstraintToString(t.and)}` : ''}`;
     }
 }
 
