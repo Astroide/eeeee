@@ -481,9 +481,9 @@ class FunctionSubparser {
     parse(parser, _token) {
         const functionName = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'a function name is required'));
         const typeParameters = [];
-        if (parser.tokenSource.match(tokens_1.TokenType.LeftAngleBracket)) {
-            parser.tokenSource.next(); // Consume the <
-            while (!parser.tokenSource.match(tokens_1.TokenType.RightAngleBracket)) {
+        if (parser.tokenSource.match(tokens_1.TokenType.LeftBracket)) {
+            parser.tokenSource.next(); // Consume the '['
+            while (!parser.tokenSource.match(tokens_1.TokenType.RightBracket)) {
                 if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
                     const token = parser.tokenSource.next();
                     (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate type parameters and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
@@ -492,12 +492,12 @@ class FunctionSubparser {
                 if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
                     parser.tokenSource.next();
                 }
-                else if (!parser.tokenSource.match(tokens_1.TokenType.RightAngleBracket)) {
+                else if (!parser.tokenSource.match(tokens_1.TokenType.RightBracket)) {
                     const token = parser.tokenSource.next();
                     (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
                 }
             }
-            parser.tokenSource.next(); // Consume the '>'
+            parser.tokenSource.next(); // Consume the ']'
         }
         parser.tokenSource.consume(tokens_1.TokenType.LeftParenthesis, '[ESCE00015] A left parenthesis is required to start a function\'s argument list');
         const args = [];
@@ -654,6 +654,9 @@ class Parser {
         }
         return left;
     }
+    // getTypeParameters(): [Type[], TypeConstraint[]] {
+    // this.tokenSource.next(); // Consume the '['
+    // }
     getNamePattern() {
         return (new IdentifierSubparser()).parse(this, this.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected an identifier'));
     }

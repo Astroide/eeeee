@@ -567,9 +567,9 @@ class FunctionSubparser implements PrefixSubparser {
     parse(parser: Parser, _token: Token): FunctionExpression {
         const functionName = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(TokenType.Identifier, 'a function name is required'));
         const typeParameters: IdentifierExpression[] = [];
-        if (parser.tokenSource.match(TokenType.LeftAngleBracket)) {
-            parser.tokenSource.next(); // Consume the <
-            while (!parser.tokenSource.match(TokenType.RightAngleBracket)) {
+        if (parser.tokenSource.match(TokenType.LeftBracket)) {
+            parser.tokenSource.next(); // Consume the '['
+            while (!parser.tokenSource.match(TokenType.RightBracket)) {
                 if (parser.tokenSource.match(TokenType.Comma)) {
                     const token = parser.tokenSource.next();
                     panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate type parameters and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
@@ -577,12 +577,12 @@ class FunctionSubparser implements PrefixSubparser {
                 typeParameters.push((new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(TokenType.Identifier, 'a type parameter name was expected')));
                 if (parser.tokenSource.match(TokenType.Comma)) {
                     parser.tokenSource.next();
-                } else if (!parser.tokenSource.match(TokenType.RightAngleBracket)) {
+                } else if (!parser.tokenSource.match(TokenType.RightBracket)) {
                     const token = parser.tokenSource.next();
                     panicAt(parser.tokenSource.reader, '[ESCE00012] Arguments should be separated by commas', token.line, token.char, token.getSource());
                 }
             }
-            parser.tokenSource.next(); // Consume the '>'
+            parser.tokenSource.next(); // Consume the ']'
         }
         parser.tokenSource.consume(TokenType.LeftParenthesis, '[ESCE00015] A left parenthesis is required to start a function\'s argument list');
         const args: IdentifierExpression[] = [];
@@ -650,6 +650,12 @@ class LambdaFunctionSubparser implements PrefixSubparser {
     }
 
 }
+
+type TypeConstraint = {
+    kind: 'extends' | 'implements',
+    type: Type
+} | 'unconstrained';
+
 export class Parser {
     tokenSource: PeekableTokenStream;
     prefixSubparsers: Map<TokenType, PrefixSubparser> = new Map();
@@ -739,6 +745,10 @@ export class Parser {
 
         return left;
     }
+
+    // getTypeParameters(): [Type[], TypeConstraint[]] {
+    // this.tokenSource.next(); // Consume the '['
+    // }
 
     getNamePattern(): IdentifierExpression {
         return (new IdentifierSubparser()).parse(this, this.tokenSource.consume(TokenType.Identifier, 'expected an identifier'));
