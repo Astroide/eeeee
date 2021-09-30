@@ -21,16 +21,20 @@ export const errorAndWarningExplanations: { [x: string]: string } = {
 };
 
 export const tokenTypeExplanations: Map<TokenType, string> = new Map<TokenType, string>();
-[
+([
     [TokenType.Identifier, 'an identifier, e.g. myVariable'],
-    [TokenType.LeftBracket, '\'[\''],
-    [TokenType.RightBracket, '\']\''],
-    [TokenType.LeftCurlyBracket, '\'{\''],
-    [TokenType.RightCurlyBracket, '\'}\''],
-    [TokenType.LeftAngleBracket, '\'<\''],
-    [TokenType.RightAngleBracket, '\'>\''],
-    [TokenType.LeftParenthesis, '\'(\''],
-    [TokenType.RightParenthesis, '\')\'']
-].forEach(
+    [TokenType.LeftBracket, '['],
+    [TokenType.RightBracket, ']'],
+    [TokenType.LeftCurlyBracket, '{'],
+    [TokenType.RightCurlyBracket, '}'],
+    [TokenType.LeftAngleBracket, '<'],
+    [TokenType.RightAngleBracket, '>'],
+    [TokenType.LeftParenthesis, '('],
+    [TokenType.RightParenthesis, ')'],
+    [TokenType.Ampersand, '&'],
+    [TokenType.Pipe, '|'],
+    [TokenType.DoubleAmpersand, '&&'],
+    [TokenType.DoublePipe, '||'],
+] as [TokenType, string][]).map(([a, b]): [TokenType, string] => [a, `'${b}'`]).forEach(
     ([type, explanation]) =>
         tokenTypeExplanations.set(<TokenType>type, <string>explanation));
