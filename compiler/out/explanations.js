@@ -19,6 +19,7 @@ exports.errorAndWarningExplanations = {
     E00015: 'A left parenthesis is required to start a function\'s argument list : function expressions (fn funcName(arg1: int, arg2: int) int {}) are required to have an argument list (the (arg1: int, arg2: int) part) enclosed in parentheses.',
     E00016: 'Function arguments must be typed : This error is shown when a function\'s argument is untyped. Function arguments always need to be typed (e.g. fn funcName(argName: Type) {}) to make work easier for the type inference system (and because it is very hard for it to guess the types of the arguments from function usage).',
     E00017: 'Parentheses in \':\' type constraints must contain something : In trait requirements that require multiple traits to be implemented in type constraints (e.g. class Cls[T: (A, B)] {...}), the parentheses must contain something, otherwise they\'re useless and you can take them away.',
+    E99999: 'An error happened in the parser. Please report this to https://github.com/Astroide/escurieux/issues so that it can be fixed.',
     W00001: 'Leading zero in number literal: This warning is shown when a number literal starts with one or more extra zeroes, as in 0123, 0893.034 or 0023. If this was intended to be an octal literal, it should have been written like this : 0o123 instead of 0123 or 00123.',
 };
 exports.tokenTypeExplanations = new Map();
