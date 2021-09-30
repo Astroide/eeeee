@@ -39,13 +39,14 @@ exports.__esModule = true;
 var vscode = require("vscode");
 var child_process_1 = require("child_process");
 var promises_1 = require("fs/promises");
+var fs_1 = require("fs");
 var output = vscode.window.createOutputChannel('Escurieux');
 globalThis.console = {
     log: function (msg) {
         output.appendLine(msg);
     }
 };
-// console.log('Starting up Escurieux extension...');
+// console.log('Escurieux extension output');
 vscode.languages.setLanguageConfiguration('escurieux', {
     'wordPattern': /[A-Za-z_0-9]+/
 });
@@ -69,7 +70,6 @@ function checkCodeValidity(_path, text) {
 }
 var resetANSIEscapeCode = '\u001b[0m';
 function parseMessage(message) {
-    // console.log('Line 32:' + message);
     var result = {
         type: 'warning',
         message: '',
@@ -77,11 +77,8 @@ function parseMessage(message) {
         char: 1
     };
     result.type = message.includes('Fatal error' + resetANSIEscapeCode) ? 'error' : 'warning';
-    // console.log('Line 40:' + `!!${message}!!`);
     var matches = message.match(/: \n(.+)\nOn line (\d+) at character (\d+):\n/);
-    // console.log('Line 42:' + `matches ${matches}`);
     if (matches == null) {
-        // console.log('Line 44:' + 'Failed to match.');
         return null;
     }
     result.message = matches[1];
@@ -101,11 +98,9 @@ function updateDiagnostics(uri) {
                     if (result == null)
                         continue;
                     var type = result.type, message = result.message, line = result.line, char = result.char;
-                    // console.log('Line 62:' + type + ' ' + message + ' ' + line + ' ' + char);
                     var range = new vscode.Range(line - 1, char - 1, line - 1, char);
                     var diagnostic = new vscode.Diagnostic(range, message, type == 'error' ? vscode.DiagnosticSeverity.Error : vscode.DiagnosticSeverity.Warning);
                     diagnostics.push(diagnostic);
-                    // console.log('Line 66:' + message);
                 }
                 diagnosticCollection.clear();
                 diagnosticCollection.set(uri, diagnostics);
@@ -115,10 +110,65 @@ function updateDiagnostics(uri) {
     });
 }
 vscode.workspace.onDidChangeTextDocument(function (event) {
-    //if (!event.document.uri.fsPath.startsWith('extension-output')) // console.log('Line 76:' + `File was modified : ${event.document.uri.fsPath} ${event.document.languageId}`);
     if (event.document.languageId == 'escurieux') {
         updateDiagnostics(event.document.uri);
     }
 });
-// console.log('Line 82:' + 'Finished starting up.');
+var tokenTypes = ['class', 'interface', 'enum', 'function', 'variable', 'typeParameter', 'type', 'operator', 'string', 'number', 'keyword'];
+var tokenModifiers = ['declaration', 'documentation'];
+var legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
+function logAndReturn(x) {
+    // console.log('LOG: ' + x.slice(1).join(';'));
+    return x;
+}
+vscode.languages.registerDocumentSemanticTokensProvider({
+    'language': 'escurieux',
+    'scheme': 'file'
+}, {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    provideDocumentSemanticTokens: function (document, token) {
+        // console.log('Semantic Token Provider Started');
+        var tokenBuilder = new vscode.SemanticTokensBuilder(legend);
+        try {
+            var typeMap_1 = {
+                basetoken: 'operator',
+                stringliteral: 'string',
+                numberliteral: 'number',
+                booleanliteral: 'number',
+                keyword: 'keyword',
+                characterliteral: 'string'
+            };
+            var path = "/tmp/.escurieux-" + Math.random() + ".esc";
+            var text = document.getText();
+            (0, fs_1.writeFileSync)(path, text);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            var result = (0, child_process_1.execSync)("node ~/Desktop/projets/escurieux/compiler/out/main.js -v --stdout \"" + path + "\"").toString('utf-8');
+            (0, fs_1.unlinkSync)(path);
+            // console.log('result = ' + result);
+            result = result.match(/<tokens-start>((.|\n)*)<tokens-end>/)[1];
+            var tokenList = result.split('\n')
+                .filter(function (x) { return !!x; })
+                .map(function (x) { return x.replace(/^Token ([A-Za-z]+ \d+ \d+ \d+) (.*)$/g, '$1').toLowerCase().match(/([a-z]+) (\d+) (\d+) (\d+)/); })
+                .filter(function (x) { return !!x; })
+                .map(logAndReturn)
+                .map(function (x) { return ({
+                type: typeMap_1[x[1]],
+                line: parseInt(x[2], 10),
+                char: parseInt(x[3], 10),
+                length: parseInt(x[4], 10)
+            }); });
+            // console.log(tokenList.join(', '));
+            for (var i = 0; i < tokenList.length; i++) {
+                var token_1 = tokenList[i];
+                tokenBuilder.push(token_1.line, token_1.char, token_1.length, legend.tokenTypes.indexOf(token_1.type));
+            }
+        }
+        catch (e) {
+            console.log(e.stack);
+            throw e;
+        }
+        // console.log('Semantic Token Provider Ended');
+        return tokenBuilder.build();
+    }
+}, legend);
 //# sourceMappingURL=extension.js.map

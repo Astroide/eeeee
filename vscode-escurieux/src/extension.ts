@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import { unlink, writeFile } from 'fs/promises';
+import { unlinkSync, writeFileSync } from 'fs';
 const output = vscode.window.createOutputChannel('Escurieux');
 globalThis.console = <Console>{
     log: (msg) => {
         output.appendLine(msg);
     }
 };
-// console.log('Starting up Escurieux extension...');
+// console.log('Escurieux extension output');
 vscode.languages.setLanguageConfiguration('escurieux', {
     'wordPattern': /[A-Za-z_0-9]+/
 });
@@ -33,7 +34,6 @@ function checkCodeValidity(_path: string, text: string): Promise<string[]> {
 type ParsedMessage = { type: 'error' | 'warning', message: string, line: number, char: number };
 const resetANSIEscapeCode = '\u001b[0m';
 function parseMessage(message: string): ParsedMessage {
-    // console.log('Line 32:' + message);
     const result: ParsedMessage = {
         type: 'warning',
         message: '',
@@ -41,11 +41,8 @@ function parseMessage(message: string): ParsedMessage {
         char: 1
     };
     result.type = message.includes('Fatal error' + resetANSIEscapeCode) ? 'error' : 'warning';
-    // console.log('Line 40:' + `!!${message}!!`);
     const matches = message.match(/: \n(.+)\nOn line (\d+) at character (\d+):\n/);
-    // console.log('Line 42:' + `matches ${matches}`);
     if (matches == null) {
-        // console.log('Line 44:' + 'Failed to match.');
         return null;
     }
     result.message = matches[1];
@@ -63,11 +60,9 @@ async function updateDiagnostics(uri: vscode.Uri) {
             const result = parseMessage(unparsedMessage);
             if (result == null) continue;
             const { type, message, line, char } = result;
-            // console.log('Line 62:' + type + ' ' + message + ' ' + line + ' ' + char);
             const range = new vscode.Range(line - 1, char - 1, line - 1, char);
             const diagnostic = new vscode.Diagnostic(range, message, type == 'error' ? vscode.DiagnosticSeverity.Error : vscode.DiagnosticSeverity.Warning);
             diagnostics.push(diagnostic);
-            // console.log('Line 66:' + message);
         }
         diagnosticCollection.clear();
         diagnosticCollection.set(uri, diagnostics);
@@ -75,10 +70,67 @@ async function updateDiagnostics(uri: vscode.Uri) {
 }
 
 vscode.workspace.onDidChangeTextDocument(event => {
-    //if (!event.document.uri.fsPath.startsWith('extension-output')) // console.log('Line 76:' + `File was modified : ${event.document.uri.fsPath} ${event.document.languageId}`);
     if (event.document.languageId == 'escurieux') {
         updateDiagnostics(event.document.uri);
     }
 });
 
-// console.log('Line 82:' + 'Finished starting up.');
+
+const tokenTypes = ['class', 'interface', 'enum', 'function', 'variable', 'typeParameter', 'type', 'operator', 'string', 'number', 'keyword'];
+const tokenModifiers = ['declaration', 'documentation'];
+const legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
+
+function logAndReturn(x: RegExpMatchArray): RegExpMatchArray {
+    // console.log('LOG: ' + x.slice(1).join(';'));
+    return x;
+}
+
+vscode.languages.registerDocumentSemanticTokensProvider({
+    'language': 'escurieux',
+    'scheme': 'file'
+}, {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    provideDocumentSemanticTokens(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<vscode.SemanticTokens> {
+        // console.log('Semantic Token Provider Started');
+        const tokenBuilder = new vscode.SemanticTokensBuilder(legend);
+        try {
+            const typeMap: { [x: string]: string } = {
+                basetoken: 'operator',
+                stringliteral: 'string',
+                numberliteral: 'number',
+                booleanliteral: 'number',
+                keyword: 'keyword',
+                characterliteral: 'string'
+            };
+            const path = `/tmp/.escurieux-${Math.random()}.esc`;
+            const text = document.getText();
+            writeFileSync(path, text);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            let result = execSync(`node ~/Desktop/projets/escurieux/compiler/out/main.js -v --stdout "${path}"`).toString('utf-8');
+            unlinkSync(path);
+            // console.log('result = ' + result);
+            result = result.match(/<tokens-start>((.|\n)*)<tokens-end>/)[1];
+            const tokenList = result.split('\n')
+                .filter(x => !!x)
+                .map(x => x.replace(/^Token ([A-Za-z]+ \d+ \d+ \d+) (.*)$/g, '$1').toLowerCase().match(/([a-z]+) (\d+) (\d+) (\d+)/))
+                .filter(x => !!x)
+                .map(logAndReturn)
+                .map(x => ({
+                    type: typeMap[x[1]],
+                    line: parseInt(x[2], 10),
+                    char: parseInt(x[3], 10),
+                    length: parseInt(x[4], 10)
+                }));
+            // console.log(tokenList.join(', '));
+            for (let i = 0; i < tokenList.length; i++) {
+                const token = tokenList[i];
+                tokenBuilder.push(token.line, token.char, token.length, legend.tokenTypes.indexOf(token.type));
+            }
+        } catch (e) {
+            console.log(e.stack);
+            throw e;
+        }
+        // console.log('Semantic Token Provider Ended');
+        return tokenBuilder.build();
+    }
+}, legend);

@@ -2,15 +2,19 @@ import { exit } from 'process';
 import { readFile as fsReadFile } from 'fs/promises';
 import { errorAndWarningExplanations } from './explanations';
 let showLongErrors = false;
+let outputFunction: typeof console.error = console.error;
+export function setOutput(fn: typeof console.log): void {
+    outputFunction = fn;
+}
 export function panic(message: string): never {
-    console.error('\u001b[31mFatal error\u001b[0m: ' + message + '');
+    outputFunction('\u001b[31mFatal error\u001b[0m: ' + message + '');
     exit(1);
 }
 export function print(message: string): void {
-    console.error(message);
+    outputFunction(message);
 }
 export function warn(message: string): void {
-    console.error(`\u001b[33mWarning\u001b[0m: ${message}`);
+    outputFunction(`\u001b[33mWarning\u001b[0m: ${message}`);
 }
 function doSomethingAt<T>(fn: (message: string) => T, source: StringReader, message: string, line: number, char: number, text: string): T {
     const lineCount = source.lineCount();

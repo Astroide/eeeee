@@ -1,22 +1,27 @@
 "use strict";
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.showLongErrorMessages = exports.zip = exports.logCalls = exports.readFile = exports.Result = exports.StringReader = exports.warnAt = exports.panicAt = exports.warn = exports.print = exports.panic = void 0;
+exports.showLongErrorMessages = exports.zip = exports.logCalls = exports.readFile = exports.Result = exports.StringReader = exports.warnAt = exports.panicAt = exports.warn = exports.print = exports.panic = exports.setOutput = void 0;
 const process_1 = require("process");
 const promises_1 = require("fs/promises");
 const explanations_1 = require("./explanations");
 let showLongErrors = false;
+let outputFunction = console.error;
+function setOutput(fn) {
+    outputFunction = fn;
+}
+exports.setOutput = setOutput;
 function panic(message) {
-    console.error('\u001b[31mFatal error\u001b[0m: ' + message + '');
+    outputFunction('\u001b[31mFatal error\u001b[0m: ' + message + '');
     (0, process_1.exit)(1);
 }
 exports.panic = panic;
 function print(message) {
-    console.error(message);
+    outputFunction(message);
 }
 exports.print = print;
 function warn(message) {
-    console.error(`\u001b[33mWarning\u001b[0m: ${message}`);
+    outputFunction(`\u001b[33mWarning\u001b[0m: ${message}`);
 }
 exports.warn = warn;
 function doSomethingAt(fn, source, message, line, char, text) {

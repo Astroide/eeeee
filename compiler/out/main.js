@@ -32,6 +32,10 @@ async function main() {
         longErrorMessages: {
             short: 'l',
             long: 'long-errors'
+        },
+        stdout: {
+            short: 's',
+            long: 'stdout'
         }
     };
     let filename = '';
@@ -84,6 +88,9 @@ async function main() {
     if (filename == '' && !getOption('help') && !getOption('explain')) {
         (0, utilities_1.panic)('Unless -h or --help is specified, a filename is required.');
     }
+    if (getOption('stdout')) {
+        (0, utilities_1.setOutput)(console.log);
+    }
     if (getOption('help')) {
         (0, utilities_1.print)(`Usage:
 escurieux [options] [filename]
@@ -129,28 +136,34 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
         if (verbose) {
             (0, utilities_1.print)('=== Tokens ===');
             (0, utilities_1.print)('Note : these may be incorrect if you are using a macro that requires untokenized input.');
+            (0, utilities_1.print)('<tokens-start>');
             const tokenGeneratorForPrinting = (new tokenizer_1.Tokenizer(contentsOfSourceFile)).tokenize();
             [...tokenGeneratorForPrinting.gen].forEach(token => {
                 if (token instanceof tokens_1.NumberLiteral) {
                     const num = token.content;
-                    (0, utilities_1.print)(`Token NumberLiteral <${num}>`);
+                    (0, utilities_1.print)(`Token NumberLiteral ${token.line} ${token.char} ${token.length} <${num}>`);
                 }
                 else if (token instanceof tokens_1.StringLiteral) {
                     const num = token.content;
-                    (0, utilities_1.print)(`Token StringLiteral <${num}>`);
+                    (0, utilities_1.print)(`Token StringLiteral ${token.line} ${token.char} ${token.length} <${num}>`);
+                }
+                else if (token instanceof tokens_1.CharLiteral) {
+                    const num = token.content;
+                    (0, utilities_1.print)(`Token StringLiteral ${token.line} ${token.char} ${token.length} <${num}>`);
                 }
                 else if (token instanceof tokens_1.Keyword) {
                     const num = token.getSource();
-                    (0, utilities_1.print)(`Token Keyword <${num}>`);
+                    (0, utilities_1.print)(`Token Keyword ${token.line} ${token.char} ${token.length} <${num}>`);
                 }
                 else if (token instanceof tokens_1.Identifier) {
                     const num = token.identifier;
-                    (0, utilities_1.print)(`Token Identifier <${num}>`);
+                    (0, utilities_1.print)(`Token Identifier ${token.line} ${token.char} ${token.length} <${num}>`);
                 }
                 else if (token instanceof tokens_1.Token) {
-                    (0, utilities_1.print)(`Token BaseToken (${tokens_1.TokenType[token.type]}) <${token.getSource()}>`);
+                    (0, utilities_1.print)(`Token BaseToken ${token.line} ${token.char} ${token.length} (${tokens_1.TokenType[token.type]}) <${token.getSource()}>`);
                 }
             });
+            (0, utilities_1.print)('<tokens-end>');
         }
         const parser = new parser_1.Parser(tokenGenerator, tokenizer.reader);
         console.log(parser.getExpression(0).toString());

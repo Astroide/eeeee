@@ -35,6 +35,11 @@
     "activationEvents": [
         "*"
     ],
+    "configurationDefaults": {
+        "escurieux": {
+            "editor.semanticHighlighting.enabled": true
+        }
+    },
     "main": "out/extension.js",
     "dependencies": {
         "@types/vscode": "^1.60.0"
