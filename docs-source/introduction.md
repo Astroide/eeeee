@@ -1,5 +1,6 @@
 @! 1 - Introduction
 -- Note: this file is *not* intended to be viewed in GitHub's default Markdown renderer. It is intended to be available on the [Escurieux docs website](https://astroide.github.io/escurieux)
+[Back to index](/escurieux/index.html)
 # 1 - Introduction
 $E is a language made of expressions. Every $E program is an expression.
 There are different types of expressions:
