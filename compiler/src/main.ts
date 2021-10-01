@@ -3,9 +3,11 @@ import { errorAndWarningExplanations } from './explanations';
 import { Parser } from './parser';
 import { Tokenizer } from './tokenizer';
 import { CharLiteral, Identifier, Keyword, NumberLiteral, StringLiteral, Token, TokenType } from './tokens';
-import { panic, print, readFile, setOutput, showLongErrorMessages } from './utilities';
+import { panic, print, readFile, setCommand, setOutput, showLongErrorMessages } from './utilities';
 
 async function main() {
+    const command = argv[0] + ' ' + argv[1];
+    setCommand(command);
     const commandLineArguments = argv.slice(2).sort((a: string, _) => a.startsWith('-') ? -1 : 1);
     const commandLineOptions: { [x: string]: { short: string, long: string } } = {
         verbose: {
@@ -87,7 +89,7 @@ async function main() {
     if (getOption('help')) {
         print(
             `Usage:
-escurieux [options] [filename]
+${command} [options] [filename]
 (filename is required unless -h, --help, -e or --explain is specified)
 Options:
 * -v, --verbose : Verbose mode. Print extra informations about what the compiler is doing.

@@ -7,6 +7,8 @@ const tokenizer_1 = require("./tokenizer");
 const tokens_1 = require("./tokens");
 const utilities_1 = require("./utilities");
 async function main() {
+    const command = process_1.argv[0] + ' ' + process_1.argv[1];
+    (0, utilities_1.setCommand)(command);
     const commandLineArguments = process_1.argv.slice(2).sort((a, _) => a.startsWith('-') ? -1 : 1);
     const commandLineOptions = {
         verbose: {
@@ -93,7 +95,7 @@ async function main() {
     }
     if (getOption('help')) {
         (0, utilities_1.print)(`Usage:
-escurieux [options] [filename]
+${command} [options] [filename]
 (filename is required unless -h, --help, -e or --explain is specified)
 Options:
 * -v, --verbose : Verbose mode. Print extra informations about what the compiler is doing.
