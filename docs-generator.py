@@ -23,7 +23,8 @@ for file in files:
     if os.path.splitext(file)[1] == '.md':
         # process the content...
         title = ''
-        content = (content + ' ').splitlines()
+        content = list(filter(lambda x: not x.startswith('--'), map(lambda x: x.replace(
+            '$E', 'Escurieux'), (content + ' ').splitlines())))
         if content[0].startswith('@!'):
             title = content[0][2:].strip()
             content = content[1:]
