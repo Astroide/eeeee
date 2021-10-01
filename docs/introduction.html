@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html class="light-theme">
 <head>
-<!-- Generated at Unix time 1633103854855000 by the Escurieux Docs Generator. Copyright (c) 2020 Olie Auger. -->
+<!-- Generated at Unix time 1633108185645000 by the Escurieux Docs Generator. Copyright (c) 2020 Olie Auger. -->
     <title>1 - Introduction</title>
     <link rel="stylesheet" href="/escurieux/theme.css" />
 </head>
 <body>
 <div id="mode-selector"><code>[Light mode] Dark mode</code></div>
-<h1>1 - Introduction</h1>Escurieux is a language made of expressions. Every Escurieux program is an expression.There are different types of expressions:<ul><li>Literals : these are just a piece of data. Literals aren't composed of other expressions. There are number literals (decimal: <code>0.234</code>, <code>3244.3</code>, <code>42</code>, hexadecimal: <code>0xFF</code>, <code>0xabcde</code>, <code>0x0.FE4</code>, octal: <code>0o755</code>, <code>0o100.23</code>, binary: <code>0b1010001011</code>, <code>0b0.001</code>), string literals (<code>"some text here"</code>) which can contain newlines, character literals, which are only one character long (<code>'t</code>, <code>'"</code>) and boolean literals (<code>true</code> or <code>false</code>). 
+<h1>1 - Introduction</h1>Escurieux is a language made of expressions. Every Escurieux program is an expression.There are different types of expressions:<ul><li>Literals : these are just a piece of data. Literals aren't composed of other expressions. There are number literals (decimal: <code>0.234</code>, <code>3244.3</code>, <code>42</code>, hexadecimal: <code>0xFF</code>, <code>0xabcde</code>, <code>0x0.FE4</code>, octal: <code>0o755</code>, <code>0o100.23</code>, binary: <code>0b1010001011</code>, <code>0b0.001</code>), string literals (<code>"some text here"</code>) which can contain newlines, character literals, which are only one character long (<code>'t</code>, <code>'"</code>), boolean literals (<code>true</code> or <code>false</code>), function literals (<code>fn functionName(arg1: Type) ReturnType { expr }</code>, <code>fn functionName[T](arg1: T) T { expr }</code>) and lambda functions (<code>|| expr</code>, <code>|arg1, arg2| expr</code>).<li>Property accessors : these are ways to access properties of objects. Their syntax is <code>expr.propertyName</code> (meaning: property <code>propertyName</code> of <code>expr</code>).<li>Parenthesized groups : they're used to execute part of an expression before the rest of the expression (precedence) and act like parentheses in math (e.g. <code>(expr)</code>).<li>Call syntax : used to call an expression that evaluates to a function, written <code>expr()</code> or <code>expr(arg1, arg2, ...)</code></ul> 
 <script src="/escurieux/script.js"></script>
 </body>
 </html>
