@@ -164,7 +164,7 @@ for file in files:
     <link rel="stylesheet" href="/escurieux/theme.css" />
 </head>
 <body>
-<div id="mode-selector"><code>[Light mode] Dark mode</code></div>
+<div id="mode-selector"><code>[Light theme] Dark theme</code></div>
 {content}
 <script src="/escurieux/script.js"></script>
 </body>
