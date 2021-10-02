@@ -14,3 +14,4 @@ There are different types of expressions:
 * Identifiers (anything matching §[A-Za-z][A-Za-z0-9]*§ except keywords): these are ways of getting the values referenced by names.
 * Semicolons (§;§) : these chain execution of expressions. §expr1; expr2§ first executes §expr1§, then evaluates §expr2§ and returns its value.
 * If / else expressions : these permit branching. §if expr1 { expr2 } else { expr3 }§ evaluates §expr1§ first. If it evaluates to §true§, then it evaluates §expr2§ and returns its value. Otherwise, it executes §expr3§ and returns its value. An §else§-less variant also exists (§if expr1 { expr2 }§), but it can only be used if its result is discarded, because it may not return a value (if §expr1§ evaluates to §false§).
+* Loop expressions (§loop { expr }§): these are loops that run forever (or until they're exited via §break§ or §break expr§). If they ever end, they return the value passed to §break§ if a value there is.
