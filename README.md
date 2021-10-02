@@ -16,3 +16,4 @@ Tokenizer  Parser    Compiler   Standard Library   Rewriting
                                                  the compiler
                                                  in Escurieux
 ```
+[The documentation](https://astroide.github.io/escurieux) is being written in parallel with the development of the language.
