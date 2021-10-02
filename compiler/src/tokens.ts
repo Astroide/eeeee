@@ -47,7 +47,8 @@ enum TokenType {
     Bang,
     Tilde,
     NotEquals,
-    Colon
+    Colon,
+    Loop
 }
 
 class Token {

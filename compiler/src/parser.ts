@@ -264,10 +264,11 @@ class PropertyAccessSubparser implements InfixSubparser {
     }
 }
 
-class PrefixOperatorExpression {
+class PrefixOperatorExpression extends Expression {
     operator: TokenType;
     operand: Expression;
     constructor(operator: TokenType, operand: Expression) {
+        super();
         this.operator = operator;
         this.operand = operand;
     }
@@ -338,11 +339,12 @@ class InfixOperatorExpression extends Expression {
     }
 }
 
-class IfExpression {
+class IfExpression extends Expression {
     condition: Expression;
     thenBranch: Block;
     elseBranch?: Block;
     constructor(condition: Expression, thenBranch: Block, elseBranch?: Block) {
+        super();
         this.condition = condition;
         this.thenBranch = thenBranch;
         this.elseBranch = elseBranch;
@@ -353,16 +355,29 @@ class IfExpression {
     }
 }
 
-class WhileExpression {
+class WhileExpression extends Expression {
     condition: Expression;
     body: Block;
     constructor(condition: Expression, body: Block) {
+        super();
         this.condition = condition;
         this.body = body;
     }
 
     toString(): string {
         return `While {${this.condition.toString()}, ${this.body.toString()}}`;
+    }
+}
+
+class LoopExpression extends Expression {
+    body: Block;
+    constructor(body: Block) {
+        super();
+        this.body = body;
+    }
+
+    toString(): string {
+        return `Loop {${this.body.toString()}}`;
     }
 }
 
@@ -389,6 +404,15 @@ class WhileSubparser implements PrefixSubparser {
         const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'a \'{\' was expected after an while\'s condition');
         const body = (new BlockSubparser()).parse(parser, token);
         return new WhileExpression(condition, body);
+    }
+}
+
+class LoopSubparser implements PrefixSubparser {
+    @logCalls
+    parse(parser: Parser, _token: Token): LoopExpression {
+        const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'a \'{\' was expected after a \'loop\'');
+        const body = (new BlockSubparser()).parse(parser, token);
+        return new LoopExpression(body);
     }
 }
 
@@ -678,6 +702,7 @@ export class Parser {
         this.registerPrefix(TokenType.Pipe, new LambdaFunctionSubparser());
         this.registerPrefix(TokenType.DoublePipe, new LambdaFunctionSubparser());
         this.registerPrefix(TokenType.Fn, new FunctionSubparser());
+        this.registerPrefix(TokenType.Loop, new LoopSubparser());
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],
             [TokenType.DoubleAmpersand, Precedence.SUM],
