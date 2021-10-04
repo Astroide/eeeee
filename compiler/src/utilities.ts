@@ -148,16 +148,19 @@ export async function readFile(filename: string): Promise<Result<string>> {
     return <Result<string>>contents;
 }
 
-const DEBUG_SUBPARSER_CALLS = false;
+const DEBUG_SUBPARSER_CALLS = true;
+let indent = 0;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function logCalls(target: unknown, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> {
     const originalMethod = descriptor.value; // save a reference to the original method
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     descriptor.value = DEBUG_SUBPARSER_CALLS ? function (...args: any[]) {
-        console.log(`<${target.constructor.name}>`);
+        console.log(`${'  '.repeat(indent)}<${target.constructor.name}>`);
+        indent++;
         const result = originalMethod.apply(this, args);
-        console.log(`</${target.constructor.name}>`);
+        indent--;
+        console.log(`${'  '.repeat(indent)}</${target.constructor.name}>`);
         return result;
     } : originalMethod;
 

@@ -274,7 +274,7 @@ export class Tokenizer {
                             while (!self.reader.done() && /[a-zA-Z_0-9]/.test(self.reader.peek())) {
                                 tokenText += self.reader.next();
                             }
-                            const keywords = 'fn while for if else continue break let const loop'.split(' ');
+                            const keywords = 'fn while for if else continue break let const loop in'.split(' ');
                             const keywordTokenTypes = {
                                 'fn': TokenType.Fn,
                                 'while': TokenType.While,
@@ -285,7 +285,8 @@ export class Tokenizer {
                                 'break': TokenType.Break,
                                 'let': TokenType.Let,
                                 'const': TokenType.Const,
-                                'loop': TokenType.Loop
+                                'loop': TokenType.Loop,
+                                'in': TokenType.In
                             };
                             if (keywords.includes(tokenText)) {
                                 yield (new Keyword(self.reader.currentLine, char, self.reader.source, current, tokenText.length, keywordTokenTypes[tokenText]));

@@ -7,6 +7,8 @@ class PeekableTokenStream {
     private stream: TokenStream;
     private nextTokens: Token[] = [];
     reader: StringReader;
+    index = 0;
+    stack: Token[] = [];
 
     constructor(stream: TokenStream, reader: StringReader) {
         this.stream = stream;
@@ -14,11 +16,17 @@ class PeekableTokenStream {
     }
 
     next(): Token {
+        this.index++;
         if (this.nextTokens.length > 0) {
-            return this.nextTokens.shift();
+            return this.pushToStackAndReturn(this.nextTokens.shift());
         } else {
-            return <Token>this.stream.gen.next().value;
+            return this.pushToStackAndReturn(<Token>this.stream.gen.next().value);
         }
+    }
+
+    pushToStackAndReturn(token: Token): Token {
+        this.stack.push(token);
+        return token;
     }
 
     peek(): Token {
@@ -35,11 +43,23 @@ class PeekableTokenStream {
     }
 
     consume(type: TokenType, message: string): Token {
+        this.index++;
         const next = this.next();
         if (next.type != type) {
             panicAt(this.reader, `[ESCE00010] Expected TokenType.${TokenType[type]}${tokenTypeExplanations.has(type) ? ` (${tokenTypeExplanations.get(type)})` : ''}, got '${next.getSource()}' : ${message}`, next.line, next.char, next.getSource());
         }
-        return next;
+        return this.pushToStackAndReturn(next);
+    }
+
+    state(): number {
+        return this.index;
+    }
+
+    rewind(state: number): void {
+        while (this.index != state) {
+            this.index--;
+            this.nextTokens.unshift(this.stack.pop());
+        }
     }
 }
 
@@ -507,44 +527,78 @@ class PostfixOperatorSubparser implements InfixSubparser {
     }
 }
 
-class ForExpression extends Expression {
+type ForAInB = {
+    name: IdentifierExpression;
+    iterator: Expression;
+}
+type ForABC = {
     init: Expression;
     condition: Expression;
     repeat: Expression;
+}
+class ForExpression extends Expression {
+    kind: 'a,b,c' | 'a in b';
+    condition: ForABC | ForAInB;
     body: Block;
 
-    constructor(init: Expression, condition: Expression, repeat: Expression, body: Block) {
+    constructor(condition: {
+        init: Expression;
+        condition: Expression;
+        repeat: Expression;
+    } | {
+        name: IdentifierExpression;
+        iterator: Expression;
+    }, body: Block, kind: 'a,b,c' | 'a in b') {
         super();
-        this.init = init;
+        this.kind = kind;
         this.condition = condition;
-        this.repeat = repeat;
         this.body = body;
     }
 
     toString(): string {
-        return `ForExpression {${this.init.toString()}, ${this.condition.toString()}, ${this.repeat.toString()}, ${this.body.toString()}}`;
+        if (this.kind == 'a,b,c') return `ForExpression.<for a, b, c> {${(this.condition as ForABC).init.toString()}, ${(this.condition as ForABC).condition.toString()}, ${(this.condition as ForABC).repeat.toString()}, ${this.body.toString()}}`;
+        else return `ForExpression.<for a in b> {${(this.condition as ForAInB).name.toString()}, ${(this.condition as ForAInB).iterator.toString()}, ${this.body.toString()}}`;
     }
 }
 
 class ForSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, _token: Token): ForExpression {
         let init: Expression = new LiteralExpression(true, TokenType.BooleanLiteral);
         let condition: Expression = new LiteralExpression(true, TokenType.BooleanLiteral);
         let repeat: Expression = new LiteralExpression(true, TokenType.BooleanLiteral);
+        const state = parser.tokenSource.state();
         if (!parser.tokenSource.match(TokenType.Comma)) {
             init = parser.getExpression(0);
         }
-        parser.tokenSource.consume(TokenType.Comma, 'expected a comma after a for loop\'s initialization expression');
-        if (!parser.tokenSource.match(TokenType.Comma)) {
-            condition = parser.getExpression(0);
+        if (parser.tokenSource.match(TokenType.In)) {
+            parser.tokenSource.rewind(state);
+            const name = parser.getNamePattern();
+            parser.tokenSource.consume(TokenType.In, 'Expected an \'in\', this is an error that shouldn\'t ever happen. Report this to https://github.com/Astroide/escurieux/issues .');
+            const iterator = parser.getExpression(0);
+            const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'expected a block start after a for loop\'s iterator expression');
+            const body = (new BlockSubparser()).parse(parser, token);
+            return new ForExpression(<ForAInB>{
+                name: name,
+                iterator: iterator
+            }, body, 'a in b');
+        } else {
+            parser.tokenSource.consume(TokenType.Comma, 'expected a comma after a for loop\'s initialization expression');
+            if (!parser.tokenSource.match(TokenType.Comma)) {
+                condition = parser.getExpression(0);
+            }
+            parser.tokenSource.consume(TokenType.Comma, 'expected a comma after a for loop\'s condition');
+            if (!parser.tokenSource.match(TokenType.LeftCurlyBracket)) {
+                repeat = parser.getExpression(0);
+            }
+            const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'expected a block start after a for loop\'s repeating expression');
+            const loopBody = (new BlockSubparser()).parse(parser, token);
+            return new ForExpression(<ForABC>{
+                condition: condition,
+                init: init,
+                repeat: repeat
+            }, loopBody, 'a,b,c');
         }
-        parser.tokenSource.consume(TokenType.Comma, 'expected a comma after a for loop\'s condition');
-        if (!parser.tokenSource.match(TokenType.LeftCurlyBracket)) {
-            repeat = parser.getExpression(0);
-        }
-        const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'expected a block start after a for loop\'s repeating expression');
-        const loopBody = (new BlockSubparser()).parse(parser, token);
-        return new ForExpression(init, condition, repeat, loopBody);
     }
 }
 
@@ -590,6 +644,7 @@ class FunctionExpression extends Expression {
 }
 
 class FunctionSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, _token: Token): FunctionExpression {
         const functionName = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(TokenType.Identifier, 'a function name is required'));
         let typeParameters: IdentifierExpression[] = [];
