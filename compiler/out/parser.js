@@ -633,7 +633,7 @@ class ClassExpression extends Expression {
         this.properties = properties;
     }
     toString() {
-        return `ClassExpression<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, type]) => name.toString() + ' : ' + typeToString(type)).join(', ')}], [${this.methods.map(x => x.toString()).join(', ')}]}`;
+        return `ClassExpression<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, type, modifier]) => modifier + ' ' + name.toString() + ' : ' + typeToString(type)).join(', ')}], [${this.methods.map(([func, modifier]) => modifier + ' ' + func.toString()).join(', ')}]}`;
     }
 }
 function typeConstraintToString(t) {

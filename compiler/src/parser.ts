@@ -723,9 +723,9 @@ class ClassExpression extends Expression {
     typeParameters: Type[];
     typeConstraints: TypeConstraint[];
     name: IdentifierExpression;
-    methods: FunctionExpression[];
-    properties: [IdentifierExpression, Type][];
-    constructor(name: IdentifierExpression, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: FunctionExpression[], properties: [IdentifierExpression, Type][]) {
+    methods: [FunctionExpression, 'static' | 'instance'][];
+    properties: [IdentifierExpression, Type, 'static' | 'instance'][];
+    constructor(name: IdentifierExpression, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: [FunctionExpression, 'static' | 'instance'][], properties: [IdentifierExpression, Type, 'static' | 'instance'][]) {
         super();
         this.name = name;
         this.typeParameters = typeParameters;
@@ -735,7 +735,7 @@ class ClassExpression extends Expression {
     }
 
     toString(): string {
-        return `ClassExpression<${zip(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, type]) => name.toString() + ' : ' + typeToString(type)).join(', ')}], [${this.methods.map(x => x.toString()).join(', ')}]}`;
+        return `ClassExpression<${zip(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, type, modifier]) => modifier + ' ' + name.toString() + ' : ' + typeToString(type)).join(', ')}], [${this.methods.map(([func, modifier]) => modifier + ' ' + func.toString()).join(', ')}]}`;
     }
 }
 
