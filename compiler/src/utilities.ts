@@ -148,7 +148,7 @@ export async function readFile(filename: string): Promise<Result<string>> {
     return <Result<string>>contents;
 }
 
-const DEBUG_SUBPARSER_CALLS = true;
+const DEBUG_SUBPARSER_CALLS = false;
 let indent = 0;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function logCalls(target: unknown, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> {

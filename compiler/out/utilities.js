@@ -147,7 +147,7 @@ async function readFile(filename) {
     return contents;
 }
 exports.readFile = readFile;
-const DEBUG_SUBPARSER_CALLS = true;
+const DEBUG_SUBPARSER_CALLS = false;
 let indent = 0;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function logCalls(target, propertyKey, descriptor) {
