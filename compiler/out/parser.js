@@ -404,7 +404,7 @@ class TypeCastingSubparser {
 }
 class LetOrConstDeclarationSubparser {
     parse(parser, token) {
-        const type = token.type == tokens_1.TokenType.Let ? 'let' : 'const';
+        const type = (token && token.type == tokens_1.TokenType.Const) ? 'const' : 'let';
         const name = parser.tokenSource.consume(tokens_1.TokenType.Identifier, `expected an identifier after ${type}`);
         let variableType = null;
         if (parser.tokenSource.match(tokens_1.TokenType.Colon)) {
@@ -633,7 +633,40 @@ class ClassExpression extends Expression {
         this.properties = properties;
     }
     toString() {
-        return `ClassExpression<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, type, modifier]) => modifier + ' ' + name.toString() + ' : ' + typeToString(type)).join(', ')}], [${this.methods.map(([func, modifier]) => modifier + ' ' + func.toString()).join(', ')}]}`;
+        return `ClassExpression<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier]) => modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier]) => modifier + ' ' + func.toString()).join(', ')}]}`;
+    }
+}
+class ClassSubparser {
+    parse(parser, _token) {
+        const name = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected a class name'));
+        let typeParameters = [], typeConstraints = [];
+        if (parser.tokenSource.match(tokens_1.TokenType.LeftBracket)) {
+            [typeParameters, typeConstraints] = parser.getTypeParameters();
+        }
+        parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, `expected a '{' after ${typeParameters.length == 0 ? 'the class name' : 'the type parameters'}`);
+        const methods = [];
+        const properties = [];
+        while (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
+            let modifier = 'instance';
+            if (parser.tokenSource.match(tokens_1.TokenType.Static)) {
+                parser.tokenSource.next();
+                modifier = 'static';
+            }
+            if (parser.tokenSource.match(tokens_1.TokenType.Fn)) {
+                const method = (new FunctionSubparser()).parse(parser, parser.tokenSource.next());
+                methods.push([method, modifier]);
+            }
+            else if (parser.tokenSource.match(tokens_1.TokenType.Const)) {
+                const property = (new LetOrConstDeclarationSubparser()).parse(parser, parser.tokenSource.next());
+                properties.push([property, modifier]);
+            }
+            else {
+                const property = (new LetOrConstDeclarationSubparser()).parse(parser, null);
+                properties.push([property, modifier]);
+            }
+        }
+        parser.tokenSource.consume(tokens_1.TokenType.RightCurlyBracket, '!!!');
+        return new ClassExpression(name, typeParameters, typeConstraints, methods, properties);
     }
 }
 function typeConstraintToString(t) {
@@ -668,6 +701,7 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.DoublePipe, new LambdaFunctionSubparser());
         this.registerPrefix(tokens_1.TokenType.Fn, new FunctionSubparser());
         this.registerPrefix(tokens_1.TokenType.Loop, new LoopSubparser());
+        this.registerPrefix(tokens_1.TokenType.Class, new ClassSubparser());
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoubleAmpersand, Precedence.SUM],

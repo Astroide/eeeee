@@ -49,7 +49,9 @@ enum TokenType {
     NotEquals,
     Colon,
     Loop,
-    In
+    In,
+    Static,
+    Class
 }
 
 class Token {

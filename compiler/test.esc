@@ -1,3 +1,13 @@
+class HugeSquirrel {
+    x = 1
+    const y = 2
+    static z = 3
+    static const w = 4
+    fn new() HugeSquirrel {
+        let isHuge = true
+    }
+}
+
 fn main[I, K, V <= K : (I, J)](x: T) T {
     for ,, {
         let x: List[int] = 0;

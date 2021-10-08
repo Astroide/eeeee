@@ -54,6 +54,8 @@ var TokenType;
     TokenType[TokenType["Colon"] = 48] = "Colon";
     TokenType[TokenType["Loop"] = 49] = "Loop";
     TokenType[TokenType["In"] = 50] = "In";
+    TokenType[TokenType["Static"] = 51] = "Static";
+    TokenType[TokenType["Class"] = 52] = "Class";
 })(TokenType || (TokenType = {}));
 exports.TokenType = TokenType;
 class Token {
