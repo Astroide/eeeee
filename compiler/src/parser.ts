@@ -639,7 +639,7 @@ class FunctionExpression extends Expression {
     }
 
     toString(): string {
-        return `Function<${zip(this.typeParameters, this.typeConstraints).map(x => `${x[0].id} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {[${zip(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
+        return `Function<${zip(this.typeParameters, this.typeConstraints).map(x => `${x[0].id} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.name.toString()}, [${zip(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
     }
 }
 
@@ -685,6 +685,7 @@ class FunctionSubparser implements PrefixSubparser {
         return new FunctionExpression(typeParameters, args, typesOfArguments, body, functionName, typeConstraints, returnType);
     }
 }
+
 class LambdaFunctionSubparser implements PrefixSubparser {
     @logCalls
     parse(parser: Parser, token: Token): LambdaFunctionExpression {
@@ -716,7 +717,26 @@ class LambdaFunctionSubparser implements PrefixSubparser {
         const body = parser.getExpression(0);
         return new LambdaFunctionExpression(args, typesOfArguments, body);
     }
+}
 
+class ClassExpression extends Expression {
+    typeParameters: Type[];
+    typeConstraints: TypeConstraint[];
+    name: IdentifierExpression;
+    methods: FunctionExpression[];
+    properties: [IdentifierExpression, Type][];
+    constructor(name: IdentifierExpression, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: FunctionExpression[], properties: [IdentifierExpression, Type][]) {
+        super();
+        this.name = name;
+        this.typeParameters = typeParameters;
+        this.typeConstraints = typeConstraints;
+        this.methods = methods;
+        this.properties = properties;
+    }
+
+    toString(): string {
+        return `ClassExpression<${zip(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, type]) => name.toString() + ' : ' + typeToString(type)).join(', ')}], [${this.methods.map(x => x.toString()).join(', ')}]}`;
+    }
 }
 
 type TypeConstraint = {

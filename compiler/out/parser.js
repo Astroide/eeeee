@@ -538,7 +538,7 @@ class FunctionExpression extends Expression {
         this.typeConstraints = typeConstraints;
     }
     toString() {
-        return `Function<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(x => `${x[0].id} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {[${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
+        return `Function<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(x => `${x[0].id} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.name.toString()}, [${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
     }
 }
 class FunctionSubparser {
@@ -623,6 +623,19 @@ class LambdaFunctionSubparser {
 __decorate([
     utilities_1.logCalls
 ], LambdaFunctionSubparser.prototype, "parse", null);
+class ClassExpression extends Expression {
+    constructor(name, typeParameters, typeConstraints, methods, properties) {
+        super();
+        this.name = name;
+        this.typeParameters = typeParameters;
+        this.typeConstraints = typeConstraints;
+        this.methods = methods;
+        this.properties = properties;
+    }
+    toString() {
+        return `ClassExpression<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, type]) => name.toString() + ' : ' + typeToString(type)).join(', ')}], [${this.methods.map(x => x.toString()).join(', ')}]}`;
+    }
+}
 function typeConstraintToString(t) {
     if (t == 'unconstrained')
         return t;
