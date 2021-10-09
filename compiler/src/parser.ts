@@ -619,7 +619,7 @@ class LambdaFunctionExpression extends Expression {
 }
 
 class FunctionExpression extends Expression {
-    typeParameters: IdentifierExpression[];
+    typeParameters: Type[];
     args: IdentifierExpression[];
     typesOfArguments: Type[];
     body: Block;
@@ -627,7 +627,7 @@ class FunctionExpression extends Expression {
     returnType?: Type;
     typeConstraints: TypeConstraint[];
 
-    constructor(typeParameters: IdentifierExpression[], args: IdentifierExpression[], typesOfArguments: Type[], body: Block, name: IdentifierExpression, typeConstraints: TypeConstraint[], returnType?: Type) {
+    constructor(typeParameters: Type[], args: IdentifierExpression[], typesOfArguments: Type[], body: Block, name: IdentifierExpression, typeConstraints: TypeConstraint[], returnType?: Type) {
         super();
         this.typeParameters = typeParameters;
         this.args = args;
@@ -639,7 +639,7 @@ class FunctionExpression extends Expression {
     }
 
     toString(): string {
-        return `Function<${zip(this.typeParameters, this.typeConstraints).map(x => `${x[0].id} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.name.toString()}, [${zip(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
+        return `Function<${zip(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.name.toString()}, [${zip(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
     }
 }
 
@@ -647,7 +647,7 @@ class FunctionSubparser implements PrefixSubparser {
     @logCalls
     parse(parser: Parser, _token: Token): FunctionExpression {
         const functionName = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(TokenType.Identifier, 'a function name is required'));
-        let typeParameters: IdentifierExpression[] = [];
+        let typeParameters: Type[] = [];
         let typeConstraints: TypeConstraint[] = [];
         if (parser.tokenSource.match(TokenType.LeftBracket)) {
             [typeParameters, typeConstraints] = parser.getTypeParameters();
@@ -876,16 +876,16 @@ export class Parser {
         return left;
     }
 
-    getTypeParameters(): [IdentifierExpression[], TypeConstraint[]] {
+    getTypeParameters(): [Type[], TypeConstraint[]] {
         this.tokenSource.next(); // Consume the '['
-        const names: IdentifierExpression[] = [];
+        const names: Identifier[] = [];
         const constraints: TypeConstraint[] = [];
         while (!this.tokenSource.match(TokenType.RightBracket)) {
             if (this.tokenSource.match(TokenType.Comma)) {
                 const token = this.tokenSource.next();
                 panicAt(this.tokenSource.reader, '[ESCE00011] Only commas to separate type parameters and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
-            names.push((new IdentifierSubparser()).parse(this, this.tokenSource.consume(TokenType.Identifier, 'a type parameter name was expected')));
+            names.push(<Identifier>this.tokenSource.consume(TokenType.Identifier, 'a type parameter name was expected'));
             const innerConstraints: TypeConstraint[] = [];
             if (this.tokenSource.match(TokenType.SmallerOrEqual)) {
                 this.tokenSource.next();
@@ -950,18 +950,19 @@ export class Parser {
             }
         }
         this.tokenSource.next(); // Consume the ']'
-        return [names, constraints];
+        return [names.map(x => <Type>{ plain: true, value: x }), constraints];
     }
 
     getNamePattern(): IdentifierExpression {
         return (new IdentifierSubparser()).parse(this, this.tokenSource.consume(TokenType.Identifier, 'expected an identifier'));
     }
 
-    getType(): Type {
+    getType(raw = false): Type {
         let T: Type = {
             plain: true,
             value: <Identifier>this.tokenSource.consume(TokenType.Identifier, 'expected a type name')
         };
+        if (raw) return T;
         if (this.tokenSource.match(TokenType.LeftBracket)) {
             this.tokenSource.next();
             T = {

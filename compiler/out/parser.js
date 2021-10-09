@@ -538,7 +538,7 @@ class FunctionExpression extends Expression {
         this.typeConstraints = typeConstraints;
     }
     toString() {
-        return `Function<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(x => `${x[0].id} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.name.toString()}, [${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
+        return `Function<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.name.toString()}, [${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
     }
 }
 class FunctionSubparser {
@@ -771,7 +771,7 @@ class Parser {
                 const token = this.tokenSource.next();
                 (0, utilities_1.panicAt)(this.tokenSource.reader, '[ESCE00011] Only commas to separate type parameters and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
-            names.push((new IdentifierSubparser()).parse(this, this.tokenSource.consume(tokens_1.TokenType.Identifier, 'a type parameter name was expected')));
+            names.push(this.tokenSource.consume(tokens_1.TokenType.Identifier, 'a type parameter name was expected'));
             const innerConstraints = [];
             if (this.tokenSource.match(tokens_1.TokenType.SmallerOrEqual)) {
                 this.tokenSource.next();
@@ -840,16 +840,18 @@ class Parser {
             }
         }
         this.tokenSource.next(); // Consume the ']'
-        return [names, constraints];
+        return [names.map(x => ({ plain: true, value: x })), constraints];
     }
     getNamePattern() {
         return (new IdentifierSubparser()).parse(this, this.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected an identifier'));
     }
-    getType() {
+    getType(raw = false) {
         let T = {
             plain: true,
             value: this.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected a type name')
         };
+        if (raw)
+            return T;
         if (this.tokenSource.match(tokens_1.TokenType.LeftBracket)) {
             this.tokenSource.next();
             T = {

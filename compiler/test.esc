@@ -1,4 +1,4 @@
-class HugeSquirrel {
+class HugeSquirrel[X, Y: X, Z <= Y] {
     x = 1
     const y = 2
     static z = 3
@@ -6,7 +6,7 @@ class HugeSquirrel {
     fn new() HugeSquirrel {
         let isHuge = true
     }
-}
+};
 
 fn main[I, K, V <= K : (I, J)](x: T) T {
     for ,, {
