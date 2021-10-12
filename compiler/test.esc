@@ -1,5 +1,5 @@
 class HugeSquirrel[X, Y: X, Z <= Y] {
-    private x = 1,
+    x = 1,
     const y = 2,
     static z = 3,
     static const w = 4,
@@ -11,7 +11,7 @@ class HugeSquirrel[X, Y: X, Z <= Y] {
     protected const y2 = 2,
     protected static z2 = 3,
     protected static const w2 = 4,
-    fn new() HugeSquirrel {
+    fn new() HugeSquirrel[X, Y, Z] {
         let isHuge = true
     },
 };
