@@ -51,7 +51,10 @@ enum TokenType {
     Loop,
     In,
     Static,
-    Class
+    Class,
+    Public,
+    Protected,
+    Private
 }
 
 class Token {

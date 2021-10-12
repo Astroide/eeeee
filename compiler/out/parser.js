@@ -633,7 +633,7 @@ class ClassExpression extends Expression {
         this.properties = properties;
     }
     toString() {
-        return `ClassExpression<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier]) => modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier]) => modifier + ' ' + func.toString()).join(', ')}]}`;
+        return `ClassExpression<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
     }
 }
 class ClassSubparser {
@@ -648,21 +648,34 @@ class ClassSubparser {
         const properties = [];
         while (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
             let modifier = 'instance';
+            let accessModifier = 'private';
+            if (parser.tokenSource.match(tokens_1.TokenType.Private)) {
+                const token = parser.tokenSource.next();
+                (0, utilities_1.warnAt)(parser.tokenSource.reader, '[ESCW00002] The \'private\' access specifier is not required, properties and methods are private by default', token.line, token.char, token.getSource());
+            }
+            else if (parser.tokenSource.match(tokens_1.TokenType.Protected)) {
+                parser.tokenSource.next();
+                accessModifier = 'protected';
+            }
+            else if (parser.tokenSource.match(tokens_1.TokenType.Public)) {
+                parser.tokenSource.next();
+                accessModifier = 'public';
+            }
             if (parser.tokenSource.match(tokens_1.TokenType.Static)) {
                 parser.tokenSource.next();
                 modifier = 'static';
             }
             if (parser.tokenSource.match(tokens_1.TokenType.Fn)) {
                 const method = (new FunctionSubparser()).parse(parser, parser.tokenSource.next());
-                methods.push([method, modifier]);
+                methods.push([method, modifier, accessModifier]);
             }
             else if (parser.tokenSource.match(tokens_1.TokenType.Const)) {
                 const property = (new LetOrConstDeclarationSubparser()).parse(parser, parser.tokenSource.next());
-                properties.push([property, modifier]);
+                properties.push([property, modifier, accessModifier]);
             }
             else {
                 const property = (new LetOrConstDeclarationSubparser()).parse(parser, null);
-                properties.push([property, modifier]);
+                properties.push([property, modifier, accessModifier]);
             }
         }
         parser.tokenSource.consume(tokens_1.TokenType.RightCurlyBracket, '!!!');
@@ -846,17 +859,17 @@ class Parser {
         return (new IdentifierSubparser()).parse(this, this.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected an identifier'));
     }
     getType(raw = false) {
-        let T = {
+        let type = {
             plain: true,
             value: this.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected a type name')
         };
         if (raw)
-            return T;
+            return type;
         if (this.tokenSource.match(tokens_1.TokenType.LeftBracket)) {
             this.tokenSource.next();
-            T = {
+            type = {
                 plain: false,
-                value: T.value,
+                value: type.value,
                 typeParameters: []
             };
             if (this.tokenSource.match(tokens_1.TokenType.RightBracket)) {
@@ -869,14 +882,14 @@ class Parser {
                     (0, utilities_1.panicAt)(this.tokenSource.reader, '[ESCE00011] Only commas to separate type parameters and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
                 }
                 const parameter = this.getType();
-                T.typeParameters.push(parameter);
+                type.typeParameters.push(parameter);
                 if (this.tokenSource.match(tokens_1.TokenType.Comma)) {
                     this.tokenSource.next(); // Consume the comma
                 }
             }
             this.tokenSource.next(); // Consume the ']'
         }
-        return T;
+        return type;
     }
 }
 exports.Parser = Parser;

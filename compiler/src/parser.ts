@@ -1,7 +1,7 @@
 import { tokenTypeExplanations } from './explanations';
 import { TokenStream } from './tokenizer';
 import { BooleanLiteral, CharLiteral, Identifier, NumberLiteral, StringLiteral, Token, TokenType } from './tokens';
-import { logCalls, panicAt, StringReader, zip } from './utilities';
+import { logCalls, panicAt, StringReader, warnAt, zip } from './utilities';
 
 class PeekableTokenStream {
     private stream: TokenStream;
@@ -719,13 +719,15 @@ class LambdaFunctionSubparser implements PrefixSubparser {
     }
 }
 
+type PrivacyModifier = 'private' | 'public' | 'protected';
+
 class ClassExpression extends Expression {
     typeParameters: Type[];
     typeConstraints: TypeConstraint[];
     name: IdentifierExpression;
-    methods: [FunctionExpression, 'static' | 'instance'][];
-    properties: [LetOrConstDeclarationExpression, 'static' | 'instance'][];
-    constructor(name: IdentifierExpression, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: [FunctionExpression, 'static' | 'instance'][], properties: [LetOrConstDeclarationExpression, 'static' | 'instance'][]) {
+    methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][];
+    properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][];
+    constructor(name: IdentifierExpression, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][], properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][]) {
         super();
         this.name = name;
         this.typeParameters = typeParameters;
@@ -735,7 +737,7 @@ class ClassExpression extends Expression {
     }
 
     toString(): string {
-        return `ClassExpression<${zip(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier]) => modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier]) => modifier + ' ' + func.toString()).join(', ')}]}`;
+        return `ClassExpression<${zip(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
     }
 }
 
@@ -747,23 +749,34 @@ class ClassSubparser implements PrefixSubparser {
             [typeParameters, typeConstraints] = parser.getTypeParameters();
         }
         parser.tokenSource.consume(TokenType.LeftCurlyBracket, `expected a '{' after ${typeParameters.length == 0 ? 'the class name' : 'the type parameters'}`);
-        const methods: [FunctionExpression, 'static' | 'instance'][] = [];
-        const properties: [LetOrConstDeclarationExpression, 'static' | 'instance'][] = [];
+        const methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][] = [];
+        const properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][] = [];
         while (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
             let modifier: 'instance' | 'static' = 'instance';
+            let accessModifier: PrivacyModifier = 'private';
+            if (parser.tokenSource.match(TokenType.Private)) {
+                const token = parser.tokenSource.next();
+                warnAt(parser.tokenSource.reader, '[ESCW00002] The \'private\' access specifier is not required, properties and methods are private by default', token.line, token.char, token.getSource());
+            } else if (parser.tokenSource.match(TokenType.Protected)) {
+                parser.tokenSource.next();
+                accessModifier = 'protected';
+            } else if (parser.tokenSource.match(TokenType.Public)) {
+                parser.tokenSource.next();
+                accessModifier = 'public';
+            }
             if (parser.tokenSource.match(TokenType.Static)) {
                 parser.tokenSource.next();
                 modifier = 'static';
             }
             if (parser.tokenSource.match(TokenType.Fn)) {
                 const method = (new FunctionSubparser()).parse(parser, parser.tokenSource.next());
-                methods.push([method, modifier]);
+                methods.push([method, modifier, accessModifier]);
             } else if (parser.tokenSource.match(TokenType.Const)) {
                 const property = (new LetOrConstDeclarationSubparser()).parse(parser, parser.tokenSource.next());
-                properties.push([property, modifier]);
+                properties.push([property, modifier, accessModifier]);
             } else {
                 const property = (new LetOrConstDeclarationSubparser()).parse(parser, null);
-                properties.push([property, modifier]);
+                properties.push([property, modifier, accessModifier]);
             }
         }
         parser.tokenSource.consume(TokenType.RightCurlyBracket, '!!!');

@@ -56,6 +56,9 @@ var TokenType;
     TokenType[TokenType["In"] = 50] = "In";
     TokenType[TokenType["Static"] = 51] = "Static";
     TokenType[TokenType["Class"] = 52] = "Class";
+    TokenType[TokenType["Public"] = 53] = "Public";
+    TokenType[TokenType["Protected"] = 54] = "Protected";
+    TokenType[TokenType["Private"] = 55] = "Private";
 })(TokenType || (TokenType = {}));
 exports.TokenType = TokenType;
 class Token {
