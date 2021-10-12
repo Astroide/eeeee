@@ -647,6 +647,14 @@ class ClassSubparser {
         const methods = [];
         const properties = [];
         while (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
+            if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                const errorToken = parser.tokenSource.next();
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00018] Leading or double commas are not allowed in classes', errorToken.line, errorToken.char, errorToken.getSource());
+            }
+            const token = parser.tokenSource.peek();
+            if (![tokens_1.TokenType.Public, tokens_1.TokenType.Fn, tokens_1.TokenType.Identifier, tokens_1.TokenType.Private, tokens_1.TokenType.Protected, tokens_1.TokenType.Const, tokens_1.TokenType.Static].includes(token.type)) {
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, `[ESCE00019] One of ('private', 'protected', 'public', 'const', 'static', <identifier>) was expected, found TokenType.${tokens_1.TokenType[token.type]} instead`, token.line, token.char, token.getSource());
+            }
             let modifier = 'instance';
             let accessModifier = 'private';
             if (parser.tokenSource.match(tokens_1.TokenType.Private)) {
@@ -676,6 +684,9 @@ class ClassSubparser {
             else {
                 const property = (new LetOrConstDeclarationSubparser()).parse(parser, null);
                 properties.push([property, modifier, accessModifier]);
+            }
+            if (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
+                parser.tokenSource.consume(tokens_1.TokenType.Comma, 'a comma is required after properties / methods');
             }
         }
         parser.tokenSource.consume(tokens_1.TokenType.RightCurlyBracket, '!!!');

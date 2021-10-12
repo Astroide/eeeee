@@ -1,19 +1,19 @@
 class HugeSquirrel[X, Y: X, Z <= Y] {
-    private x = 1
-    const y = 2
-    static z = 3
-    static const w = 4
-    public x1 = 1
-    public const y1 = 2
-    public static z1 = 3
-    public static const w1 = 4
-    protected x2 = 1
-    protected const y2 = 2
-    protected static z2 = 3
-    protected static const w2 = 4
+    private x = 1,
+    const y = 2,
+    static z = 3,
+    static const w = 4,
+    public x1 = 1,
+    public const y1 = 2,
+    public static z1 = 3,
+    public static const w1 = 4,
+    protected x2 = 1,
+    protected const y2 = 2,
+    protected static z2 = 3,
+    protected static const w2 = 4,
     fn new() HugeSquirrel {
         let isHuge = true
-    }
+    },
 };
 
 fn main[I, K, V <= K : (I, J)](x: T) T {

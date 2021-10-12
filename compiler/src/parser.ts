@@ -752,6 +752,14 @@ class ClassSubparser implements PrefixSubparser {
         const methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][] = [];
         const properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][] = [];
         while (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                const errorToken = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00018] Leading or double commas are not allowed in classes', errorToken.line, errorToken.char, errorToken.getSource());
+            }
+            const token = parser.tokenSource.peek();
+            if (![TokenType.Public, TokenType.Fn, TokenType.Identifier, TokenType.Private, TokenType.Protected, TokenType.Const, TokenType.Static].includes(token.type)) {
+                panicAt(parser.tokenSource.reader, `[ESCE00019] One of ('private', 'protected', 'public', 'const', 'static', <identifier>) was expected, found TokenType.${TokenType[token.type]} instead`, token.line, token.char, token.getSource());
+            }
             let modifier: 'instance' | 'static' = 'instance';
             let accessModifier: PrivacyModifier = 'private';
             if (parser.tokenSource.match(TokenType.Private)) {
@@ -777,6 +785,9 @@ class ClassSubparser implements PrefixSubparser {
             } else {
                 const property = (new LetOrConstDeclarationSubparser()).parse(parser, null);
                 properties.push([property, modifier, accessModifier]);
+            }
+            if (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
+                parser.tokenSource.consume(TokenType.Comma, 'a comma is required after properties / methods');
             }
         }
         parser.tokenSource.consume(TokenType.RightCurlyBracket, '!!!');
