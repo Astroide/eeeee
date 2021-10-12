@@ -958,16 +958,16 @@ export class Parser {
     }
 
     getType(raw = false): Type {
-        let T: Type = {
+        let type: Type = {
             plain: true,
             value: <Identifier>this.tokenSource.consume(TokenType.Identifier, 'expected a type name')
         };
-        if (raw) return T;
+        if (raw) return type;
         if (this.tokenSource.match(TokenType.LeftBracket)) {
             this.tokenSource.next();
-            T = {
+            type = {
                 plain: false,
-                value: T.value,
+                value: type.value,
                 typeParameters: []
             };
             if (this.tokenSource.match(TokenType.RightBracket)) {
@@ -980,13 +980,13 @@ export class Parser {
                     panicAt(this.tokenSource.reader, '[ESCE00011] Only commas to separate type parameters and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
                 }
                 const parameter = this.getType();
-                T.typeParameters.push(parameter);
+                type.typeParameters.push(parameter);
                 if (this.tokenSource.match(TokenType.Comma)) {
                     this.tokenSource.next(); // Consume the comma
                 }
             }
             this.tokenSource.next(); // Consume the ']'
         }
-        return T;
+        return type;
     }
 }
