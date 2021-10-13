@@ -809,7 +809,15 @@ class AssignmentExpression extends Expression {
     }
 }
 
-// class AssignmentSubparser implements InfixSubparser
+class AssignmentSubparser implements InfixSubparser {
+    parse(parser: Parser, left: Expression, token: Token): AssignmentExpression {
+        const right = parser.getExpression(0);
+        if (!(left instanceof IdentifierExpression) && !(left instanceof PropertyAccessExpression) && !(left instanceof ElementAccessExpression)) {
+            errorAt(parser.tokenSource.reader, '[ESCE00019] Left expression of an assignment must be either an identifier, a property access or an indexing expression', token.line, token.char, token.getSource());
+        }
+        return new AssignmentExpression(left, right);
+    }
+}
 
 type TypeConstraint = {
     kind: 'extends' | 'implements',
@@ -879,6 +887,7 @@ export class Parser {
         this.registerInfix(TokenType.Semicolon, new StatementSubparser());
         this.registerInfix(TokenType.DoubleMinus, new PostfixOperatorSubparser());
         this.registerInfix(TokenType.DoublePlus, new PostfixOperatorSubparser());
+        this.registerInfix(TokenType.Equals, new AssignmentSubparser());
     }
 
     registerPrefix(type: TokenType, subparser: PrefixSubparser): void {
