@@ -795,6 +795,19 @@ class ClassSubparser implements PrefixSubparser {
     }
 }
 
+class AssignmentExpression extends Expression {
+    left: Expression;
+    right: Expression;
+    constructor(left: Expression, right: Expression) {
+        this.left = left;
+        this.right = right;
+    }
+
+    toString(): string {
+        return `AssignmentExpression {${this.left.toString()}, ${this.right.toString()}}`;
+    }
+}
+
 type TypeConstraint = {
     kind: 'extends' | 'implements',
     type: Type,
