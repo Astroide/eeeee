@@ -693,6 +693,28 @@ class ClassSubparser {
         return new ClassExpression(name, typeParameters, typeConstraints, methods, properties);
     }
 }
+class AssignmentExpression extends Expression {
+    constructor(left, right) {
+        super();
+        this.left = left;
+        this.right = right;
+    }
+    toString() {
+        return `AssignmentExpression {${this.left.toString()}, ${this.right.toString()}}`;
+    }
+}
+class AssignmentSubparser {
+    constructor() {
+        this.precedence = 0.9;
+    }
+    parse(parser, left, token) {
+        const right = parser.getExpression(0);
+        if (!(left instanceof IdentifierExpression) && !(left instanceof PropertyAccessExpression) && !(left instanceof ElementAccessExpression)) {
+            (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00019] Left expression of an assignment must be either an identifier, a property access or an indexing expression', token.line, token.char, token.getSource());
+        }
+        return new AssignmentExpression(left, right);
+    }
+}
 function typeConstraintToString(t) {
     if (t == 'unconstrained')
         return t;
@@ -754,6 +776,7 @@ class Parser {
         this.registerInfix(tokens_1.TokenType.Semicolon, new StatementSubparser());
         this.registerInfix(tokens_1.TokenType.DoubleMinus, new PostfixOperatorSubparser());
         this.registerInfix(tokens_1.TokenType.DoublePlus, new PostfixOperatorSubparser());
+        this.registerInfix(tokens_1.TokenType.Equals, new AssignmentSubparser());
     }
     registerPrefix(type, subparser) {
         this.prefixSubparsers.set(type, subparser);
