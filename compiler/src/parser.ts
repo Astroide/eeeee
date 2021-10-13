@@ -799,6 +799,7 @@ class AssignmentExpression extends Expression {
     left: Expression;
     right: Expression;
     constructor(left: Expression, right: Expression) {
+        super();
         this.left = left;
         this.right = right;
     }
@@ -807,6 +808,8 @@ class AssignmentExpression extends Expression {
         return `AssignmentExpression {${this.left.toString()}, ${this.right.toString()}}`;
     }
 }
+
+// class AssignmentSubparser implements InfixSubparser
 
 type TypeConstraint = {
     kind: 'extends' | 'implements',
