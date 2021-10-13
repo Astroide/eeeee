@@ -810,10 +810,11 @@ class AssignmentExpression extends Expression {
 }
 
 class AssignmentSubparser implements InfixSubparser {
+    precedence = 0.9;
     parse(parser: Parser, left: Expression, token: Token): AssignmentExpression {
         const right = parser.getExpression(0);
         if (!(left instanceof IdentifierExpression) && !(left instanceof PropertyAccessExpression) && !(left instanceof ElementAccessExpression)) {
-            errorAt(parser.tokenSource.reader, '[ESCE00019] Left expression of an assignment must be either an identifier, a property access or an indexing expression', token.line, token.char, token.getSource());
+            panicAt(parser.tokenSource.reader, '[ESCE00019] Left expression of an assignment must be either an identifier, a property access or an indexing expression', token.line, token.char, token.getSource());
         }
         return new AssignmentExpression(left, right);
     }
