@@ -38,6 +38,15 @@ class PeekableTokenStream {
         this.nextTokens.push(this.stream.gen.next().value);
         return this.nextTokens[0];
     }
+    peekN(n) {
+        if (this.nextTokens.length > n - 1) {
+            return this.nextTokens[n - 1];
+        }
+        while (!(this.nextTokens.length > n - 1)) {
+            this.nextTokens.push(this.stream.gen.next().value);
+        }
+        return this.nextTokens[n - 1];
+    }
     match(type) {
         const next = this.peek();
         return next.type == type;
@@ -122,8 +131,14 @@ class FunctionCallSubparser {
                 const token = parser.tokenSource.next();
                 (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
+            let argName = null;
+            if (parser.tokenSource.peek().type == tokens_1.TokenType.Identifier && parser.tokenSource.peekN(2).type == tokens_1.TokenType.Colon) {
+                // Named argument
+                argName = parser.tokenSource.next();
+                parser.tokenSource.next();
+            }
             const arg = parser.getExpression(0);
-            args.push(arg);
+            args.push(argName ? [arg, argName] : [arg]);
             if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
                 parser.tokenSource.next();
             }

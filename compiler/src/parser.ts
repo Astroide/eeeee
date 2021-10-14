@@ -37,6 +37,16 @@ class PeekableTokenStream {
         return this.nextTokens[0];
     }
 
+    peekN(n: number): Token {
+        if (this.nextTokens.length > n - 1) {
+            return this.nextTokens[n - 1];
+        }
+        while (!(this.nextTokens.length > n - 1)) {
+            this.nextTokens.push(<Token>this.stream.gen.next().value);
+        }
+        return this.nextTokens[n - 1];
+    }
+
     match(type: TokenType): boolean {
         const next = this.peek();
         return next.type == type;
@@ -129,14 +139,20 @@ class FunctionCallSubparser implements InfixSubparser {
     }
     @logCalls
     parse(parser: Parser, callee: Expression, _token: Token): FunctionCallExpression {
-        const args: Expression[] = [];
+        const args: [Expression, Identifier?][] = [];
         while (!parser.tokenSource.match(TokenType.RightParenthesis)) {
             if (parser.tokenSource.match(TokenType.Comma)) {
                 const token = parser.tokenSource.next();
                 panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
+            let argName: Identifier = null;
+            if (parser.tokenSource.peek().type == TokenType.Identifier && parser.tokenSource.peekN(2).type == TokenType.Colon) {
+                // Named argument
+                argName = <Identifier>parser.tokenSource.next();
+                parser.tokenSource.next();
+            }
             const arg = parser.getExpression(0);
-            args.push(arg);
+            args.push(argName ? [arg, argName] : [arg]);
             if (parser.tokenSource.match(TokenType.Comma)) {
                 parser.tokenSource.next();
             } else if (!parser.tokenSource.match(TokenType.RightParenthesis)) {
@@ -193,8 +209,8 @@ class GroupExpression extends Expression {
 
 class FunctionCallExpression extends Expression {
     callee: Expression;
-    args: Expression[];
-    constructor(callee: Expression, args: Expression[]) {
+    args: [Expression, Identifier?][];
+    constructor(callee: Expression, args: [Expression, Identifier?][]) {
         super();
         this.callee = callee;
         this.args = args;

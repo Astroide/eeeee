@@ -1,7 +1,7 @@
 ### What this file is
 This file lists what is left to do.
 - Parser :
-  - [ ] Named arguments
+  - [x] Named arguments
   - [ ] Default values
   - [ ] Enum parsing
   - [ ] Class overloads
