@@ -54,7 +54,9 @@ enum TokenType {
     Class,
     Public,
     Protected,
-    Private
+    Private,
+    Import,
+    From
 }
 
 class Token {

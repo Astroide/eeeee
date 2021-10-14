@@ -10,3 +10,4 @@ This file lists what is left to do.
 - Compiler
   - [ ] Write code to translate the parsing structures into C code
 - Standard Library
+- Macros
