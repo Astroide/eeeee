@@ -619,10 +619,10 @@ class ForSubparser implements PrefixSubparser {
 }
 
 class LambdaFunctionExpression extends Expression {
-    args: IdentifierExpression[];
+    args: [IdentifierExpression, Expression?][];
     body: Expression;
     typesOfArguments: Type[];
-    constructor(args: IdentifierExpression[], typesOfArguments: Type[], body: Expression) {
+    constructor(args: [IdentifierExpression, Expression?][], typesOfArguments: Type[], body: Expression) {
         super();
         this.args = args;
         this.body = body;
@@ -630,20 +630,20 @@ class LambdaFunctionExpression extends Expression {
     }
 
     toString(): string {
-        return `LambdaFunction {[${zip(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + (type ? typeToString(type) : '<inferred type>')).join(', ')}], ${this.body.toString()}]`;
+        return `LambdaFunction {[${zip(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + (type ? typeToString(type) : '<inferred type>')).join(', ')}], ${this.body.toString()}]`;
     }
 }
 
 class FunctionExpression extends Expression {
     typeParameters: Type[];
-    args: IdentifierExpression[];
+    args: [IdentifierExpression, Expression?][];
     typesOfArguments: Type[];
     body: Block;
     name: IdentifierExpression;
     returnType?: Type;
     typeConstraints: TypeConstraint[];
 
-    constructor(typeParameters: Type[], args: IdentifierExpression[], typesOfArguments: Type[], body: Block, name: IdentifierExpression, typeConstraints: TypeConstraint[], returnType?: Type) {
+    constructor(typeParameters: Type[], args: [IdentifierExpression, Expression?][], typesOfArguments: Type[], body: Block, name: IdentifierExpression, typeConstraints: TypeConstraint[], returnType?: Type) {
         super();
         this.typeParameters = typeParameters;
         this.args = args;
@@ -655,7 +655,7 @@ class FunctionExpression extends Expression {
     }
 
     toString(): string {
-        return `Function<${zip(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.name.toString()}, [${zip(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
+        return `Function<${zip(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.name.toString()}, [${zip(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
     }
 }
 
@@ -669,14 +669,15 @@ class FunctionSubparser implements PrefixSubparser {
             [typeParameters, typeConstraints] = parser.getTypeParameters();
         }
         parser.tokenSource.consume(TokenType.LeftParenthesis, '[ESCE00015] A left parenthesis is required to start a function\'s argument list');
-        const args: IdentifierExpression[] = [];
+        const args: [IdentifierExpression, Expression?][] = [];
         const typesOfArguments: Type[] = [];
         while (!parser.tokenSource.match(TokenType.RightParenthesis)) {
             if (parser.tokenSource.match(TokenType.Comma)) {
                 const token = parser.tokenSource.next();
                 panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
-            args.push(parser.getNamePattern());
+            const pattern = parser.getNamePattern();
+            let defaultValue: Expression = null;
             if (!parser.tokenSource.match(TokenType.Colon)) {
                 const wrongToken = parser.tokenSource.next();
                 panicAt(parser.tokenSource.reader, '[ESCE00016] Function arguments must be typed', wrongToken.line, wrongToken.char, wrongToken.getSource());
@@ -684,6 +685,11 @@ class FunctionSubparser implements PrefixSubparser {
                 parser.tokenSource.next();
                 typesOfArguments.push(parser.getType());
             }
+            if (parser.tokenSource.match(TokenType.Equals)) {
+                parser.tokenSource.next();
+                defaultValue = parser.getExpression(0);
+            }
+            args.push(defaultValue ? [pattern, defaultValue] : [pattern]);
             if (parser.tokenSource.match(TokenType.Comma)) {
                 parser.tokenSource.next();
             } else if (!parser.tokenSource.match(TokenType.RightParenthesis)) {
@@ -705,7 +711,7 @@ class FunctionSubparser implements PrefixSubparser {
 class LambdaFunctionSubparser implements PrefixSubparser {
     @logCalls
     parse(parser: Parser, token: Token): LambdaFunctionExpression {
-        const args: IdentifierExpression[] = [];
+        const args: [IdentifierExpression, Expression?][] = [];
         const typesOfArguments: Type[] = [];
         if (token.type == TokenType.Pipe) {
             // Function potentially has arguments
@@ -714,13 +720,19 @@ class LambdaFunctionSubparser implements PrefixSubparser {
                     const token = parser.tokenSource.next();
                     panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
                 }
-                args.push(parser.getNamePattern());
+                const pattern = parser.getNamePattern();
+                let defaultValue: Expression = null;
                 if (parser.tokenSource.match(TokenType.Colon)) {
                     parser.tokenSource.next();
                     typesOfArguments.push(parser.getType());
                 } else {
                     typesOfArguments.push(null);
                 }
+                if (parser.tokenSource.match(TokenType.Equals)) {
+                    parser.tokenSource.next();
+                    defaultValue = parser.getExpression(0);
+                }
+                args.push(defaultValue ? [pattern, defaultValue] : [pattern]);
                 if (parser.tokenSource.match(TokenType.Comma)) {
                     parser.tokenSource.next();
                 } else if (!parser.tokenSource.match(TokenType.Pipe)) {

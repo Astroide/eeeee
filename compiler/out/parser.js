@@ -538,7 +538,7 @@ class LambdaFunctionExpression extends Expression {
         this.typesOfArguments = typesOfArguments;
     }
     toString() {
-        return `LambdaFunction {[${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + (type ? typeToString(type) : '<inferred type>')).join(', ')}], ${this.body.toString()}]`;
+        return `LambdaFunction {[${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + (type ? typeToString(type) : '<inferred type>')).join(', ')}], ${this.body.toString()}]`;
     }
 }
 class FunctionExpression extends Expression {
@@ -553,7 +553,7 @@ class FunctionExpression extends Expression {
         this.typeConstraints = typeConstraints;
     }
     toString() {
-        return `Function<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.name.toString()}, [${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name.toString() + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
+        return `Function<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.name.toString()}, [${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
     }
 }
 class FunctionSubparser {
@@ -572,7 +572,8 @@ class FunctionSubparser {
                 const token = parser.tokenSource.next();
                 (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
-            args.push(parser.getNamePattern());
+            const pattern = parser.getNamePattern();
+            let defaultValue = null;
             if (!parser.tokenSource.match(tokens_1.TokenType.Colon)) {
                 const wrongToken = parser.tokenSource.next();
                 (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00016] Function arguments must be typed', wrongToken.line, wrongToken.char, wrongToken.getSource());
@@ -581,6 +582,11 @@ class FunctionSubparser {
                 parser.tokenSource.next();
                 typesOfArguments.push(parser.getType());
             }
+            if (parser.tokenSource.match(tokens_1.TokenType.Equals)) {
+                parser.tokenSource.next();
+                defaultValue = parser.getExpression(0);
+            }
+            args.push(defaultValue ? [pattern, defaultValue] : [pattern]);
             if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
                 parser.tokenSource.next();
             }
@@ -613,7 +619,8 @@ class LambdaFunctionSubparser {
                     const token = parser.tokenSource.next();
                     (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
                 }
-                args.push(parser.getNamePattern());
+                const pattern = parser.getNamePattern();
+                let defaultValue = null;
                 if (parser.tokenSource.match(tokens_1.TokenType.Colon)) {
                     parser.tokenSource.next();
                     typesOfArguments.push(parser.getType());
@@ -621,6 +628,11 @@ class LambdaFunctionSubparser {
                 else {
                     typesOfArguments.push(null);
                 }
+                if (parser.tokenSource.match(tokens_1.TokenType.Equals)) {
+                    parser.tokenSource.next();
+                    defaultValue = parser.getExpression(0);
+                }
+                args.push(defaultValue ? [pattern, defaultValue] : [pattern]);
                 if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
                     parser.tokenSource.next();
                 }
