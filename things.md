@@ -7,6 +7,8 @@ This file lists what is left to do.
   - [ ] Class overloads
   - [ ] Function overloads
   - [ ] Imports
+  - [ ] Match expressions
+  - [ ] Allow patterns in `let` / `const` expressions, and in functions' arguments lists
 - Compiler
   - [ ] Write code to translate the parsing structures into C code
 - Standard Library
