@@ -24,7 +24,8 @@ exports.errorAndWarningExplanations = {
     E00020: 'Expected \'}\' after expression in template string : in template strings (delimited by \'`\' characters), expressions inserted via ${expr} are required to be closed by a closing curly bracket \'}\'.',
     E99999: 'An error happened in the parser. Please report this to https://github.com/Astroide/escurieux/issues so that it can be fixed.',
     W00001: 'Leading zero in number literal: This warning is shown when a number literal starts with one or more extra zeroes, as in 0123, 0893.034 or 0023. If this was intended to be an octal literal, it should have been written like this : 0o123 instead of 0123 or 00123.',
-    W00002: 'The \'private\' access specifier is not required, properties and methods are private by default : This means that you needn\'t add the \'private\' access modifier before a property or a method, because unless specified otherwise, they\'re already private and it\'d be redundant.'
+    W00002: 'The \'private\' access specifier is not required, properties and methods are private by default : This means that you needn\'t add the \'private\' access modifier before a property or a method, because unless specified otherwise, they\'re already private and it\'d be redundant.',
+    W00003: 'Dollar signs \'$\' are not required to be escaped within template strings if they aren\'t followed by a \'{\' : in template strings, the only use of escaping dollar signs is if they are followed by an opening curly bracket, because otherwise the contents of the string after the expression could be misinterpreted as part of that expression. For example, in the template string `number = ${3 + 2`, the expression could be either 3 or 3 + 2, and the parser won\'t try to guess what you meant, as it is deterministic.'
 };
 exports.tokenTypeExplanations = new Map();
 [

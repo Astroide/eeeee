@@ -231,6 +231,14 @@ export class Tokenizer {
                                             // Nothing here
                                         } else if (next == '\'') {
                                             currentData += '\'';
+                                        } else if (next == '$' && self.reader.peek() == '{') {
+                                            currentData += '${';
+                                            self.reader.next();
+                                        } else if (next == '$') {
+                                            currentData += '$';
+                                            warnAt(self.reader, '[ESCW00003] Dollar signs \'$\' are not required to be escaped within template strings if they aren\'t followed by a \'{\'', self.reader.currentLine, self.reader.currentCharacter - 2, '\\' + next);
+                                        } else {
+                                            panicAt(self.reader, `[ESCE00006] Invalid escape sequence: \\${next}`, self.reader.currentLine, self.reader.currentCharacter - 2, '\\' + next);
                                         }
                                     } else {
                                         currentData += char;
