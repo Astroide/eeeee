@@ -865,6 +865,24 @@ class AssignmentSubparser implements InfixSubparser {
     }
 }
 
+class ReturnExpression extends Expression {
+    returnValue: Expression;
+    constructor(returnValue: Expression) {
+        super();
+        this.returnValue = returnValue;
+    }
+
+    toString(): string {
+        return `ReturnExpression {${this.returnValue.toString()}}`;
+    }
+}
+
+class ReturnSubparser implements PrefixSubparser {
+    parse(parser: Parser, _token: Token): ReturnExpression {
+        return new ReturnExpression(parser.getExpression(0));
+    }
+}
+
 type TypeConstraint = {
     kind: 'extends' | 'implements',
     type: Type,
@@ -905,6 +923,7 @@ export class Parser {
         this.registerPrefix(TokenType.Fn, new FunctionSubparser());
         this.registerPrefix(TokenType.Loop, new LoopSubparser());
         this.registerPrefix(TokenType.Class, new ClassSubparser());
+        this.registerPrefix(TokenType.Return, new ReturnSubparser());
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],
             [TokenType.DoubleAmpersand, Precedence.SUM],

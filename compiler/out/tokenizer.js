@@ -268,7 +268,6 @@ class Tokenizer {
                                     }
                                 }
                                 isFirstIteration = false;
-                                // console.log(':' + self.reader.peekSome(2));
                                 if (self.reader.peekSome(2) == '${') {
                                     if (currentData.length > 1) {
                                         const newPart = {
@@ -286,10 +285,8 @@ class Tokenizer {
                                     }
                                     self.reader.next();
                                     self.reader.next();
-                                    // console.log('NEXT>> ' + self.reader.peek());
                                     const tokenizer = new Tokenizer(self.reader.source);
                                     tokenizer.reader = self.reader;
-                                    // console.log('NEXT>> ' + tokenizer.reader.peek());
                                     const parser = new parser_1.Parser(tokenizer.tokenize(), self.reader);
                                     const newPart = {
                                         data: parser.getExpression(0)
@@ -300,23 +297,19 @@ class Tokenizer {
                                         self.reader.currentLine--;
                                         self.reader.currentCharacter = self.reader.getLine(self.reader.currentLine).length - 1;
                                     }
-                                    // console.log(firstPart.data);
                                     if (!firstPart.data) {
                                         firstPart = newPart;
                                         currentPart = newPart;
-                                        // console.log('SWAP');
                                     }
                                     else {
                                         currentPart.next = newPart;
                                         currentPart = newPart;
                                     }
-                                    // console.log(newPart.data.toString());
                                     if (self.reader.next() != '}') {
                                         (0, utilities_1.panicAt)(self.reader, '[ESCE00020] Expected \'}\' after expression in template string', self.reader.currentLine, self.reader.currentCharacter, self.reader.peek());
                                     }
                                 }
                             }
-                            // console.log(firstPart);
                             if (currentData.length > 1) {
                                 const newPart = {
                                     data: currentData
@@ -412,7 +405,7 @@ class Tokenizer {
                             while (!self.reader.done() && /[a-zA-Z_0-9]/.test(self.reader.peek())) {
                                 tokenText += self.reader.next();
                             }
-                            const keywords = 'fn while for if else continue break let const loop in static class private public protected import'.split(' ');
+                            const keywords = 'fn while for if else continue break let const loop in static class private public protected import return'.split(' ');
                             const keywordTokenTypes = {
                                 'fn': tokens_1.TokenType.Fn,
                                 'while': tokens_1.TokenType.While,
@@ -430,7 +423,8 @@ class Tokenizer {
                                 'private': tokens_1.TokenType.Private,
                                 'protected': tokens_1.TokenType.Protected,
                                 'public': tokens_1.TokenType.Public,
-                                'import': tokens_1.TokenType.Import
+                                'import': tokens_1.TokenType.Import,
+                                'return': tokens_1.TokenType.Return
                             };
                             if (keywords.includes(tokenText)) {
                                 yield (new tokens_1.Keyword(self.reader.currentLine, char, self.reader.source, current, tokenText.length, keywordTokenTypes[tokenText]));

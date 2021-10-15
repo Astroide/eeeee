@@ -245,7 +245,6 @@ export class Tokenizer {
                                     }
                                 }
                                 isFirstIteration = false;
-                                // console.log(':' + self.reader.peekSome(2));
                                 if (self.reader.peekSome(2) == '${') {
                                     if (currentData.length > 1) {
                                         const newPart = {
@@ -262,10 +261,8 @@ export class Tokenizer {
                                     }
                                     self.reader.next();
                                     self.reader.next();
-                                    // console.log('NEXT>> ' + self.reader.peek());
                                     const tokenizer = new Tokenizer(self.reader.source);
                                     tokenizer.reader = self.reader;
-                                    // console.log('NEXT>> ' + tokenizer.reader.peek());
                                     const parser = new Parser(tokenizer.tokenize(), self.reader);
                                     const newPart: TemplateStringElement = {
                                         data: parser.getExpression(0)
@@ -276,22 +273,18 @@ export class Tokenizer {
                                         self.reader.currentLine--;
                                         self.reader.currentCharacter = self.reader.getLine(self.reader.currentLine).length - 1;
                                     }
-                                    // console.log(firstPart.data);
                                     if (!firstPart.data) {
                                         firstPart = newPart;
                                         currentPart = newPart;
-                                        // console.log('SWAP');
                                     } else {
                                         currentPart.next = newPart;
                                         currentPart = newPart;
                                     }
-                                    // console.log(newPart.data.toString());
                                     if (self.reader.next() != '}') {
                                         panicAt(self.reader, '[ESCE00020] Expected \'}\' after expression in template string', self.reader.currentLine, self.reader.currentCharacter, self.reader.peek());
                                     }
                                 }
                             }
-                            // console.log(firstPart);
                             if (currentData.length > 1) {
                                 const newPart = {
                                     data: currentData
@@ -380,7 +373,7 @@ export class Tokenizer {
                             while (!self.reader.done() && /[a-zA-Z_0-9]/.test(self.reader.peek())) {
                                 tokenText += self.reader.next();
                             }
-                            const keywords = 'fn while for if else continue break let const loop in static class private public protected import'.split(' ');
+                            const keywords = 'fn while for if else continue break let const loop in static class private public protected import return'.split(' ');
                             const keywordTokenTypes = {
                                 'fn': TokenType.Fn,
                                 'while': TokenType.While,
@@ -398,7 +391,8 @@ export class Tokenizer {
                                 'private': TokenType.Private,
                                 'protected': TokenType.Protected,
                                 'public': TokenType.Public,
-                                'import': TokenType.Import
+                                'import': TokenType.Import,
+                                'return': TokenType.Return
                             };
                             if (keywords.includes(tokenText)) {
                                 yield (new Keyword(self.reader.currentLine, char, self.reader.source, current, tokenText.length, keywordTokenTypes[tokenText]));

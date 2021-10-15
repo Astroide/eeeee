@@ -61,7 +61,7 @@ var TokenType;
     TokenType[TokenType["Protected"] = 55] = "Protected";
     TokenType[TokenType["Private"] = 56] = "Private";
     TokenType[TokenType["Import"] = 57] = "Import";
-    TokenType[TokenType["From"] = 58] = "From";
+    TokenType[TokenType["Return"] = 58] = "Return";
 })(TokenType || (TokenType = {}));
 exports.TokenType = TokenType;
 class Token {

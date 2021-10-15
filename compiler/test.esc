@@ -1,6 +1,26 @@
+const fustibale = (class Fustibale {
+    fn throw(snailName: string) Snail {
+        return Snail(snailName)
+    }
+})()
+/* fustibale.throw();
+struct Fustibale {}
+struct Fustibale Fustibale__new() {
+    Fustibale f = {};
+    return f;
+}
+void Fustibale__throw() {
+    printf("Boom")
+}
+const fustibale = Fustibale__new();
+Fustibale__throw(fustibale) */
+/* function x() {
+    /* code... */
+} */ /* comment /* nested comment */ */
+x => x * 2
 `outer\'\
 ${`inner${class T {}}`}
-\${data}`;
+$ {data}`;
 class HugeSquirrel[X, Y: X, Z <= Y] {
     x = 1,
     const y = 2,

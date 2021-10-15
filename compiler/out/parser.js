@@ -782,6 +782,20 @@ class AssignmentSubparser {
         return new AssignmentExpression(left, right);
     }
 }
+class ReturnExpression extends Expression {
+    constructor(returnValue) {
+        super();
+        this.returnValue = returnValue;
+    }
+    toString() {
+        return `ReturnExpression {${this.returnValue.toString()}}`;
+    }
+}
+class ReturnSubparser {
+    parse(parser, _token) {
+        return new ReturnExpression(parser.getExpression(0));
+    }
+}
 function typeConstraintToString(t) {
     if (t == 'unconstrained')
         return t;
@@ -815,6 +829,7 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.Fn, new FunctionSubparser());
         this.registerPrefix(tokens_1.TokenType.Loop, new LoopSubparser());
         this.registerPrefix(tokens_1.TokenType.Class, new ClassSubparser());
+        this.registerPrefix(tokens_1.TokenType.Return, new ReturnSubparser());
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoubleAmpersand, Precedence.SUM],

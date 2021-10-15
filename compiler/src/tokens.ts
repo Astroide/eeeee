@@ -59,7 +59,7 @@ enum TokenType {
     Protected,
     Private,
     Import,
-    From
+    Return
 }
 
 class Token {
