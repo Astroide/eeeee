@@ -44,11 +44,11 @@ function doSomethingAt(fn, source, message, line, char, text) {
     const errorOrWarningId = message.match(/\[ESC(W|E)\d\d\d\d\d\]/)[0].slice(1, -1);
     return fn(`\n${message}
 On line ${line + 1} at character ${char + 1}:
- \u001b[34m${(line - 1).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 2 >= 0 ? (currentLine = source.getLine(line - 2)).slice(0, currentLine.length - 1) : ''}
- \u001b[34m${(line).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 1 >= 0 ? (currentLine = source.getLine(line - 1)).slice(0, currentLine.length - 1) : ''}
+ \u001b[34m${line - 2 < 0 ? '(start of file)\u001b[0m' : `${(line - 1).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 2 >= 0 ? (currentLine = source.getLine(line - 2)).slice(0, currentLine.length - 1) : ''}`}
+ \u001b[34m${line - 1 < 0 ? '(start of file)\u001b[0m' : `${(line).toString().padEnd(6, ' ')}      \u001b[0m| ${line - 1 >= 0 ? (currentLine = source.getLine(line - 1)).slice(0, currentLine.length - 1) : ''}`}
  \u001b[34m${(line + 1).toString().padEnd(6, ' ')} here >\u001b[0m ${lineText.slice(0, lineText.length - 1)}
- \u001b[34m${(line + 2).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 1 < lineCount ? (currentLine = source.getLine(line + 1)).slice(0, currentLine.length - 1) : ''}
- \u001b[34m${(line + 3).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : ''}
+ \u001b[34m${line + 2 >= lineCount ? '(end of file)\u001b[0m' : `${(line + 2).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 1 < lineCount ? (currentLine = source.getLine(line + 1)).slice(0, currentLine.length - 1) : ''}`}
+ \u001b[34m${line + 3 >= lineCount ? '(end of file)\u001b[0m' : `${(line + 3).toString().padEnd(6, ' ')}      \u001b[0m| ${line + 2 < lineCount ? (currentLine = source.getLine(line + 2)).slice(0, currentLine.length - 1) : ''}`}
 ${showLongErrors ? `Explanation of error ${errorOrWarningId}:\n  ${explanations_1.errorAndWarningExplanations[errorOrWarningId.slice(3)]}` : `Run ${command} -e ${errorOrWarningId} or ${command} --explain ${errorOrWarningId} for more informations about this error.`}\n----------\n`);
 }
 const panicAt = (source, message, line, char, text) => doSomethingAt(panic, source, message, line, char, text);
