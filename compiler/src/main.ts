@@ -126,7 +126,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
         if (result.err()) {
             panic(`The file ${filename} does not exist. Node.js error:\n${result.errorMessage}`);
         }
-        const contentsOfSourceFile = result.value;
+        const contentsOfSourceFile = result.value.replace(/\r\n/g, '\n');
         const tokenizer = new Tokenizer(contentsOfSourceFile);
         const tokenGenerator = tokenizer.tokenize();
         if (verbose) {
