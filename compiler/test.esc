@@ -1,3 +1,5 @@
+`outer\'\
+${`inner${class T {}}`}`;
 class HugeSquirrel[X, Y: X, Z <= Y] {
     x = 1,
     const y = 2,

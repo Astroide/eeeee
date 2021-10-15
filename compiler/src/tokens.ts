@@ -1,5 +1,8 @@
+import { Expression } from './parser';
+
 enum TokenType {
     StringLiteral,
+    TemplateStringLiteral,
     NumericLiteral,
     BooleanLiteral,
     CharacterLiteral,
@@ -88,6 +91,19 @@ class StringLiteral extends Token {
     }
 }
 
+type TemplateStringElement = {
+    data: Expression | string;
+    next?: TemplateStringElement;
+};
+
+class TemplateStringLiteral extends Token {
+    contents: TemplateStringElement;
+    constructor(line: number, char: number, source: string, start: number, length: number, contents: TemplateStringElement) {
+        super(line, char, source, TokenType.TemplateStringLiteral, start, length);
+        this.contents = contents;
+    }
+}
+
 class CharLiteral extends Token {
     content: string;
     constructor(line: number, char: number, source: string, start: number, length: number, content: string) {
@@ -128,4 +144,4 @@ class Keyword extends Token {
     }
 }
 
-export { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword };
+export { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword, TemplateStringLiteral, TemplateStringElement };

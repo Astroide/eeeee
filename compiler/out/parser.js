@@ -6,7 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Parser = void 0;
+exports.Parser = exports.AssignmentExpression = exports.ClassExpression = exports.FunctionExpression = exports.LambdaFunctionExpression = exports.ForExpression = exports.PostfixOperatorExpression = exports.LetOrConstDeclarationExpression = exports.TypeCastingExpression = exports.LoopExpression = exports.WhileExpression = exports.IfExpression = exports.InfixOperatorExpression = exports.StatementExpression = exports.PrefixOperatorExpression = exports.PropertyAccessExpression = exports.LiteralExpression = exports.IdentifierExpression = exports.ElementAccessExpression = exports.FunctionCallExpression = exports.GroupExpression = exports.Expression = void 0;
 const explanations_1 = require("./explanations");
 const tokens_1 = require("./tokens");
 const utilities_1 = require("./utilities");
@@ -184,6 +184,7 @@ __decorate([
 ], ElementAccessSubparser.prototype, "parse", null);
 class Expression {
 }
+exports.Expression = Expression;
 class GroupExpression extends Expression {
     constructor(content) {
         super();
@@ -193,6 +194,7 @@ class GroupExpression extends Expression {
         return `GroupExpression {${this.content.toString()}}`;
     }
 }
+exports.GroupExpression = GroupExpression;
 class FunctionCallExpression extends Expression {
     constructor(callee, args) {
         super();
@@ -203,6 +205,7 @@ class FunctionCallExpression extends Expression {
         return `FunctionCall {${this.callee.toString()}${this.args.length > 0 ? ', ' + this.args.map(x => x.toString()).join(', ') : ''}}`;
     }
 }
+exports.FunctionCallExpression = FunctionCallExpression;
 class ElementAccessExpression extends Expression {
     constructor(left, indices) {
         super();
@@ -213,6 +216,7 @@ class ElementAccessExpression extends Expression {
         return `IndexingExpression {${this.left.toString()}${this.indices.length > 0 ? ', ' + this.indices.map(x => x.toString()).join(', ') : ''}}`;
     }
 }
+exports.ElementAccessExpression = ElementAccessExpression;
 class IdentifierExpression extends Expression {
     constructor(id) {
         super();
@@ -222,6 +226,7 @@ class IdentifierExpression extends Expression {
         return `Identifier[${this.id}]`;
     }
 }
+exports.IdentifierExpression = IdentifierExpression;
 class LiteralExpression extends Expression {
     constructor(value, type) {
         super();
@@ -229,9 +234,27 @@ class LiteralExpression extends Expression {
         this.type = type;
     }
     toString() {
-        return `${tokens_1.TokenType[this.type]}[${this.value}]`;
+        if (this.type == tokens_1.TokenType.TemplateStringLiteral) {
+            let string = `${tokens_1.TokenType[this.type]}[\n`;
+            let element = this.value;
+            while (element) {
+                if (element.data instanceof Expression) {
+                    string += '+ ' + element.data.toString() + '\n';
+                }
+                else {
+                    string += '+ string |' + element.data.toString() + '|\n';
+                }
+                element = element.next;
+            }
+            string += ']';
+            return string;
+        }
+        else {
+            return `${tokens_1.TokenType[this.type]}[${this.value}]`;
+        }
     }
 }
+exports.LiteralExpression = LiteralExpression;
 class LiteralSubparser {
     parse(_parser, token) {
         if (token.type == tokens_1.TokenType.CharacterLiteral)
@@ -242,6 +265,8 @@ class LiteralSubparser {
             return new LiteralExpression(token.content, tokens_1.TokenType.NumericLiteral);
         else if (token.type == tokens_1.TokenType.BooleanLiteral)
             return new LiteralExpression(token.content, tokens_1.TokenType.BooleanLiteral);
+        else if (token.type == tokens_1.TokenType.TemplateStringLiteral)
+            return new LiteralExpression(token.contents, tokens_1.TokenType.TemplateStringLiteral);
     }
 }
 __decorate([
@@ -257,6 +282,7 @@ class PropertyAccessExpression extends Expression {
         return `PropertyAccess {${this.object.toString()}, ${this.property}}`;
     }
 }
+exports.PropertyAccessExpression = PropertyAccessExpression;
 class PropertyAccessSubparser {
     constructor(precedence) {
         this.precedence = precedence;
@@ -279,6 +305,7 @@ class PrefixOperatorExpression extends Expression {
         return tokens_1.TokenType[this.operator] + '.prefix {' + this.operand.toString() + '}';
     }
 }
+exports.PrefixOperatorExpression = PrefixOperatorExpression;
 class StatementExpression extends Expression {
     constructor(left, right) {
         super();
@@ -289,6 +316,7 @@ class StatementExpression extends Expression {
         return `${this.left} ; ${this.right}`;
     }
 }
+exports.StatementExpression = StatementExpression;
 class StatementSubparser {
     constructor() {
         this.precedence = 0.5;
@@ -331,6 +359,7 @@ class InfixOperatorExpression extends Expression {
         return `${tokens_1.TokenType[this.operator]}.infix {${this.leftOperand.toString()}, ${this.rightOperand.toString()}}`;
     }
 }
+exports.InfixOperatorExpression = InfixOperatorExpression;
 class IfExpression extends Expression {
     constructor(condition, thenBranch, elseBranch) {
         super();
@@ -342,6 +371,7 @@ class IfExpression extends Expression {
         return `If {${this.condition.toString()}, ${this.thenBranch.toString()}${this.elseBranch ? ', ' + this.elseBranch.toString() : ''}}`;
     }
 }
+exports.IfExpression = IfExpression;
 class WhileExpression extends Expression {
     constructor(condition, body) {
         super();
@@ -352,6 +382,7 @@ class WhileExpression extends Expression {
         return `While {${this.condition.toString()}, ${this.body.toString()}}`;
     }
 }
+exports.WhileExpression = WhileExpression;
 class LoopExpression extends Expression {
     constructor(body) {
         super();
@@ -361,6 +392,7 @@ class LoopExpression extends Expression {
         return `Loop {${this.body.toString()}}`;
     }
 }
+exports.LoopExpression = LoopExpression;
 class IfSubparser {
     parse(parser, _token) {
         const condition = parser.getExpression(0);
@@ -409,6 +441,7 @@ class TypeCastingExpression extends Expression {
         return `Typecast {${typeToString(this.type)}, ${this.value.toString()}}`;
     }
 }
+exports.TypeCastingExpression = TypeCastingExpression;
 class TypeCastingSubparser {
     parse(parser, _token) {
         const type = parser.getType();
@@ -446,6 +479,7 @@ class LetOrConstDeclarationExpression extends Expression {
         return `${this.type} {${(new IdentifierExpression(this.name.getSource())).toString()}, ${this.variableType ? typeToString(this.variableType) : '<inferred type>'}${this.value ? ', ' + this.value.toString() : ''}}`;
     }
 }
+exports.LetOrConstDeclarationExpression = LetOrConstDeclarationExpression;
 function typeToString(type) {
     if (type.plain)
         return type.value.getSource();
@@ -462,6 +496,7 @@ class PostfixOperatorExpression extends Expression {
         return `${tokens_1.TokenType[this.operator]}.postfix {${this.operand.toString()}}`;
     }
 }
+exports.PostfixOperatorExpression = PostfixOperatorExpression;
 class PostfixOperatorSubparser {
     constructor() {
         this.precedence = Precedence.POSTFIX;
@@ -487,6 +522,7 @@ class ForExpression extends Expression {
             return `ForExpression.<for a in b> {${this.condition.name.toString()}, ${this.condition.iterator.toString()}, ${this.body.toString()}}`;
     }
 }
+exports.ForExpression = ForExpression;
 class ForSubparser {
     parse(parser, _token) {
         let init = new LiteralExpression(true, tokens_1.TokenType.BooleanLiteral);
@@ -541,6 +577,7 @@ class LambdaFunctionExpression extends Expression {
         return `LambdaFunction {[${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + (type ? typeToString(type) : '<inferred type>')).join(', ')}], ${this.body.toString()}]`;
     }
 }
+exports.LambdaFunctionExpression = LambdaFunctionExpression;
 class FunctionExpression extends Expression {
     constructor(typeParameters, args, typesOfArguments, body, name, typeConstraints, returnType) {
         super();
@@ -556,6 +593,7 @@ class FunctionExpression extends Expression {
         return `Function<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.name.toString()}, [${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
     }
 }
+exports.FunctionExpression = FunctionExpression;
 class FunctionSubparser {
     parse(parser, _token) {
         const functionName = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'a function name is required'));
@@ -663,6 +701,7 @@ class ClassExpression extends Expression {
         return `ClassExpression<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
     }
 }
+exports.ClassExpression = ClassExpression;
 class ClassSubparser {
     parse(parser, _token) {
         const name = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected a class name'));
@@ -730,6 +769,7 @@ class AssignmentExpression extends Expression {
         return `AssignmentExpression {${this.left.toString()}, ${this.right.toString()}}`;
     }
 }
+exports.AssignmentExpression = AssignmentExpression;
 class AssignmentSubparser {
     constructor() {
         this.precedence = 0.9;
@@ -759,7 +799,7 @@ class Parser {
         [tokens_1.TokenType.Plus, tokens_1.TokenType.Minus, tokens_1.TokenType.Tilde, tokens_1.TokenType.Bang].forEach(type => {
             self.registerPrefix(type, new PrefixOperatorSubparser());
         });
-        [tokens_1.TokenType.BooleanLiteral, tokens_1.TokenType.CharacterLiteral, tokens_1.TokenType.StringLiteral, tokens_1.TokenType.NumericLiteral].forEach(type => {
+        [tokens_1.TokenType.BooleanLiteral, tokens_1.TokenType.CharacterLiteral, tokens_1.TokenType.StringLiteral, tokens_1.TokenType.NumericLiteral, tokens_1.TokenType.TemplateStringLiteral].forEach(type => {
             self.registerPrefix(type, new LiteralSubparser());
         });
         this.registerPrefix(tokens_1.TokenType.LeftCurlyBracket, new BlockSubparser());

@@ -1,4 +1,5 @@
-import { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, Identifier, Keyword } from './tokens';
+import { Parser } from './parser';
+import { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, Identifier, Keyword, TemplateStringElement, TemplateStringLiteral } from './tokens';
 import { StringReader, warnAt, panicAt } from './utilities';
 
 export type TokenStream = { gen: Generator<Token | string, void, unknown>, setRaw: (boolean) => void };
@@ -192,6 +193,8 @@ export class Tokenizer {
                                         stringContents += '\'';
                                     } else if (next == '"') {
                                         stringContents += '"';
+                                    } else if (next == '`') {
+                                        stringContents += '`';
                                     } else {
                                         panicAt(self.reader, `[ESCE00006] Invalid escape sequence: \\${next}`, self.reader.currentLine, self.reader.currentCharacter - 2, '\\' + next);
                                     }
@@ -202,6 +205,99 @@ export class Tokenizer {
                             }
                             self.reader.next();
                             yield (new StringLiteral(line, character, self.reader.source, position, self.reader.current - position, stringContents));
+                            continue parsing;
+                        }
+                        if (/`/.test(tokenText)) {
+                            const line = self.reader.currentLine, character = self.reader.currentCharacter - 1, position = self.reader.current - 1;
+                            let currentPart: TemplateStringElement = {
+                                data: null
+                            };
+                            let firstPart = currentPart;
+                            let isFirstIteration = true;
+                            let currentData = '';
+                            while (self.reader.peek() != '`') {
+                                if (!isFirstIteration) {
+                                    let char = '';
+                                    char = self.reader.next();
+                                    if (char == '\\') {
+                                        const next = self.reader.next();
+                                        if (next == '\\') {
+                                            currentData += '\\';
+                                        } else if (next == '`') {
+                                            currentData += '`';
+                                        } else if (next == '"') {
+                                            currentData += '"';
+                                        } else if (next == '\n') {
+                                            // Nothing here
+                                        } else if (next == '\'') {
+                                            currentData += '\'';
+                                        }
+                                    } else {
+                                        currentData += char;
+                                    }
+                                }
+                                isFirstIteration = false;
+                                // console.log(':' + self.reader.peekSome(2));
+                                if (self.reader.peekSome(2) == '${') {
+                                    if (currentData.length > 1) {
+                                        const newPart = {
+                                            data: currentData
+                                        };
+                                        if (firstPart.data == null) {
+                                            firstPart = newPart;
+                                            currentPart = newPart;
+                                        } else {
+                                            currentPart.next = newPart;
+                                            currentPart = newPart;
+                                        }
+                                        currentData = '';
+                                    }
+                                    self.reader.next();
+                                    self.reader.next();
+                                    // console.log('NEXT>> ' + self.reader.peek());
+                                    const tokenizer = new Tokenizer(self.reader.source);
+                                    tokenizer.reader = self.reader;
+                                    // console.log('NEXT>> ' + tokenizer.reader.peek());
+                                    const parser = new Parser(tokenizer.tokenize(), self.reader);
+                                    const newPart: TemplateStringElement = {
+                                        data: parser.getExpression(0)
+                                    };
+                                    self.reader.current--;
+                                    self.reader.currentCharacter--;
+                                    if (self.reader.currentCharacter < 0) {
+                                        self.reader.currentLine--;
+                                        self.reader.currentCharacter = self.reader.getLine(self.reader.currentLine).length - 1;
+                                    }
+                                    // console.log(firstPart.data);
+                                    if (!firstPart.data) {
+                                        firstPart = newPart;
+                                        currentPart = newPart;
+                                        // console.log('SWAP');
+                                    } else {
+                                        currentPart.next = newPart;
+                                        currentPart = newPart;
+                                    }
+                                    // console.log(newPart.data.toString());
+                                    if (self.reader.next() != '}') {
+                                        panicAt(self.reader, '[ESCE00020] Expected \'}\' after expression in template string', self.reader.currentLine, self.reader.currentCharacter, self.reader.peek());
+                                    }
+                                }
+                            }
+                            // console.log(firstPart);
+                            if (currentData.length > 1) {
+                                const newPart = {
+                                    data: currentData
+                                };
+                                if (firstPart.data == null) {
+                                    firstPart = newPart;
+                                    currentPart = newPart;
+                                } else {
+                                    currentPart.next = newPart;
+                                    currentPart = newPart;
+                                }
+                            }
+                            self.reader.next();
+                            yield (new TemplateStringLiteral(line, character, self.reader.source, position, self.reader.current - position, firstPart));
                             continue parsing;
                         }
                         if (/'/.test(tokenText)) {
@@ -218,6 +314,8 @@ export class Tokenizer {
                                     charContents += '\n';
                                 } else if (escaped == '\'') {
                                     charContents += '\'';
+                                } else if (escaped == '`') {
+                                    charContents += '`';
                                 } else if (escaped == '"') {
                                     charContents += '"';
                                 } else {

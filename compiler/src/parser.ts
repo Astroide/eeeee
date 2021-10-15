@@ -1,6 +1,6 @@
 import { tokenTypeExplanations } from './explanations';
 import { TokenStream } from './tokenizer';
-import { BooleanLiteral, CharLiteral, Identifier, NumberLiteral, StringLiteral, Token, TokenType } from './tokens';
+import { BooleanLiteral, CharLiteral, Identifier, NumberLiteral, StringLiteral, TemplateStringElement, TemplateStringLiteral, Token, TokenType } from './tokens';
 import { logCalls, panicAt, StringReader, warnAt, zip } from './utilities';
 
 class PeekableTokenStream {
@@ -193,9 +193,9 @@ class ElementAccessSubparser implements InfixSubparser {
     }
 }
 
-class Expression { }
+export class Expression { }
 
-class GroupExpression extends Expression {
+export class GroupExpression extends Expression {
     content: Expression;
     constructor(content: Expression) {
         super();
@@ -207,7 +207,7 @@ class GroupExpression extends Expression {
     }
 }
 
-class FunctionCallExpression extends Expression {
+export class FunctionCallExpression extends Expression {
     callee: Expression;
     args: [Expression, Identifier?][];
     constructor(callee: Expression, args: [Expression, Identifier?][]) {
@@ -221,7 +221,7 @@ class FunctionCallExpression extends Expression {
     }
 }
 
-class ElementAccessExpression extends Expression {
+export class ElementAccessExpression extends Expression {
     left: Expression;
     indices: Expression[];
     constructor(left: Expression, indices: Expression[]) {
@@ -234,7 +234,7 @@ class ElementAccessExpression extends Expression {
     }
 }
 
-class IdentifierExpression extends Expression {
+export class IdentifierExpression extends Expression {
     id: string;
     constructor(id: string) {
         super();
@@ -246,17 +246,32 @@ class IdentifierExpression extends Expression {
     }
 }
 
-class LiteralExpression extends Expression {
-    value: string | number | boolean;
-    type: TokenType.NumericLiteral | TokenType.BooleanLiteral | TokenType.StringLiteral | TokenType.CharacterLiteral;
-    constructor(value: string | number | boolean, type: TokenType.NumericLiteral | TokenType.BooleanLiteral | TokenType.StringLiteral | TokenType.CharacterLiteral) {
+export class LiteralExpression extends Expression {
+    value: string | number | boolean | TemplateStringElement;
+    type: TokenType.NumericLiteral | TokenType.BooleanLiteral | TokenType.StringLiteral | TokenType.CharacterLiteral | TokenType.TemplateStringLiteral;
+    constructor(value: string | number | boolean | TemplateStringElement, type: TokenType.NumericLiteral | TokenType.BooleanLiteral | TokenType.StringLiteral | TokenType.CharacterLiteral | TokenType.TemplateStringLiteral) {
         super();
         this.value = value;
         this.type = type;
     }
 
     toString(): string {
-        return `${TokenType[this.type]}[${this.value}]`;
+        if (this.type == TokenType.TemplateStringLiteral) {
+            let string = `${TokenType[this.type]}[\n`;
+            let element = <TemplateStringElement>this.value;
+            while (element) {
+                if (element.data instanceof Expression) {
+                    string += '+ ' + element.data.toString() + '\n';
+                } else {
+                    string += '+ string |' + element.data.toString() + '|\n';
+                }
+                element = element.next;
+            }
+            string += ']';
+            return string;
+        } else {
+            return `${TokenType[this.type]}[${this.value}]`;
+        }
     }
 }
 
@@ -271,10 +286,12 @@ class LiteralSubparser implements PrefixSubparser {
             return new LiteralExpression((<NumberLiteral>token).content, TokenType.NumericLiteral);
         else if (token.type == TokenType.BooleanLiteral)
             return new LiteralExpression((<BooleanLiteral>token).content, TokenType.BooleanLiteral);
+        else if (token.type == TokenType.TemplateStringLiteral)
+            return new LiteralExpression((<TemplateStringLiteral>token).contents, TokenType.TemplateStringLiteral);
     }
 }
 
-class PropertyAccessExpression extends Expression {
+export class PropertyAccessExpression extends Expression {
     object: Expression;
     property: string;
     constructor(object: Expression, property: string) {
@@ -300,7 +317,7 @@ class PropertyAccessSubparser implements InfixSubparser {
     }
 }
 
-class PrefixOperatorExpression extends Expression {
+export class PrefixOperatorExpression extends Expression {
     operator: TokenType;
     operand: Expression;
     constructor(operator: TokenType, operand: Expression) {
@@ -314,7 +331,7 @@ class PrefixOperatorExpression extends Expression {
     }
 }
 
-class StatementExpression extends Expression {
+export class StatementExpression extends Expression {
     left: Expression;
     right: Expression;
     constructor(left: Expression, right: Expression) {
@@ -359,7 +376,7 @@ class BlockSubparser implements PrefixSubparser {
     }
 }
 
-class InfixOperatorExpression extends Expression {
+export class InfixOperatorExpression extends Expression {
     operator: TokenType;
     leftOperand: Expression;
     rightOperand: Expression;
@@ -375,7 +392,7 @@ class InfixOperatorExpression extends Expression {
     }
 }
 
-class IfExpression extends Expression {
+export class IfExpression extends Expression {
     condition: Expression;
     thenBranch: Block;
     elseBranch?: Block;
@@ -391,7 +408,7 @@ class IfExpression extends Expression {
     }
 }
 
-class WhileExpression extends Expression {
+export class WhileExpression extends Expression {
     condition: Expression;
     body: Block;
     constructor(condition: Expression, body: Block) {
@@ -405,7 +422,7 @@ class WhileExpression extends Expression {
     }
 }
 
-class LoopExpression extends Expression {
+export class LoopExpression extends Expression {
     body: Block;
     constructor(body: Block) {
         super();
@@ -452,7 +469,7 @@ class LoopSubparser implements PrefixSubparser {
     }
 }
 
-class TypeCastingExpression extends Expression {
+export class TypeCastingExpression extends Expression {
     value: Expression;
     type: Type;
     constructor(type: Type, value: Expression) {
@@ -493,7 +510,7 @@ class LetOrConstDeclarationSubparser implements PrefixSubparser {
     }
 }
 
-class LetOrConstDeclarationExpression extends Expression {
+export class LetOrConstDeclarationExpression extends Expression {
     type: 'let' | 'const';
     name: Identifier;
     value?: Expression;
@@ -518,7 +535,7 @@ function typeToString(type: Type): string {
     else return `${type.value.getSource()}[${(<{ plain: false, value: Identifier, typeParameters: Type[] }>type).typeParameters.map(x => typeToString(x)).join(', ')}]`;
 }
 
-class PostfixOperatorExpression extends Expression {
+export class PostfixOperatorExpression extends Expression {
     operator: TokenType;
     operand: Expression;
     constructor(operator: TokenType, operand: Expression) {
@@ -552,7 +569,7 @@ type ForABC = {
     condition: Expression;
     repeat: Expression;
 }
-class ForExpression extends Expression {
+export class ForExpression extends Expression {
     kind: 'a,b,c' | 'a in b';
     condition: ForABC | ForAInB;
     body: Block;
@@ -618,7 +635,7 @@ class ForSubparser implements PrefixSubparser {
     }
 }
 
-class LambdaFunctionExpression extends Expression {
+export class LambdaFunctionExpression extends Expression {
     args: [IdentifierExpression, Expression?][];
     body: Expression;
     typesOfArguments: Type[];
@@ -634,7 +651,7 @@ class LambdaFunctionExpression extends Expression {
     }
 }
 
-class FunctionExpression extends Expression {
+export class FunctionExpression extends Expression {
     typeParameters: Type[];
     args: [IdentifierExpression, Expression?][];
     typesOfArguments: Type[];
@@ -749,7 +766,7 @@ class LambdaFunctionSubparser implements PrefixSubparser {
 
 type PrivacyModifier = 'private' | 'public' | 'protected';
 
-class ClassExpression extends Expression {
+export class ClassExpression extends Expression {
     typeParameters: Type[];
     typeConstraints: TypeConstraint[];
     name: IdentifierExpression;
@@ -823,7 +840,7 @@ class ClassSubparser implements PrefixSubparser {
     }
 }
 
-class AssignmentExpression extends Expression {
+export class AssignmentExpression extends Expression {
     left: Expression;
     right: Expression;
     constructor(left: Expression, right: Expression) {
@@ -872,7 +889,7 @@ export class Parser {
         [TokenType.Plus, TokenType.Minus, TokenType.Tilde, TokenType.Bang].forEach(type => {
             self.registerPrefix(type, new PrefixOperatorSubparser());
         });
-        [TokenType.BooleanLiteral, TokenType.CharacterLiteral, TokenType.StringLiteral, TokenType.NumericLiteral].forEach(type => {
+        [TokenType.BooleanLiteral, TokenType.CharacterLiteral, TokenType.StringLiteral, TokenType.NumericLiteral, TokenType.TemplateStringLiteral].forEach(type => {
             self.registerPrefix(type, new LiteralSubparser());
         });
         this.registerPrefix(TokenType.LeftCurlyBracket, new BlockSubparser());

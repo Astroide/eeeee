@@ -3,6 +3,7 @@ This file lists what is left to do.
 - Parser :
   - [x] Named arguments
   - [x] Default values
+  - [x] Template string literals
   - [ ] Enum parsing
   - [ ] Class overloads
   - [ ] Function overloads
