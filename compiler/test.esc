@@ -1,5 +1,8 @@
 const fustibale = (class Fustibale {
     fn throw(snailName: string) Snail {
+        for character in snailName {
+            stdout.writeln(character)
+        };
         return Snail(snailName)
     }
 })()
