@@ -17,14 +17,13 @@
         ["[", "]"],
         ["(", ")"],
         ["\"", "\""],
-        ["'", "'"]
+        // ["'", "'"] not needed, Escurieux's character literals are only 'c and not 'c'
     ],
     // symbols that can be used to surround a selection
     "surroundingPairs": [
         ["{", "}"],
         ["[", "]"],
         ["(", ")"],
-        ["\"", "\""],
-        ["'", "'"]
+        ["\"", "\""]
     ]
 }
