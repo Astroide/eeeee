@@ -76,7 +76,7 @@ vscode.workspace.onDidChangeTextDocument(event => {
 });
 
 
-const tokenTypes = ['class', 'interface', 'enum', 'function', 'variable', 'typeParameter', 'type', 'operator', 'string', 'number', 'keyword'];
+const tokenTypes = ['class', 'interface', 'enum', 'function', 'variable', 'typeParameter', 'type', 'operator', 'string', 'number', 'keyword', 'label'];
 const tokenModifiers = ['declaration', 'documentation'];
 const legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
 
@@ -100,13 +100,20 @@ vscode.languages.registerDocumentSemanticTokensProvider({
                 numberliteral: 'number',
                 booleanliteral: 'number',
                 keyword: 'keyword',
-                characterliteral: 'string'
+                characterliteral: 'string',
+                label: 'label'
             };
             const path = `/tmp/.escurieux-${Math.random()}.esc`;
             const text = document.getText();
             writeFileSync(path, text);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            let result = execSync(`node ~/Desktop/projets/escurieux/compiler/out/main.js -v --stdout "${path}"`).toString('utf-8');
+            let result = '';
+            try {
+                result = execSync(`node ~/Desktop/projets/escurieux/compiler/out/main.js -v --stdout "${path}"`).toString('utf-8');
+            } catch (e) {
+                console.log(e);
+                unlinkSync(path);
+                throw e;
+            }
             unlinkSync(path);
             // console.log('result = ' + result);
             result = result.match(/<tokens-start>((.|\n)*)<tokens-end>/)[1];

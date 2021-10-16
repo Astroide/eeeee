@@ -114,7 +114,7 @@ vscode.workspace.onDidChangeTextDocument(function (event) {
         updateDiagnostics(event.document.uri);
     }
 });
-var tokenTypes = ['class', 'interface', 'enum', 'function', 'variable', 'typeParameter', 'type', 'operator', 'string', 'number', 'keyword'];
+var tokenTypes = ['class', 'interface', 'enum', 'function', 'variable', 'typeParameter', 'type', 'operator', 'string', 'number', 'keyword', 'label'];
 var tokenModifiers = ['declaration', 'documentation'];
 var legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
 function logAndReturn(x) {
@@ -136,13 +136,21 @@ vscode.languages.registerDocumentSemanticTokensProvider({
                 numberliteral: 'number',
                 booleanliteral: 'number',
                 keyword: 'keyword',
-                characterliteral: 'string'
+                characterliteral: 'string',
+                label: 'label'
             };
             var path = "/tmp/.escurieux-" + Math.random() + ".esc";
             var text = document.getText();
             (0, fs_1.writeFileSync)(path, text);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            var result = (0, child_process_1.execSync)("node ~/Desktop/projets/escurieux/compiler/out/main.js -v --stdout \"" + path + "\"").toString('utf-8');
+            var result = '';
+            try {
+                result = (0, child_process_1.execSync)("node ~/Desktop/projets/escurieux/compiler/out/main.js -v --stdout \"" + path + "\"").toString('utf-8');
+            }
+            catch (e) {
+                console.log(e);
+                (0, fs_1.unlinkSync)(path);
+                throw e;
+            }
             (0, fs_1.unlinkSync)(path);
             // console.log('result = ' + result);
             result = result.match(/<tokens-start>((.|\n)*)<tokens-end>/)[1];

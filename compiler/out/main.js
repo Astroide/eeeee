@@ -161,6 +161,10 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
                     const num = token.identifier;
                     (0, utilities_1.print)(`Token Identifier ${token.line} ${token.char} ${token.length} <${num}>`);
                 }
+                else if (token instanceof tokens_1.Label) {
+                    const num = '#' + token.labelText;
+                    (0, utilities_1.print)(`Token Label ${token.line} ${token.char} ${token.length} <${num}>`);
+                }
                 else if (token instanceof tokens_1.Token) {
                     (0, utilities_1.print)(`Token BaseToken ${token.line} ${token.char} ${token.length} (${tokens_1.TokenType[token.type]}) <${token.getSource()}>`);
                 }

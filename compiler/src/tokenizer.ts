@@ -403,7 +403,7 @@ export class Tokenizer {
                         }
 
                         if (/#/.test(tokenText)) {
-                            const line = self.reader.currentLine, char = self.reader.currentCharacter, current = self.reader.current - 1;
+                            const line = self.reader.currentLine, char = self.reader.currentCharacter, current = self.reader.current;
                             let labelText = '';
                             while (!self.reader.done() && /[a-zA-Z_0-9]/.test(self.reader.peek())) {
                                 const character = self.reader.next();

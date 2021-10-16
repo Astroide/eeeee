@@ -2,7 +2,7 @@ import { argv, exit } from 'process';
 import { errorAndWarningExplanations } from './explanations';
 import { Parser } from './parser';
 import { Tokenizer } from './tokenizer';
-import { CharLiteral, Identifier, Keyword, NumberLiteral, StringLiteral, Token, TokenType } from './tokens';
+import { CharLiteral, Identifier, Keyword, Label, NumberLiteral, StringLiteral, Token, TokenType } from './tokens';
 import { panic, print, readFile, setCommand, setOutput, showLongErrorMessages } from './utilities';
 
 async function main() {
@@ -150,6 +150,9 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
                 } else if (token instanceof Identifier) {
                     const num = (<Identifier>token).identifier;
                     print(`Token Identifier ${token.line} ${token.char} ${token.length} <${num}>`);
+                } else if (token instanceof Label) {
+                    const num = '#' + (<Label>token).labelText;
+                    print(`Token Label ${token.line} ${token.char} ${token.length} <${num}>`);
                 } else if (token instanceof Token) {
                     print(`Token BaseToken ${token.line} ${token.char} ${token.length} (${TokenType[token.type]}) <${token.getSource()}>`);
                 }
