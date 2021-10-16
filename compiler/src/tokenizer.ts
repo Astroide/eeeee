@@ -1,5 +1,5 @@
 import { Parser } from './parser';
-import { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, Identifier, Keyword, TemplateStringElement, TemplateStringLiteral } from './tokens';
+import { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, Identifier, Keyword, TemplateStringElement, TemplateStringLiteral, Label } from './tokens';
 import { StringReader, warnAt, panicAt } from './utilities';
 
 export type TokenStream = { gen: Generator<Token | string, void, unknown>, setRaw: (boolean) => void };
@@ -399,6 +399,21 @@ export class Tokenizer {
                             } else {
                                 yield (new Identifier(self.reader.currentLine, char, self.reader.source, current, tokenText.length, tokenText));
                             }
+                            continue parsing;
+                        }
+
+                        if (/#/.test(tokenText)) {
+                            const line = self.reader.currentLine, char = self.reader.currentCharacter, current = self.reader.current - 1;
+                            let labelText = '';
+                            while (!self.reader.done() && /[a-zA-Z_0-9]/.test(self.reader.peek())) {
+                                const character = self.reader.next();
+                                tokenText += character;
+                                labelText += character;
+                            }
+                            if (labelText.length == 0 || /[0-9]/.test(labelText[0])) {
+                                panicAt(self.reader, '[ESCE00021] A label started by \'#\' is required to contain at least one character except the \'#\', and the first of these characters is required to be an ASCII letter or underscore (/[A-Za-z_]/).', line, char, '#');
+                            }
+                            yield (new Label(line, char, '#' + labelText, current, labelText.length + 1, labelText));
                             continue parsing;
                         }
 

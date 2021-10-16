@@ -59,7 +59,8 @@ enum TokenType {
     Protected,
     Private,
     Import,
-    Return
+    Return,
+    Label
 }
 
 class Token {
@@ -144,4 +145,13 @@ class Keyword extends Token {
     }
 }
 
-export { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword, TemplateStringLiteral, TemplateStringElement };
+class Label extends Token {
+    labelText: string;
+    constructor(line: number, char: number, source: string, start: number, length: number, labelText: string) {
+        super(line, char, source, TokenType.Label, start, length);
+        this.labelText = labelText;
+    }
+}
+
+export { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword, TemplateStringLiteral, TemplateStringElement, Label };
+

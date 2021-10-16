@@ -434,6 +434,20 @@ class Tokenizer {
                             }
                             continue parsing;
                         }
+                        if (/#/.test(tokenText)) {
+                            const line = self.reader.currentLine, char = self.reader.currentCharacter, current = self.reader.current - 1;
+                            let labelText = '';
+                            while (!self.reader.done() && /[a-zA-Z_0-9]/.test(self.reader.peek())) {
+                                const character = self.reader.next();
+                                tokenText += character;
+                                labelText += character;
+                            }
+                            if (labelText.length == 0 || /[0-9]/.test(labelText[0])) {
+                                (0, utilities_1.panicAt)(self.reader, '[ESCE00021] A label started by \'#\' is required to contain at least one character except the \'#\', and the first of these characters is required to be an ASCII letter or underscore (/[A-Za-z_]/).', line, char, '#');
+                            }
+                            yield (new tokens_1.Label(line, char, '#' + labelText, current, labelText.length + 1, labelText));
+                            continue parsing;
+                        }
                         // These should be the last ifs
                         if (/\s/.test(tokenText)) {
                             // Whitespace, OK
