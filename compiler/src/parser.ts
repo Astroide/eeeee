@@ -1,6 +1,6 @@
 import { tokenTypeExplanations } from './explanations';
 import { TokenStream } from './tokenizer';
-import { BooleanLiteral, CharLiteral, Identifier, NumberLiteral, StringLiteral, TemplateStringElement, TemplateStringLiteral, Token, TokenType } from './tokens';
+import { BooleanLiteral, CharLiteral, Identifier, Label, NumberLiteral, StringLiteral, TemplateStringElement, TemplateStringLiteral, Token, TokenType } from './tokens';
 import { logCalls, panicAt, StringReader, warnAt, zip } from './utilities';
 
 class PeekableTokenStream {
@@ -357,13 +357,14 @@ class StatementSubparser implements InfixSubparser {
 
 class Block extends Expression {
     expression: Expression;
+    label?: string = null;
     constructor(expression: Expression) {
         super();
         this.expression = expression;
     }
 
     toString(): string {
-        return `Block {${this.expression.toString()}}`;
+        return `Block${this.label ? '#' + this.label : ''} {${this.expression.toString()}}`;
     }
 }
 
@@ -424,13 +425,14 @@ export class WhileExpression extends Expression {
 
 export class LoopExpression extends Expression {
     body: Block;
+    label?: string = null;
     constructor(body: Block) {
         super();
         this.body = body;
     }
 
     toString(): string {
-        return `Loop {${this.body.toString()}}`;
+        return `Loop${this.label ? '#' + this.label : ''} {${this.body.toString()}}`;
     }
 }
 
@@ -573,6 +575,7 @@ export class ForExpression extends Expression {
     kind: 'a,b,c' | 'a in b';
     condition: ForABC | ForAInB;
     body: Block;
+    label?: string = null;
 
     constructor(condition: {
         init: Expression;
@@ -589,8 +592,8 @@ export class ForExpression extends Expression {
     }
 
     toString(): string {
-        if (this.kind == 'a,b,c') return `ForExpression.<for a, b, c> {${(this.condition as ForABC).init.toString()}, ${(this.condition as ForABC).condition.toString()}, ${(this.condition as ForABC).repeat.toString()}, ${this.body.toString()}}`;
-        else return `ForExpression.<for a in b> {${(this.condition as ForAInB).name.toString()}, ${(this.condition as ForAInB).iterator.toString()}, ${this.body.toString()}}`;
+        if (this.kind == 'a,b,c') return `ForExpression${this.label ? '#' + this.label : ''}.<for a, b, c> {${(this.condition as ForABC).init.toString()}, ${(this.condition as ForABC).condition.toString()}, ${(this.condition as ForABC).repeat.toString()}, ${this.body.toString()}}`;
+        else return `ForExpression${this.label ? '#' + this.label : ''}.<for a in b> {${(this.condition as ForAInB).name.toString()}, ${(this.condition as ForAInB).iterator.toString()}, ${this.body.toString()}}`;
     }
 }
 
@@ -865,7 +868,7 @@ class AssignmentSubparser implements InfixSubparser {
     }
 }
 
-class ReturnExpression extends Expression {
+export class ReturnExpression extends Expression {
     returnValue: Expression;
     constructor(returnValue: Expression) {
         super();
@@ -883,37 +886,45 @@ class ReturnSubparser implements PrefixSubparser {
     }
 }
 
-class BreakExpression extends Expression {
+export class BreakExpression extends Expression {
     breakValue: Expression;
-    constructor(breakValue: Expression) {
+    label?: string;
+    constructor(breakValue: Expression, label?: string) {
         super();
         this.breakValue = breakValue;
+        this.label = label;
     }
 
     toString(): string {
-        return `ReturnExpression {${this.breakValue.toString()}}`;
+        return `BreakExpression${this.label ? '#' + this.label : ''} {${this.breakValue.toString()}}`;
     }
 }
 
 class BreakSubparser implements PrefixSubparser {
     parse(parser: Parser, _token: Token): BreakExpression {
-        return new BreakExpression(parser.getExpression(0));
+        let label: string = null;
+        if (parser.tokenSource.match(TokenType.Label)) {
+            label = (<Label>parser.tokenSource.next()).labelText;
+        }
+        return new BreakExpression(parser.getExpression(0), label);
     }
 }
 
-class ContinueExpression extends Expression {
-    constructor() {
+export class ContinueExpression extends Expression {
+    label?: string;
+    constructor(label?: string) {
         super();
+        this.label = label;
     }
 
     toString(): string {
-        return 'ContinueExpression';
+        return `ContinueExpression${this.label ? '#' + this.label : ''}`;
     }
 }
 
 class ContinueSubparser implements PrefixSubparser {
-    parse(_parser: Parser, _token: Token): ContinueExpression {
-        return new ContinueExpression;
+    parse(parser: Parser, _token: Token): ContinueExpression {
+        return new ContinueExpression(parser.tokenSource.match(TokenType.Label) ? (<Label>parser.tokenSource.next()).labelText : null);
     }
 }
 
@@ -928,6 +939,20 @@ function typeConstraintToString(t: TypeConstraint): string {
     else {
         return `${t.kind == 'extends' ? '<=' : ':'} ${typeToString(t.type)}${t.and ? ` & ${typeConstraintToString(t.and)}` : ''}`;
     }
+}
+
+class LabelSubparser implements PrefixSubparser {
+    parse(parser: Parser, token: Token): ForExpression | LoopExpression | Block {
+        parser.tokenSource.consume(TokenType.Colon, 'expected a colon after a label');
+        const expression = parser.getExpression(Infinity);
+        if (!(expression instanceof ForExpression || expression instanceof LoopExpression)) {
+            panicAt(parser.tokenSource.reader, '[ESCE00022] Cannot label anything that is not a for loop, a \'loop\' loop, or a block.', token.line, token.char, token.getSource());
+        }
+        const typedExpression = <ForExpression | LoopExpression | Block>expression;
+        typedExpression.label = (<Label>token).labelText;
+        return typedExpression;
+    }
+
 }
 
 export class Parser {
@@ -960,6 +985,7 @@ export class Parser {
         this.registerPrefix(TokenType.Return, new ReturnSubparser());
         this.registerPrefix(TokenType.Break, new BreakSubparser());
         this.registerPrefix(TokenType.Continue, new ContinueSubparser());
+        this.registerPrefix(TokenType.Label, new LabelSubparser());
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],
             [TokenType.DoubleAmpersand, Precedence.SUM],

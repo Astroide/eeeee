@@ -1,14 +1,20 @@
 const fustibale = (class Fustibale {
     fn throw(snailName: string) Snail {
-        for character in snailName {
+        #printing: for character in snailName {
             if character == 'x {
-                continue
+                continue #printing
             } else {
                 if character == 'y {
-                    break 0
+                    break #printing 0
                 }
             };
             stdout.writeln(character)
+        };
+        #randomPrinting: loop {
+            if Math.random() < 0x.1 {
+                stdout.writeln("meow");
+                break #randomPrinting 1
+            }
         };
         return Snail(snailName)
     }

@@ -13,6 +13,7 @@ This file lists what is left to do.
   - [x] Add `continue` and `break` expressions
     - [x] `continue`
     - [x] `break`
+  - [x] Add loop / block labels
   - [ ] Allow `return` and `break` without value
   - [ ] Allow `else if`
   - [ ] Add `match` expressions

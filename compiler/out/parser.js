@@ -6,7 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Parser = exports.AssignmentExpression = exports.ClassExpression = exports.FunctionExpression = exports.LambdaFunctionExpression = exports.ForExpression = exports.PostfixOperatorExpression = exports.LetOrConstDeclarationExpression = exports.TypeCastingExpression = exports.LoopExpression = exports.WhileExpression = exports.IfExpression = exports.InfixOperatorExpression = exports.StatementExpression = exports.PrefixOperatorExpression = exports.PropertyAccessExpression = exports.LiteralExpression = exports.IdentifierExpression = exports.ElementAccessExpression = exports.FunctionCallExpression = exports.GroupExpression = exports.Expression = void 0;
+exports.Parser = exports.ContinueExpression = exports.BreakExpression = exports.ReturnExpression = exports.AssignmentExpression = exports.ClassExpression = exports.FunctionExpression = exports.LambdaFunctionExpression = exports.ForExpression = exports.PostfixOperatorExpression = exports.LetOrConstDeclarationExpression = exports.TypeCastingExpression = exports.LoopExpression = exports.WhileExpression = exports.IfExpression = exports.InfixOperatorExpression = exports.StatementExpression = exports.PrefixOperatorExpression = exports.PropertyAccessExpression = exports.LiteralExpression = exports.IdentifierExpression = exports.ElementAccessExpression = exports.FunctionCallExpression = exports.GroupExpression = exports.Expression = void 0;
 const explanations_1 = require("./explanations");
 const tokens_1 = require("./tokens");
 const utilities_1 = require("./utilities");
@@ -332,10 +332,11 @@ __decorate([
 class Block extends Expression {
     constructor(expression) {
         super();
+        this.label = null;
         this.expression = expression;
     }
     toString() {
-        return `Block {${this.expression.toString()}}`;
+        return `Block${this.label ? '#' + this.label : ''} {${this.expression.toString()}}`;
     }
 }
 class BlockSubparser {
@@ -386,10 +387,11 @@ exports.WhileExpression = WhileExpression;
 class LoopExpression extends Expression {
     constructor(body) {
         super();
+        this.label = null;
         this.body = body;
     }
     toString() {
-        return `Loop {${this.body.toString()}}`;
+        return `Loop${this.label ? '#' + this.label : ''} {${this.body.toString()}}`;
     }
 }
 exports.LoopExpression = LoopExpression;
@@ -511,15 +513,16 @@ __decorate([
 class ForExpression extends Expression {
     constructor(condition, body, kind) {
         super();
+        this.label = null;
         this.kind = kind;
         this.condition = condition;
         this.body = body;
     }
     toString() {
         if (this.kind == 'a,b,c')
-            return `ForExpression.<for a, b, c> {${this.condition.init.toString()}, ${this.condition.condition.toString()}, ${this.condition.repeat.toString()}, ${this.body.toString()}}`;
+            return `ForExpression${this.label ? '#' + this.label : ''}.<for a, b, c> {${this.condition.init.toString()}, ${this.condition.condition.toString()}, ${this.condition.repeat.toString()}, ${this.body.toString()}}`;
         else
-            return `ForExpression.<for a in b> {${this.condition.name.toString()}, ${this.condition.iterator.toString()}, ${this.body.toString()}}`;
+            return `ForExpression${this.label ? '#' + this.label : ''}.<for a in b> {${this.condition.name.toString()}, ${this.condition.iterator.toString()}, ${this.body.toString()}}`;
     }
 }
 exports.ForExpression = ForExpression;
@@ -791,36 +794,45 @@ class ReturnExpression extends Expression {
         return `ReturnExpression {${this.returnValue.toString()}}`;
     }
 }
+exports.ReturnExpression = ReturnExpression;
 class ReturnSubparser {
     parse(parser, _token) {
         return new ReturnExpression(parser.getExpression(0));
     }
 }
 class BreakExpression extends Expression {
-    constructor(breakValue) {
+    constructor(breakValue, label) {
         super();
         this.breakValue = breakValue;
+        this.label = label;
     }
     toString() {
-        return `ReturnExpression {${this.breakValue.toString()}}`;
+        return `BreakExpression${this.label ? '#' + this.label : ''} {${this.breakValue.toString()}}`;
     }
 }
+exports.BreakExpression = BreakExpression;
 class BreakSubparser {
     parse(parser, _token) {
-        return new BreakExpression(parser.getExpression(0));
+        let label = null;
+        if (parser.tokenSource.match(tokens_1.TokenType.Label)) {
+            label = parser.tokenSource.next().labelText;
+        }
+        return new BreakExpression(parser.getExpression(0), label);
     }
 }
 class ContinueExpression extends Expression {
-    constructor() {
+    constructor(label) {
         super();
+        this.label = label;
     }
     toString() {
-        return 'ContinueExpression';
+        return `ContinueExpression${this.label ? '#' + this.label : ''}`;
     }
 }
+exports.ContinueExpression = ContinueExpression;
 class ContinueSubparser {
-    parse(_parser, _token) {
-        return new ContinueExpression;
+    parse(parser, _token) {
+        return new ContinueExpression(parser.tokenSource.match(tokens_1.TokenType.Label) ? parser.tokenSource.next().labelText : null);
     }
 }
 function typeConstraintToString(t) {
@@ -828,6 +840,18 @@ function typeConstraintToString(t) {
         return t;
     else {
         return `${t.kind == 'extends' ? '<=' : ':'} ${typeToString(t.type)}${t.and ? ` & ${typeConstraintToString(t.and)}` : ''}`;
+    }
+}
+class LabelSubparser {
+    parse(parser, token) {
+        parser.tokenSource.consume(tokens_1.TokenType.Colon, 'expected a colon after a label');
+        const expression = parser.getExpression(Infinity);
+        if (!(expression instanceof ForExpression || expression instanceof LoopExpression)) {
+            (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00022] Cannot label anything that is not a for loop, a \'loop\' loop, or a block.', token.line, token.char, token.getSource());
+        }
+        const typedExpression = expression;
+        typedExpression.label = token.labelText;
+        return typedExpression;
     }
 }
 class Parser {
@@ -859,6 +883,7 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.Return, new ReturnSubparser());
         this.registerPrefix(tokens_1.TokenType.Break, new BreakSubparser());
         this.registerPrefix(tokens_1.TokenType.Continue, new ContinueSubparser());
+        this.registerPrefix(tokens_1.TokenType.Label, new LabelSubparser());
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoubleAmpersand, Precedence.SUM],
