@@ -883,6 +883,24 @@ class ReturnSubparser implements PrefixSubparser {
     }
 }
 
+class BreakExpression extends Expression {
+    breakValue: Expression;
+    constructor(breakValue: Expression) {
+        super();
+        this.breakValue = breakValue;
+    }
+
+    toString(): string {
+        return `ReturnExpression {${this.breakValue.toString()}}`;
+    }
+}
+
+class BreakSubparser implements PrefixSubparser {
+    parse(parser: Parser, _token: Token): BreakExpression {
+        return new BreakExpression(parser.getExpression(0));
+    }
+}
+
 class ContinueExpression extends Expression {
     constructor() {
         super();
@@ -940,6 +958,7 @@ export class Parser {
         this.registerPrefix(TokenType.Loop, new LoopSubparser());
         this.registerPrefix(TokenType.Class, new ClassSubparser());
         this.registerPrefix(TokenType.Return, new ReturnSubparser());
+        this.registerPrefix(TokenType.Break, new BreakSubparser());
         this.registerPrefix(TokenType.Continue, new ContinueSubparser());
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],

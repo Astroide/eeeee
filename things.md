@@ -10,9 +10,11 @@ This file lists what is left to do.
   - [ ] Imports
   - [ ] Match expressions
   - [ ] Allow patterns in `let` / `const` expressions, and in functions' arguments lists
-  - [ ] Add `continue` and `break` expressions
+  - [x] Add `continue` and `break` expressions
     - [x] `continue`
-    - [ ] `break`
+    - [x] `break`
+  - [ ] Allow `return` and `break` without value
+  - [ ] Allow `else if`
   - [ ] Add `match` expressions
   - [ ] Add Haskell-like 'operators as functions' `${+}`
   - [ ] Add an equivalent of Rust's `if let`

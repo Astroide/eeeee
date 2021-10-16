@@ -796,6 +796,20 @@ class ReturnSubparser {
         return new ReturnExpression(parser.getExpression(0));
     }
 }
+class BreakExpression extends Expression {
+    constructor(breakValue) {
+        super();
+        this.breakValue = breakValue;
+    }
+    toString() {
+        return `ReturnExpression {${this.breakValue.toString()}}`;
+    }
+}
+class BreakSubparser {
+    parse(parser, _token) {
+        return new BreakExpression(parser.getExpression(0));
+    }
+}
 class ContinueExpression extends Expression {
     constructor() {
         super();
@@ -843,6 +857,7 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.Loop, new LoopSubparser());
         this.registerPrefix(tokens_1.TokenType.Class, new ClassSubparser());
         this.registerPrefix(tokens_1.TokenType.Return, new ReturnSubparser());
+        this.registerPrefix(tokens_1.TokenType.Break, new BreakSubparser());
         this.registerPrefix(tokens_1.TokenType.Continue, new ContinueSubparser());
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],

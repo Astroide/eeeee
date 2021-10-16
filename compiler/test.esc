@@ -3,6 +3,10 @@ const fustibale = (class Fustibale {
         for character in snailName {
             if character == 'x {
                 continue
+            } else {
+                if character == 'y {
+                    break 0
+                }
             };
             stdout.writeln(character)
         };
