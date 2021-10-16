@@ -1,6 +1,9 @@
 const fustibale = (class Fustibale {
     fn throw(snailName: string) Snail {
         for character in snailName {
+            if character == 'x {
+                continue
+            };
             stdout.writeln(character)
         };
         return Snail(snailName)

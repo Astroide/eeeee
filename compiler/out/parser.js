@@ -796,6 +796,19 @@ class ReturnSubparser {
         return new ReturnExpression(parser.getExpression(0));
     }
 }
+class ContinueExpression extends Expression {
+    constructor() {
+        super();
+    }
+    toString() {
+        return 'ContinueExpression';
+    }
+}
+class ContinueSubparser {
+    parse(_parser, _token) {
+        return new ContinueExpression;
+    }
+}
 function typeConstraintToString(t) {
     if (t == 'unconstrained')
         return t;
@@ -830,6 +843,7 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.Loop, new LoopSubparser());
         this.registerPrefix(tokens_1.TokenType.Class, new ClassSubparser());
         this.registerPrefix(tokens_1.TokenType.Return, new ReturnSubparser());
+        this.registerPrefix(tokens_1.TokenType.Continue, new ContinueSubparser());
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoubleAmpersand, Precedence.SUM],

@@ -883,6 +883,22 @@ class ReturnSubparser implements PrefixSubparser {
     }
 }
 
+class ContinueExpression extends Expression {
+    constructor() {
+        super();
+    }
+
+    toString(): string {
+        return 'ContinueExpression';
+    }
+}
+
+class ContinueSubparser implements PrefixSubparser {
+    parse(_parser: Parser, _token: Token): ContinueExpression {
+        return new ContinueExpression;
+    }
+}
+
 type TypeConstraint = {
     kind: 'extends' | 'implements',
     type: Type,
@@ -924,6 +940,7 @@ export class Parser {
         this.registerPrefix(TokenType.Loop, new LoopSubparser());
         this.registerPrefix(TokenType.Class, new ClassSubparser());
         this.registerPrefix(TokenType.Return, new ReturnSubparser());
+        this.registerPrefix(TokenType.Continue, new ContinueSubparser());
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],
             [TokenType.DoubleAmpersand, Precedence.SUM],
