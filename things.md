@@ -14,7 +14,7 @@ This file lists what is left to do.
     - [x] `continue`
     - [x] `break`
   - [x] Add loop / block labels
-  - [ ] Allow `return` and `break` without value
+  - [x] Allow `return` and `break` without value
   - [ ] Allow `else if`
   - [ ] Add `match` expressions
   - [ ] Add Haskell-like 'operators as functions' `${+}`

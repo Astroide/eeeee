@@ -869,34 +869,38 @@ class AssignmentSubparser implements InfixSubparser {
 }
 
 export class ReturnExpression extends Expression {
-    returnValue: Expression;
-    constructor(returnValue: Expression) {
+    returnValue?: Expression;
+    constructor(returnValue?: Expression) {
         super();
         this.returnValue = returnValue;
     }
 
     toString(): string {
-        return `ReturnExpression {${this.returnValue.toString()}}`;
+        return `ReturnExpression {${this.returnValue ? this.returnValue.toString() : ''}}`;
     }
 }
 
 class ReturnSubparser implements PrefixSubparser {
     parse(parser: Parser, _token: Token): ReturnExpression {
-        return new ReturnExpression(parser.getExpression(0));
+        if (parser.canReadExpression()) {
+            return new ReturnExpression(parser.getExpression(0));
+        } else {
+            return new ReturnExpression();
+        }
     }
 }
 
 export class BreakExpression extends Expression {
-    breakValue: Expression;
+    breakValue?: Expression;
     label?: string;
-    constructor(breakValue: Expression, label?: string) {
+    constructor(breakValue?: Expression, label?: string) {
         super();
         this.breakValue = breakValue;
         this.label = label;
     }
 
     toString(): string {
-        return `BreakExpression${this.label ? '#' + this.label : ''} {${this.breakValue.toString()}}`;
+        return `BreakExpression${this.label ? '#' + this.label : ''} {${this.breakValue ? this.breakValue.toString() : ''}}`;
     }
 }
 
@@ -906,7 +910,11 @@ class BreakSubparser implements PrefixSubparser {
         if (parser.tokenSource.match(TokenType.Label)) {
             label = (<Label>parser.tokenSource.next()).labelText;
         }
-        return new BreakExpression(parser.getExpression(0), label);
+        if (parser.canReadExpression()) {
+            return new BreakExpression(parser.getExpression(0), label);
+        } else {
+            return new BreakExpression(null, label);
+        }
     }
 }
 
@@ -1023,6 +1031,10 @@ export class Parser {
 
     registerInfix(type: TokenType, subparser: InfixSubparser): void {
         this.infixSubparsers.set(type, subparser);
+    }
+
+    canReadExpression(): boolean {
+        return this.prefixSubparsers.has(this.tokenSource.peek().type);
     }
 
     getPrecedence(): number {

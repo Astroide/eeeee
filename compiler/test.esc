@@ -18,7 +18,16 @@ const fustibale = (class Fustibale {
         };
         return Snail(snailName)
     }
-})()
+})();
+fn return_without_() {
+    loop {
+        break
+    };
+    #test: loop {
+        break #test
+    };
+    return
+}
 /* fustibale.throw();
 struct Fustibale {}
 struct Fustibale Fustibale__new() {

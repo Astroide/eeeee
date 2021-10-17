@@ -791,13 +791,18 @@ class ReturnExpression extends Expression {
         this.returnValue = returnValue;
     }
     toString() {
-        return `ReturnExpression {${this.returnValue.toString()}}`;
+        return `ReturnExpression {${this.returnValue ? this.returnValue.toString() : ''}}`;
     }
 }
 exports.ReturnExpression = ReturnExpression;
 class ReturnSubparser {
     parse(parser, _token) {
-        return new ReturnExpression(parser.getExpression(0));
+        if (parser.canReadExpression()) {
+            return new ReturnExpression(parser.getExpression(0));
+        }
+        else {
+            return new ReturnExpression();
+        }
     }
 }
 class BreakExpression extends Expression {
@@ -807,7 +812,7 @@ class BreakExpression extends Expression {
         this.label = label;
     }
     toString() {
-        return `BreakExpression${this.label ? '#' + this.label : ''} {${this.breakValue.toString()}}`;
+        return `BreakExpression${this.label ? '#' + this.label : ''} {${this.breakValue ? this.breakValue.toString() : ''}}`;
     }
 }
 exports.BreakExpression = BreakExpression;
@@ -817,7 +822,12 @@ class BreakSubparser {
         if (parser.tokenSource.match(tokens_1.TokenType.Label)) {
             label = parser.tokenSource.next().labelText;
         }
-        return new BreakExpression(parser.getExpression(0), label);
+        if (parser.canReadExpression()) {
+            return new BreakExpression(parser.getExpression(0), label);
+        }
+        else {
+            return new BreakExpression(null, label);
+        }
     }
 }
 class ContinueExpression extends Expression {
@@ -919,6 +929,9 @@ class Parser {
     }
     registerInfix(type, subparser) {
         this.infixSubparsers.set(type, subparser);
+    }
+    canReadExpression() {
+        return this.prefixSubparsers.has(this.tokenSource.peek().type);
     }
     getPrecedence() {
         const subparser = this.infixSubparsers.get(this.tokenSource.peek().type);
