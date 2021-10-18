@@ -417,6 +417,36 @@ class IfSubparser {
 __decorate([
     utilities_1.logCalls
 ], IfSubparser.prototype, "parse", null);
+class ListExpression extends Expression {
+    constructor(elements) {
+        super();
+        this.elements = elements;
+    }
+    toString() {
+        return `ListExpression {${this.elements.map(x => x.toString()).join(', ')}}`;
+    }
+}
+class ListSubparser {
+    parse(parser, _token) {
+        const elements = [];
+        while (!parser.tokenSource.match(tokens_1.TokenType.RightBracket)) {
+            if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                const token = parser.tokenSource.next();
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00023] Leading / double commas are not allowed within list literals.', token.line, token.char, token.getSource());
+            }
+            elements.push(parser.getExpression(0));
+            if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                parser.tokenSource.next();
+            }
+            else if (!parser.tokenSource.match(tokens_1.TokenType.RightBracket)) {
+                const token = parser.tokenSource.next();
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00024] A list literal\'s elements should be separated by commas', token.line, token.char, token.getSource());
+            }
+        }
+        parser.tokenSource.next(); // Consume the ']'
+        return new ListExpression(elements);
+    }
+}
 class WhileSubparser {
     parse(parser, _token) {
         const condition = parser.getExpression(0);
@@ -899,6 +929,7 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.Break, new BreakSubparser());
         this.registerPrefix(tokens_1.TokenType.Continue, new ContinueSubparser());
         this.registerPrefix(tokens_1.TokenType.Label, new LabelSubparser());
+        this.registerPrefix(tokens_1.TokenType.LeftBracket, new ListSubparser());
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoubleAmpersand, Precedence.SUM],
@@ -948,7 +979,7 @@ class Parser {
     getExpression(precedence) {
         let token = this.tokenSource.next();
         if (!this.prefixSubparsers.has(token.type)) {
-            (0, utilities_1.panicAt)(this.tokenSource.reader, `[ESCE00011] Could not parse : '${token.getSource()}'`, token.line, token.char, token.getSource());
+            (0, utilities_1.panicAt)(this.tokenSource.reader, `[ESCE00011] Could not parse : '${token.getSource()}' (expected an expression)`, token.line, token.char, token.getSource());
         }
         let left = this.prefixSubparsers.get(token.type).parse(this, token);
         while (precedence < this.getPrecedence()) {
