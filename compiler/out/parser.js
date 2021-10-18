@@ -403,8 +403,13 @@ class IfSubparser {
         let elseBranch = null;
         if (parser.tokenSource.match(tokens_1.TokenType.Else)) {
             parser.tokenSource.next(); // Consume 'else'
-            const token = parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, 'a \'{\' was expected after an \'else\'');
-            elseBranch = (new BlockSubparser()).parse(parser, token);
+            if (parser.tokenSource.match(tokens_1.TokenType.If)) {
+                elseBranch = (new IfSubparser()).parse(parser, parser.tokenSource.next());
+            }
+            else {
+                const token = parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, 'a \'{\' was expected after an \'else\'');
+                elseBranch = (new BlockSubparser()).parse(parser, token);
+            }
         }
         return new IfExpression(condition, thenBranch, elseBranch);
     }

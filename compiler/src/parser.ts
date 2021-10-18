@@ -396,8 +396,8 @@ export class InfixOperatorExpression extends Expression {
 export class IfExpression extends Expression {
     condition: Expression;
     thenBranch: Block;
-    elseBranch?: Block;
-    constructor(condition: Expression, thenBranch: Block, elseBranch?: Block) {
+    elseBranch?: Block | IfExpression;
+    constructor(condition: Expression, thenBranch: Block, elseBranch?: Block | IfExpression) {
         super();
         this.condition = condition;
         this.thenBranch = thenBranch;
@@ -442,11 +442,15 @@ class IfSubparser implements PrefixSubparser {
         const condition = parser.getExpression(0);
         const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'a \'{\' was expected after an if\'s condition');
         const thenBranch = (new BlockSubparser()).parse(parser, token);
-        let elseBranch = null;
+        let elseBranch: Block | IfExpression = null;
         if (parser.tokenSource.match(TokenType.Else)) {
             parser.tokenSource.next(); // Consume 'else'
-            const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'a \'{\' was expected after an \'else\'');
-            elseBranch = (new BlockSubparser()).parse(parser, token);
+            if (parser.tokenSource.match(TokenType.If)) {
+                elseBranch = (new IfSubparser()).parse(parser, parser.tokenSource.next());
+            } else {
+                const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'a \'{\' was expected after an \'else\'');
+                elseBranch = (new BlockSubparser()).parse(parser, token);
+            }
         }
         return new IfExpression(condition, thenBranch, elseBranch);
     }

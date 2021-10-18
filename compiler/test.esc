@@ -19,6 +19,13 @@ const fustibale = (class Fustibale {
         return Snail(snailName)
     }
 })();
+if x {
+    1
+} else if y {
+    2
+} else {
+    3
+}
 fn return_without_() {
     loop {
         break

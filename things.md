@@ -15,7 +15,7 @@ This file lists what is left to do.
     - [x] `break`
   - [x] Add loop / block labels
   - [x] Allow `return` and `break` without value
-  - [ ] Allow `else if`
+  - [x] Allow `else if`
   - [ ] Add `match` expressions
   - [ ] Add Haskell-like 'operators as functions' `${+}`
   - [ ] Add an equivalent of Rust's `if let`
