@@ -1,5 +1,5 @@
 import { Parser } from './parser';
-import { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, Identifier, Keyword, TemplateStringElement, TemplateStringLiteral, Label } from './tokens';
+import { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, Identifier, Keyword, TemplateStringElement, TemplateStringLiteral, Label, Macro } from './tokens';
 import { StringReader, warnAt, panicAt } from './utilities';
 
 export type TokenStream = { gen: Generator<Token | string, void, unknown>, setRaw: (boolean) => void };
@@ -394,10 +394,15 @@ export class Tokenizer {
                                 'import': TokenType.Import,
                                 'return': TokenType.Return
                             };
-                            if (keywords.includes(tokenText)) {
-                                yield (new Keyword(self.reader.currentLine, char, self.reader.source, current, tokenText.length, keywordTokenTypes[tokenText]));
+                            if (/!/.test(self.reader.peek())) {
+                                tokenText += self.reader.next();
+                                yield (new Macro(self.reader.currentLine, char, self.reader.source, current, tokenText.length, tokenText));
                             } else {
-                                yield (new Identifier(self.reader.currentLine, char, self.reader.source, current, tokenText.length, tokenText));
+                                if (keywords.includes(tokenText)) {
+                                    yield (new Keyword(self.reader.currentLine, char, self.reader.source, current, tokenText.length, keywordTokenTypes[tokenText]));
+                                } else {
+                                    yield (new Identifier(self.reader.currentLine, char, self.reader.source, current, tokenText.length, tokenText));
+                                }
                             }
                             continue parsing;
                         }

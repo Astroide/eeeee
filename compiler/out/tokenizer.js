@@ -426,11 +426,17 @@ class Tokenizer {
                                 'import': tokens_1.TokenType.Import,
                                 'return': tokens_1.TokenType.Return
                             };
-                            if (keywords.includes(tokenText)) {
-                                yield (new tokens_1.Keyword(self.reader.currentLine, char, self.reader.source, current, tokenText.length, keywordTokenTypes[tokenText]));
+                            if (/!/.test(self.reader.peek())) {
+                                tokenText += self.reader.next();
+                                yield (new tokens_1.Macro(self.reader.currentLine, char, self.reader.source, current, tokenText.length, tokenText));
                             }
                             else {
-                                yield (new tokens_1.Identifier(self.reader.currentLine, char, self.reader.source, current, tokenText.length, tokenText));
+                                if (keywords.includes(tokenText)) {
+                                    yield (new tokens_1.Keyword(self.reader.currentLine, char, self.reader.source, current, tokenText.length, keywordTokenTypes[tokenText]));
+                                }
+                                else {
+                                    yield (new tokens_1.Identifier(self.reader.currentLine, char, self.reader.source, current, tokenText.length, tokenText));
+                                }
                             }
                             continue parsing;
                         }

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Label = exports.TemplateStringLiteral = exports.Keyword = exports.Identifier = exports.BooleanLiteral = exports.NumberLiteral = exports.StringLiteral = exports.CharLiteral = exports.Token = exports.TokenType = void 0;
+exports.Macro = exports.Label = exports.TemplateStringLiteral = exports.Keyword = exports.Identifier = exports.BooleanLiteral = exports.NumberLiteral = exports.StringLiteral = exports.CharLiteral = exports.Token = exports.TokenType = void 0;
 var TokenType;
 (function (TokenType) {
     TokenType[TokenType["StringLiteral"] = 0] = "StringLiteral";
@@ -63,6 +63,7 @@ var TokenType;
     TokenType[TokenType["Import"] = 57] = "Import";
     TokenType[TokenType["Return"] = 58] = "Return";
     TokenType[TokenType["Label"] = 59] = "Label";
+    TokenType[TokenType["Macro"] = 60] = "Macro";
 })(TokenType || (TokenType = {}));
 exports.TokenType = TokenType;
 class Token {
@@ -121,6 +122,13 @@ class Identifier extends Token {
     }
 }
 exports.Identifier = Identifier;
+class Macro extends Token {
+    constructor(line, char, source, start, length, identifier) {
+        super(line, char, source, TokenType.Macro, start, length);
+        this.identifier = identifier;
+    }
+}
+exports.Macro = Macro;
 class Keyword extends Token {
     constructor(line, char, source, start, length, keyword) {
         super(line, char, source, keyword, start, length);

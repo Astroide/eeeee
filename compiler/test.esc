@@ -1,4 +1,8 @@
 const fustibale = (class Fustibale {
+    map: Map[string, float] = map! {
+        "twenty": 20.0,
+        "forty": 20.0
+    },
     fn throw(snailName: string) Snail {
         #printing: for character in snailName {
             if character == 'x {

@@ -55,14 +55,7 @@
 		},
 		"single_quoted_strings": {
 			"name": "string.quoted.single.escurieux",
-			"begin": "'",
-			"end": "'",
-			"patterns": [
-				{
-					"name": "constant.character.escape.escurieux",
-					"match": "\\\\(\\\\|'|\"|n)"
-				}
-			]
+			"match": "'."
 		},
 		"hexadecimal_numbers": {
 			"name": "constant.numeric.hexadecimal",

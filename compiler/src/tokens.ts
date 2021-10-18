@@ -60,7 +60,8 @@ enum TokenType {
     Private,
     Import,
     Return,
-    Label
+    Label,
+    Macro
 }
 
 class Token {
@@ -137,6 +138,14 @@ class Identifier extends Token {
     }
 }
 
+class Macro extends Token {
+    identifier: string;
+    constructor(line: number, char: number, source: string, start: number, length: number, identifier: string) {
+        super(line, char, source, TokenType.Macro, start, length);
+        this.identifier = identifier;
+    }
+}
+
 class Keyword extends Token {
     keyword: TokenType;
     constructor(line: number, char: number, source: string, start: number, length: number, keyword: TokenType) {
@@ -153,5 +162,5 @@ class Label extends Token {
     }
 }
 
-export { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword, TemplateStringLiteral, TemplateStringElement, Label };
+export { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword, TemplateStringLiteral, TemplateStringElement, Label, Macro };
 

@@ -20,6 +20,7 @@ This file lists what is left to do.
   - [ ] Add Haskell-like 'operators as functions' `${+}`
   - [ ] Add an equivalent of Rust's `if let`
   - [x] Add list literals
+  - [x] Add map literals
 - Compiler
   - [ ] Write code to translate the parsing structures into C code
 - Standard Library

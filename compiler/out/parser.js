@@ -899,10 +899,45 @@ class LabelSubparser {
         return typedExpression;
     }
 }
+class MapExpression {
+    constructor(keys, values) {
+        this.keys = keys;
+        this.values = values;
+    }
+    toString() {
+        return `MapExpression {${(0, utilities_1.zip)(this.keys, this.values).map(x => x[0].toString() + ': ' + x[1].toString()).join(', ')}}`;
+    }
+}
+class MapSubparser {
+    parse(parser, _token) {
+        const keys = [];
+        const values = [];
+        parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, 'expected a \'{\' after \'map!\'');
+        while (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
+            if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                const token = parser.tokenSource.next();
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00025] Leading / double commas are not allowed within map literals.', token.line, token.char, token.getSource());
+            }
+            keys.push(parser.getExpression(0));
+            parser.tokenSource.consume(tokens_1.TokenType.Colon, 'expected a colon after a key');
+            values.push(parser.getExpression(0));
+            if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                parser.tokenSource.next();
+            }
+            else if (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
+                const token = parser.tokenSource.next();
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00026] A map literal\'s key/value pairs should be separated by commas', token.line, token.char, token.getSource());
+            }
+        }
+        parser.tokenSource.next(); // Consume the '}'
+        return new MapExpression(keys, values);
+    }
+}
 class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();
         this.infixSubparsers = new Map();
+        this.conditionsOfPrefixSubparsers = new Map();
         this.tokenSource = new PeekableTokenStream(source, reader);
         this.registerPrefix(tokens_1.TokenType.Identifier, new IdentifierSubparser());
         const self = this;
@@ -930,6 +965,8 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.Continue, new ContinueSubparser());
         this.registerPrefix(tokens_1.TokenType.Label, new LabelSubparser());
         this.registerPrefix(tokens_1.TokenType.LeftBracket, new ListSubparser());
+        this.registerPrefix(tokens_1.TokenType.Macro, new MapSubparser());
+        this.conditionsOfPrefixSubparsers.set(tokens_1.TokenType.Macro, (token => token.identifier == 'map!'));
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
             [tokens_1.TokenType.DoubleAmpersand, Precedence.SUM],
@@ -978,7 +1015,7 @@ class Parser {
     }
     getExpression(precedence) {
         let token = this.tokenSource.next();
-        if (!this.prefixSubparsers.has(token.type)) {
+        if (!this.prefixSubparsers.has(token.type) || (this.conditionsOfPrefixSubparsers.has(token.type) && !this.conditionsOfPrefixSubparsers.get(token.type)(token))) {
             (0, utilities_1.panicAt)(this.tokenSource.reader, `[ESCE00011] Could not parse : '${token.getSource()}' (expected an expression)`, token.line, token.char, token.getSource());
         }
         let left = this.prefixSubparsers.get(token.type).parse(this, token);

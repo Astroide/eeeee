@@ -1,6 +1,6 @@
 import { tokenTypeExplanations } from './explanations';
 import { TokenStream } from './tokenizer';
-import { BooleanLiteral, CharLiteral, Identifier, Label, NumberLiteral, StringLiteral, TemplateStringElement, TemplateStringLiteral, Token, TokenType } from './tokens';
+import { BooleanLiteral, CharLiteral, Identifier, Label, Macro, NumberLiteral, StringLiteral, TemplateStringElement, TemplateStringLiteral, Token, TokenType } from './tokens';
 import { logCalls, panicAt, StringReader, warnAt, zip } from './utilities';
 
 class PeekableTokenStream {
@@ -487,7 +487,6 @@ class ListSubparser implements PrefixSubparser {
         parser.tokenSource.next(); // Consume the ']'
         return new ListExpression(elements);
     }
-
 }
 
 class WhileSubparser implements PrefixSubparser {
@@ -998,13 +997,51 @@ class LabelSubparser implements PrefixSubparser {
         typedExpression.label = (<Label>token).labelText;
         return typedExpression;
     }
+}
 
+class MapExpression {
+    keys: Expression[];
+    values: Expression[];
+    constructor(keys: Expression[], values: Expression[]) {
+        this.keys = keys;
+        this.values = values;
+    }
+
+    toString(): string {
+        return `MapExpression {${zip(this.keys, this.values).map(x => x[0].toString() + ': ' + x[1].toString()).join(', ')}}`;
+    }
+}
+
+class MapSubparser implements PrefixSubparser {
+    parse(parser: Parser, _token: Token): MapExpression {
+        const keys: Expression[] = [];
+        const values: Expression[] = [];
+        parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'expected a \'{\' after \'map!\'');
+        while (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                const token = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00025] Leading / double commas are not allowed within map literals.', token.line, token.char, token.getSource());
+            }
+            keys.push(parser.getExpression(0));
+            parser.tokenSource.consume(TokenType.Colon, 'expected a colon after a key');
+            values.push(parser.getExpression(0));
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                parser.tokenSource.next();
+            } else if (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
+                const token = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00026] A map literal\'s key/value pairs should be separated by commas', token.line, token.char, token.getSource());
+            }
+        }
+        parser.tokenSource.next(); // Consume the '}'
+        return new MapExpression(keys, values);
+    }
 }
 
 export class Parser {
     tokenSource: PeekableTokenStream;
     prefixSubparsers: Map<TokenType, PrefixSubparser> = new Map();
     infixSubparsers: Map<TokenType, InfixSubparser> = new Map();
+    conditionsOfPrefixSubparsers: Map<TokenType, (token: Token) => boolean> = new Map();
     constructor(source: TokenStream, reader: StringReader) {
         this.tokenSource = new PeekableTokenStream(source, reader);
         this.registerPrefix(TokenType.Identifier, new IdentifierSubparser());
@@ -1033,6 +1070,8 @@ export class Parser {
         this.registerPrefix(TokenType.Continue, new ContinueSubparser());
         this.registerPrefix(TokenType.Label, new LabelSubparser());
         this.registerPrefix(TokenType.LeftBracket, new ListSubparser());
+        this.registerPrefix(TokenType.Macro, new MapSubparser());
+        this.conditionsOfPrefixSubparsers.set(TokenType.Macro, (token => (<Macro>token).identifier == 'map!'));
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],
             [TokenType.DoubleAmpersand, Precedence.SUM],
@@ -1086,7 +1125,7 @@ export class Parser {
 
     getExpression(precedence: number): Expression {
         let token: Token = this.tokenSource.next();
-        if (!this.prefixSubparsers.has(token.type)) {
+        if (!this.prefixSubparsers.has(token.type) || (this.conditionsOfPrefixSubparsers.has(token.type) && !this.conditionsOfPrefixSubparsers.get(token.type)(token))) {
             panicAt(this.tokenSource.reader, `[ESCE00011] Could not parse : '${token.getSource()}' (expected an expression)`, token.line, token.char, token.getSource());
         }
         let left = this.prefixSubparsers.get(token.type).parse(this, token);
