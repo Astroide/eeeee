@@ -1048,6 +1048,29 @@ class MapSubparser implements PrefixSubparser {
     }
 }
 
+class NamedPattern extends Pattern {
+    name: Identifier;
+    pattern: Pattern;
+    constructor(pattern: Pattern, name: Identifier) {
+        super();
+        this.pattern = pattern;
+        this.name = name;
+    }
+
+    toString(): string {
+        return `NamedPattern(${this.name.identifier}) {${this.pattern.toString()}}`;
+    }
+}
+
+class NamedPatternSubparser implements PrefixPatternSubparser {
+    parse(parser: Parser, _token: Token): NamedPattern {
+        const token = <Identifier>parser.tokenSource.consume(TokenType.Identifier, 'expected a pattern name');
+        const pattern = parser.getPattern(0);
+        return new NamedPattern(pattern, token);
+    }
+
+}
+
 export class Parser {
     tokenSource: PeekableTokenStream;
     prefixSubparsers: Map<TokenType, PrefixSubparser> = new Map();
@@ -1114,6 +1137,9 @@ export class Parser {
         this.registerInfix(TokenType.DoubleMinus, new PostfixOperatorSubparser());
         this.registerInfix(TokenType.DoublePlus, new PostfixOperatorSubparser());
         this.registerInfix(TokenType.Equals, new AssignmentSubparser());
+
+        // Pattern handlers registering
+        this.registerPrefix(TokenType.AtSign, new NamedPatternSubparser());
     }
 
     registerPrefix(type: TokenType, subparser: PrefixSubparser): void {

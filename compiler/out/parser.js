@@ -935,6 +935,23 @@ class MapSubparser {
         return new MapExpression(keys, values);
     }
 }
+class NamedPattern extends Pattern {
+    constructor(pattern, name) {
+        super();
+        this.pattern = pattern;
+        this.name = name;
+    }
+    toString() {
+        return `NamedPattern(${this.name.identifier}) {${this.pattern.toString()}}`;
+    }
+}
+class NamedPatternSubparser {
+    parse(parser, _token) {
+        const token = parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected a pattern name');
+        const pattern = parser.getPattern(0);
+        return new NamedPattern(pattern, token);
+    }
+}
 class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();
@@ -1000,6 +1017,8 @@ class Parser {
         this.registerInfix(tokens_1.TokenType.DoubleMinus, new PostfixOperatorSubparser());
         this.registerInfix(tokens_1.TokenType.DoublePlus, new PostfixOperatorSubparser());
         this.registerInfix(tokens_1.TokenType.Equals, new AssignmentSubparser());
+        // Pattern handlers registering
+        this.registerPrefix(tokens_1.TokenType.AtSign, new NamedPatternSubparser());
     }
     registerPrefix(type, subparser) {
         this.prefixSubparsers.set(type, subparser);

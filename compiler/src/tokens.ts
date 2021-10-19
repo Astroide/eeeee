@@ -61,7 +61,8 @@ enum TokenType {
     Import,
     Return,
     Label,
-    Macro
+    Macro,
+    AtSign
 }
 
 class Token {
