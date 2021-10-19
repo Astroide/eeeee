@@ -95,6 +95,17 @@ interface InfixSubparser {
     precedence: number;
 }
 
+class Pattern { }
+
+interface PrefixPatternSubparser {
+    parse(parser: Parser, token: Token): Pattern;
+}
+
+interface InfixPatternSubparser {
+    parse(parser: Parser, left: Pattern, token: Token): Pattern;
+    precedence: number;
+}
+
 class IdentifierSubparser implements PrefixSubparser {
     @logCalls
     parse(parser: Parser, token: Token): IdentifierExpression {
@@ -1041,6 +1052,8 @@ export class Parser {
     tokenSource: PeekableTokenStream;
     prefixSubparsers: Map<TokenType, PrefixSubparser> = new Map();
     infixSubparsers: Map<TokenType, InfixSubparser> = new Map();
+    prefixPatternSubparsers: Map<TokenType, PrefixPatternSubparser> = new Map();
+    infixPatternSubparsers: Map<TokenType, InfixPatternSubparser> = new Map();
     conditionsOfPrefixSubparsers: Map<TokenType, (token: Token) => boolean> = new Map();
     constructor(source: TokenStream, reader: StringReader) {
         this.tokenSource = new PeekableTokenStream(source, reader);
@@ -1111,6 +1124,22 @@ export class Parser {
         this.infixSubparsers.set(type, subparser);
     }
 
+    registerPrefixPattern(type: TokenType, subparser: PrefixPatternSubparser): void {
+        this.prefixPatternSubparsers.set(type, subparser);
+    }
+
+    registerInfixPattern(type: TokenType, subparser: InfixPatternSubparser): void {
+        this.infixPatternSubparsers.set(type, subparser);
+    }
+
+    getPrecedenceForPattern(): number {
+        const patternSubparser = this.infixPatternSubparsers.get(this.tokenSource.peek().type);
+        if (patternSubparser) {
+            return patternSubparser.precedence;
+        }
+        return 0;
+    }
+
     canReadExpression(): boolean {
         return this.prefixSubparsers.has(this.tokenSource.peek().type);
     }
@@ -1132,6 +1161,25 @@ export class Parser {
         while (precedence < this.getPrecedence()) {
             token = this.tokenSource.next();
             const infix = this.infixSubparsers.get(token.type);
+            try {
+                left = infix.parse(this, left, token);
+            } catch (e) {
+                panicAt(this.tokenSource.reader, `[ESCE99999] [[Failure]] ${TokenType[token.type]} - please report this error to https://github.com/Astroide/escurieux/issues`, token.line, token.char, token.getSource());
+            }
+        }
+
+        return left;
+    }
+
+    getPattern(precedence: number): Pattern {
+        let token: Token = this.tokenSource.next();
+        if (!this.prefixPatternSubparsers.has(token.type)) {
+            panicAt(this.tokenSource.reader, `ESCE00027 Could not parse : '${token.getSource()}' (expected a pattern)`, token.line, token.char, token.getSource());
+        }
+        let left = this.prefixPatternSubparsers.get(token.type).parse(this, token);
+        while (precedence < this.getPrecedenceForPattern()) {
+            token = this.tokenSource.next();
+            const infix = this.infixPatternSubparsers.get(token.type);
             try {
                 left = infix.parse(this, left, token);
             } catch (e) {

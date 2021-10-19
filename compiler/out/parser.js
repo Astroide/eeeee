@@ -81,6 +81,8 @@ const Precedence = {
     PROPERTY_ACCESS: 9,
 };
 Object.seal(Precedence);
+class Pattern {
+}
 class IdentifierSubparser {
     parse(parser, token) {
         return new IdentifierExpression(token.getSource());
@@ -937,6 +939,8 @@ class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();
         this.infixSubparsers = new Map();
+        this.prefixPatternSubparsers = new Map();
+        this.infixPatternSubparsers = new Map();
         this.conditionsOfPrefixSubparsers = new Map();
         this.tokenSource = new PeekableTokenStream(source, reader);
         this.registerPrefix(tokens_1.TokenType.Identifier, new IdentifierSubparser());
@@ -1003,6 +1007,19 @@ class Parser {
     registerInfix(type, subparser) {
         this.infixSubparsers.set(type, subparser);
     }
+    registerPrefixPattern(type, subparser) {
+        this.prefixPatternSubparsers.set(type, subparser);
+    }
+    registerInfixPattern(type, subparser) {
+        this.infixPatternSubparsers.set(type, subparser);
+    }
+    getPrecedenceForPattern() {
+        const patternSubparser = this.infixPatternSubparsers.get(this.tokenSource.peek().type);
+        if (patternSubparser) {
+            return patternSubparser.precedence;
+        }
+        return 0;
+    }
     canReadExpression() {
         return this.prefixSubparsers.has(this.tokenSource.peek().type);
     }
@@ -1022,6 +1039,24 @@ class Parser {
         while (precedence < this.getPrecedence()) {
             token = this.tokenSource.next();
             const infix = this.infixSubparsers.get(token.type);
+            try {
+                left = infix.parse(this, left, token);
+            }
+            catch (e) {
+                (0, utilities_1.panicAt)(this.tokenSource.reader, `[ESCE99999] [[Failure]] ${tokens_1.TokenType[token.type]} - please report this error to https://github.com/Astroide/escurieux/issues`, token.line, token.char, token.getSource());
+            }
+        }
+        return left;
+    }
+    getPattern(precedence) {
+        let token = this.tokenSource.next();
+        if (!this.prefixPatternSubparsers.has(token.type)) {
+            (0, utilities_1.panicAt)(this.tokenSource.reader, `ESCE00027 Could not parse : '${token.getSource()}' (expected a pattern)`, token.line, token.char, token.getSource());
+        }
+        let left = this.prefixPatternSubparsers.get(token.type).parse(this, token);
+        while (precedence < this.getPrecedenceForPattern()) {
+            token = this.tokenSource.next();
+            const infix = this.infixPatternSubparsers.get(token.type);
             try {
                 left = infix.parse(this, left, token);
             }
