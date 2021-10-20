@@ -492,7 +492,7 @@ class TypeCastingSubparser {
 class LetOrConstDeclarationSubparser {
     parse(parser, token) {
         const type = (token && token.type == tokens_1.TokenType.Const) ? 'const' : 'let';
-        const name = parser.tokenSource.consume(tokens_1.TokenType.Identifier, `expected an identifier after ${type}`);
+        const pattern = parser.getPattern(0);
         let variableType = null;
         if (parser.tokenSource.match(tokens_1.TokenType.Colon)) {
             parser.tokenSource.next();
@@ -503,19 +503,19 @@ class LetOrConstDeclarationSubparser {
             parser.tokenSource.next();
             value = parser.getExpression(0);
         }
-        return new LetOrConstDeclarationExpression(type, name, value, variableType);
+        return new LetOrConstDeclarationExpression(type, pattern, value, variableType);
     }
 }
 class LetOrConstDeclarationExpression extends Expression {
     constructor(type, name, value, variableType) {
         super();
         this.type = type;
-        this.name = name;
+        this.pattern = name;
         this.value = value;
         this.variableType = variableType;
     }
     toString() {
-        return `${this.type} {${(new IdentifierExpression(this.name.getSource())).toString()}, ${this.variableType ? typeToString(this.variableType) : '<inferred type>'}${this.value ? ', ' + this.value.toString() : ''}}`;
+        return `${this.type} {${this.pattern.toString()}, ${this.variableType ? typeToString(this.variableType) : '<inferred type>'}${this.value ? ', ' + this.value.toString() : ''}}`;
     }
 }
 exports.LetOrConstDeclarationExpression = LetOrConstDeclarationExpression;
@@ -574,7 +574,7 @@ class ForSubparser {
         }
         if (parser.tokenSource.match(tokens_1.TokenType.In)) {
             parser.tokenSource.rewind(state);
-            const name = parser.getNamePattern();
+            const name = parser.getPattern(0);
             parser.tokenSource.consume(tokens_1.TokenType.In, 'Expected an \'in\', this is an error that shouldn\'t ever happen. Report this to https://github.com/Astroide/escurieux/issues .');
             const iterator = parser.getExpression(0);
             const token = parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, 'expected a block start after a for loop\'s iterator expression');
@@ -625,12 +625,12 @@ class FunctionExpression extends Expression {
         this.args = args;
         this.typesOfArguments = typesOfArguments;
         this.body = body;
-        this.name = name;
+        this.namePattern = name;
         this.returnType = returnType;
         this.typeConstraints = typeConstraints;
     }
     toString() {
-        return `Function<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.name.toString()}, [${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
+        return `Function<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.namePattern.toString()}, [${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
     }
 }
 exports.FunctionExpression = FunctionExpression;
@@ -650,7 +650,7 @@ class FunctionSubparser {
                 const token = parser.tokenSource.next();
                 (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
-            const pattern = parser.getNamePattern();
+            const pattern = parser.getPattern(0);
             let defaultValue = null;
             if (!parser.tokenSource.match(tokens_1.TokenType.Colon)) {
                 const wrongToken = parser.tokenSource.next();
@@ -697,7 +697,7 @@ class LambdaFunctionSubparser {
                     const token = parser.tokenSource.next();
                     (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
                 }
-                const pattern = parser.getNamePattern();
+                const pattern = parser.getPattern(0);
                 let defaultValue = null;
                 if (parser.tokenSource.match(tokens_1.TokenType.Colon)) {
                     parser.tokenSource.next();
@@ -744,7 +744,7 @@ class ClassExpression extends Expression {
 exports.ClassExpression = ClassExpression;
 class ClassSubparser {
     parse(parser, _token) {
-        const name = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected a class name'));
+        const name = parser.getPattern(0);
         let typeParameters = [], typeConstraints = [];
         if (parser.tokenSource.match(tokens_1.TokenType.LeftBracket)) {
             [typeParameters, typeConstraints] = parser.getTypeParameters();
@@ -952,6 +952,20 @@ class NamedPatternSubparser {
         return new NamedPattern(pattern, token);
     }
 }
+class NamePattern extends Pattern {
+    constructor(name) {
+        super();
+        this.name = name;
+    }
+    toString() {
+        return `NamePattern[${this.name.identifier}]`;
+    }
+}
+class NamePatternSubparser {
+    parse(_parser, token) {
+        return new NamePattern(token);
+    }
+}
 class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();
@@ -1018,7 +1032,8 @@ class Parser {
         this.registerInfix(tokens_1.TokenType.DoublePlus, new PostfixOperatorSubparser());
         this.registerInfix(tokens_1.TokenType.Equals, new AssignmentSubparser());
         // Pattern handlers registering
-        this.registerPrefix(tokens_1.TokenType.AtSign, new NamedPatternSubparser());
+        this.registerPrefixPattern(tokens_1.TokenType.AtSign, new NamedPatternSubparser());
+        this.registerPrefixPattern(tokens_1.TokenType.Identifier, new NamePatternSubparser());
     }
     registerPrefix(type, subparser) {
         this.prefixSubparsers.set(type, subparser);
@@ -1164,9 +1179,6 @@ class Parser {
         }
         this.tokenSource.next(); // Consume the ']'
         return [names.map(x => ({ plain: true, value: x })), constraints];
-    }
-    getNamePattern() {
-        return (new IdentifierSubparser()).parse(this, this.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected an identifier'));
     }
     getType(raw = false) {
         let type = {

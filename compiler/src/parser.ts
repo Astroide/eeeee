@@ -545,7 +545,7 @@ class TypeCastingSubparser implements PrefixSubparser {
 class LetOrConstDeclarationSubparser implements PrefixSubparser {
     parse(parser: Parser, token: Token): LetOrConstDeclarationExpression {
         const type = (token && token.type == TokenType.Const) ? 'const' : 'let';
-        const name = parser.tokenSource.consume(TokenType.Identifier, `expected an identifier after ${type}`);
+        const pattern = parser.getPattern(0);
         let variableType = null;
         if (parser.tokenSource.match(TokenType.Colon)) {
             parser.tokenSource.next();
@@ -556,25 +556,25 @@ class LetOrConstDeclarationSubparser implements PrefixSubparser {
             parser.tokenSource.next();
             value = parser.getExpression(0);
         }
-        return new LetOrConstDeclarationExpression(type, <Identifier>name, value, variableType);
+        return new LetOrConstDeclarationExpression(type, pattern, value, variableType);
     }
 }
 
 export class LetOrConstDeclarationExpression extends Expression {
     type: 'let' | 'const';
-    name: Identifier;
+    pattern: Pattern;
     value?: Expression;
     variableType?: Type;
-    constructor(type: 'let' | 'const', name: Identifier, value?: Expression, variableType?: Type) {
+    constructor(type: 'let' | 'const', name: Pattern, value?: Expression, variableType?: Type) {
         super();
         this.type = type;
-        this.name = name;
+        this.pattern = name;
         this.value = value;
         this.variableType = variableType;
     }
 
     toString(): string {
-        return `${this.type} {${(new IdentifierExpression(this.name.getSource())).toString()}, ${this.variableType ? typeToString(this.variableType) : '<inferred type>'}${this.value ? ', ' + this.value.toString() : ''}}`;
+        return `${this.type} {${this.pattern.toString()}, ${this.variableType ? typeToString(this.variableType) : '<inferred type>'}${this.value ? ', ' + this.value.toString() : ''}}`;
     }
 }
 
@@ -611,7 +611,7 @@ class PostfixOperatorSubparser implements InfixSubparser {
 }
 
 type ForAInB = {
-    name: IdentifierExpression;
+    name: Pattern;
     iterator: Expression;
 }
 type ForABC = {
@@ -630,7 +630,7 @@ export class ForExpression extends Expression {
         condition: Expression;
         repeat: Expression;
     } | {
-        name: IdentifierExpression;
+        name: Pattern;
         iterator: Expression;
     }, body: Block, kind: 'a,b,c' | 'a in b') {
         super();
@@ -657,7 +657,7 @@ class ForSubparser implements PrefixSubparser {
         }
         if (parser.tokenSource.match(TokenType.In)) {
             parser.tokenSource.rewind(state);
-            const name = parser.getNamePattern();
+            const name = parser.getPattern(0);
             parser.tokenSource.consume(TokenType.In, 'Expected an \'in\', this is an error that shouldn\'t ever happen. Report this to https://github.com/Astroide/escurieux/issues .');
             const iterator = parser.getExpression(0);
             const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'expected a block start after a for loop\'s iterator expression');
@@ -687,10 +687,10 @@ class ForSubparser implements PrefixSubparser {
 }
 
 export class LambdaFunctionExpression extends Expression {
-    args: [IdentifierExpression, Expression?][];
+    args: [Pattern, Expression?][];
     body: Expression;
     typesOfArguments: Type[];
-    constructor(args: [IdentifierExpression, Expression?][], typesOfArguments: Type[], body: Expression) {
+    constructor(args: [Pattern, Expression?][], typesOfArguments: Type[], body: Expression) {
         super();
         this.args = args;
         this.body = body;
@@ -704,26 +704,26 @@ export class LambdaFunctionExpression extends Expression {
 
 export class FunctionExpression extends Expression {
     typeParameters: Type[];
-    args: [IdentifierExpression, Expression?][];
+    args: [Pattern, Expression?][];
     typesOfArguments: Type[];
     body: Block;
-    name: IdentifierExpression;
+    namePattern: Pattern;
     returnType?: Type;
     typeConstraints: TypeConstraint[];
 
-    constructor(typeParameters: Type[], args: [IdentifierExpression, Expression?][], typesOfArguments: Type[], body: Block, name: IdentifierExpression, typeConstraints: TypeConstraint[], returnType?: Type) {
+    constructor(typeParameters: Type[], args: [Pattern, Expression?][], typesOfArguments: Type[], body: Block, name: Pattern, typeConstraints: TypeConstraint[], returnType?: Type) {
         super();
         this.typeParameters = typeParameters;
         this.args = args;
         this.typesOfArguments = typesOfArguments;
         this.body = body;
-        this.name = name;
+        this.namePattern = name;
         this.returnType = returnType;
         this.typeConstraints = typeConstraints;
     }
 
     toString(): string {
-        return `Function<${zip(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.name.toString()}, [${zip(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
+        return `Function<${zip(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.namePattern.toString()}, [${zip(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
     }
 }
 
@@ -737,14 +737,14 @@ class FunctionSubparser implements PrefixSubparser {
             [typeParameters, typeConstraints] = parser.getTypeParameters();
         }
         parser.tokenSource.consume(TokenType.LeftParenthesis, '[ESCE00015] A left parenthesis is required to start a function\'s argument list');
-        const args: [IdentifierExpression, Expression?][] = [];
+        const args: [Pattern, Expression?][] = [];
         const typesOfArguments: Type[] = [];
         while (!parser.tokenSource.match(TokenType.RightParenthesis)) {
             if (parser.tokenSource.match(TokenType.Comma)) {
                 const token = parser.tokenSource.next();
                 panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
             }
-            const pattern = parser.getNamePattern();
+            const pattern = parser.getPattern(0);
             let defaultValue: Expression = null;
             if (!parser.tokenSource.match(TokenType.Colon)) {
                 const wrongToken = parser.tokenSource.next();
@@ -779,7 +779,7 @@ class FunctionSubparser implements PrefixSubparser {
 class LambdaFunctionSubparser implements PrefixSubparser {
     @logCalls
     parse(parser: Parser, token: Token): LambdaFunctionExpression {
-        const args: [IdentifierExpression, Expression?][] = [];
+        const args: [Pattern, Expression?][] = [];
         const typesOfArguments: Type[] = [];
         if (token.type == TokenType.Pipe) {
             // Function potentially has arguments
@@ -788,7 +788,7 @@ class LambdaFunctionSubparser implements PrefixSubparser {
                     const token = parser.tokenSource.next();
                     panicAt(parser.tokenSource.reader, '[ESCE00011] Only commas to separate function arguments and an optional trailing comma are allowed.', token.line, token.char, token.getSource());
                 }
-                const pattern = parser.getNamePattern();
+                const pattern = parser.getPattern(0);
                 let defaultValue: Expression = null;
                 if (parser.tokenSource.match(TokenType.Colon)) {
                     parser.tokenSource.next();
@@ -820,10 +820,10 @@ type PrivacyModifier = 'private' | 'public' | 'protected';
 export class ClassExpression extends Expression {
     typeParameters: Type[];
     typeConstraints: TypeConstraint[];
-    name: IdentifierExpression;
+    name: Pattern;
     methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][];
     properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][];
-    constructor(name: IdentifierExpression, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][], properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][]) {
+    constructor(name: Pattern, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][], properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][]) {
         super();
         this.name = name;
         this.typeParameters = typeParameters;
@@ -839,7 +839,7 @@ export class ClassExpression extends Expression {
 
 class ClassSubparser implements PrefixSubparser {
     parse(parser: Parser, _token: Token): ClassExpression {
-        const name = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(TokenType.Identifier, 'expected a class name'));
+        const name = parser.getPattern(0);
         let typeParameters = [], typeConstraints = [];
         if (parser.tokenSource.match(TokenType.LeftBracket)) {
             [typeParameters, typeConstraints] = parser.getTypeParameters();
@@ -1068,6 +1068,24 @@ class NamedPatternSubparser implements PrefixPatternSubparser {
         const pattern = parser.getPattern(0);
         return new NamedPattern(pattern, token);
     }
+}
+
+class NamePattern extends Pattern {
+    name: Identifier;
+    constructor(name: Identifier) {
+        super();
+        this.name = name;
+    }
+
+    toString(): string {
+        return `NamePattern[${this.name.identifier}]`;
+    }
+}
+
+class NamePatternSubparser implements PrefixPatternSubparser {
+    parse(_parser: Parser, token: Token): NamePattern {
+        return new NamePattern(<Identifier>token);
+    }
 
 }
 
@@ -1139,7 +1157,8 @@ export class Parser {
         this.registerInfix(TokenType.Equals, new AssignmentSubparser());
 
         // Pattern handlers registering
-        this.registerPrefix(TokenType.AtSign, new NamedPatternSubparser());
+        this.registerPrefixPattern(TokenType.AtSign, new NamedPatternSubparser());
+        this.registerPrefixPattern(TokenType.Identifier, new NamePatternSubparser());
     }
 
     registerPrefix(type: TokenType, subparser: PrefixSubparser): void {
@@ -1291,10 +1310,6 @@ export class Parser {
         }
         this.tokenSource.next(); // Consume the ']'
         return [names.map(x => <Type>{ plain: true, value: x }), constraints];
-    }
-
-    getNamePattern(): IdentifierExpression {
-        return (new IdentifierSubparser()).parse(this, this.tokenSource.consume(TokenType.Identifier, 'expected an identifier'));
     }
 
     getType(raw = false): Type {

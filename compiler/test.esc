@@ -3,7 +3,7 @@ const fustibale = (class Fustibale {
         "twenty": 20.0,
         "forty": 20.0
     },
-    fn throw(snailName: string) Snail {
+    fn throw(@test snailName: string) Snail {
         #printing: for character in snailName {
             if character == 'x {
                 continue #printing
