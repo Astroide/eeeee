@@ -997,7 +997,6 @@ class NamedPattern extends Pattern {
 }
 class NamedPatternSubparser {
     parse(parser, _token) {
-        // console.log('NAMEDPATTERNSUBPARSER' + _token.getSource() + parser.tokenSource.peek().getSource());
         const token = parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected a pattern name');
         const pattern = parser.getPattern(0);
         return new NamedPattern(pattern, token);
