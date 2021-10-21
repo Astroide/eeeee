@@ -449,6 +449,9 @@ class ListSubparser {
         return new ListExpression(elements);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], ListSubparser.prototype, "parse", null);
 class WhileSubparser {
     parse(parser, _token) {
         const condition = parser.getExpression(0);
@@ -489,6 +492,9 @@ class TypeCastingSubparser {
         return new TypeCastingExpression(type, expression);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], TypeCastingSubparser.prototype, "parse", null);
 class LetOrConstDeclarationSubparser {
     parse(parser, token) {
         const type = (token && token.type == tokens_1.TokenType.Const) ? 'const' : 'let';
@@ -506,6 +512,9 @@ class LetOrConstDeclarationSubparser {
         return new LetOrConstDeclarationExpression(type, pattern, value, variableType);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], LetOrConstDeclarationSubparser.prototype, "parse", null);
 class LetOrConstDeclarationExpression extends Expression {
     constructor(type, name, value, variableType) {
         super();
@@ -799,6 +808,9 @@ class ClassSubparser {
         return new ClassExpression(name, typeParameters, typeConstraints, methods, properties);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], ClassSubparser.prototype, "parse", null);
 class AssignmentExpression extends Expression {
     constructor(left, right) {
         super();
@@ -822,6 +834,29 @@ class AssignmentSubparser {
         return new AssignmentExpression(left, right);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], AssignmentSubparser.prototype, "parse", null);
+class AtExpression extends Expression {
+    constructor(name, expression) {
+        super();
+        this.name = name;
+        this.expression = expression;
+    }
+    toString() {
+        return `AtExpression {IdentifierExpression[${this.name}], ${this.expression.toString()}}`;
+    }
+}
+class AtSubparser {
+    parse(parser, _token) {
+        const name = parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected an identifier');
+        const expression = parser.getExpression(0);
+        return new AtExpression(name, expression);
+    }
+}
+__decorate([
+    utilities_1.logCalls
+], AtSubparser.prototype, "parse", null);
 class ReturnExpression extends Expression {
     constructor(returnValue) {
         super();
@@ -842,6 +877,9 @@ class ReturnSubparser {
         }
     }
 }
+__decorate([
+    utilities_1.logCalls
+], ReturnSubparser.prototype, "parse", null);
 class BreakExpression extends Expression {
     constructor(breakValue, label) {
         super();
@@ -867,6 +905,9 @@ class BreakSubparser {
         }
     }
 }
+__decorate([
+    utilities_1.logCalls
+], BreakSubparser.prototype, "parse", null);
 class ContinueExpression extends Expression {
     constructor(label) {
         super();
@@ -882,6 +923,9 @@ class ContinueSubparser {
         return new ContinueExpression(parser.tokenSource.match(tokens_1.TokenType.Label) ? parser.tokenSource.next().labelText : null);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], ContinueSubparser.prototype, "parse", null);
 function typeConstraintToString(t) {
     if (t == 'unconstrained')
         return t;
@@ -901,6 +945,9 @@ class LabelSubparser {
         return typedExpression;
     }
 }
+__decorate([
+    utilities_1.logCalls
+], LabelSubparser.prototype, "parse", null);
 class MapExpression {
     constructor(keys, values) {
         this.keys = keys;
@@ -935,6 +982,9 @@ class MapSubparser {
         return new MapExpression(keys, values);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], MapSubparser.prototype, "parse", null);
 class NamedPattern extends Pattern {
     constructor(pattern, name) {
         super();
@@ -947,11 +997,15 @@ class NamedPattern extends Pattern {
 }
 class NamedPatternSubparser {
     parse(parser, _token) {
+        // console.log('NAMEDPATTERNSUBPARSER' + _token.getSource() + parser.tokenSource.peek().getSource());
         const token = parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected a pattern name');
         const pattern = parser.getPattern(0);
         return new NamedPattern(pattern, token);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], NamedPatternSubparser.prototype, "parse", null);
 class NamePattern extends Pattern {
     constructor(name) {
         super();
@@ -966,6 +1020,9 @@ class NamePatternSubparser {
         return new NamePattern(token);
     }
 }
+__decorate([
+    utilities_1.logCalls
+], NamePatternSubparser.prototype, "parse", null);
 class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();
@@ -1001,6 +1058,7 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.Label, new LabelSubparser());
         this.registerPrefix(tokens_1.TokenType.LeftBracket, new ListSubparser());
         this.registerPrefix(tokens_1.TokenType.Macro, new MapSubparser());
+        this.registerPrefix(tokens_1.TokenType.AtSign, new AtSubparser());
         this.conditionsOfPrefixSubparsers.set(tokens_1.TokenType.Macro, (token => token.identifier == 'map!'));
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
@@ -1085,7 +1143,7 @@ class Parser {
     getPattern(precedence) {
         let token = this.tokenSource.next();
         if (!this.prefixPatternSubparsers.has(token.type)) {
-            (0, utilities_1.panicAt)(this.tokenSource.reader, `ESCE00027 Could not parse : '${token.getSource()}' (expected a pattern)`, token.line, token.char, token.getSource());
+            (0, utilities_1.panicAt)(this.tokenSource.reader, `[ESCE00027] Could not parse : '${token.getSource()}' (expected a pattern)`, token.line, token.char, token.getSource());
         }
         let left = this.prefixPatternSubparsers.get(token.type).parse(this, token);
         while (precedence < this.getPrecedenceForPattern()) {

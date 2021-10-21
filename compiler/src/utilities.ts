@@ -1,6 +1,7 @@
 import { exit } from 'process';
 import { readFile as fsReadFile } from 'fs/promises';
 import { errorAndWarningExplanations } from './explanations';
+// import { Parser } from './parser';
 let showLongErrors = false;
 let outputFunction: typeof console.error = console.error;
 let command = 'escurieux';
@@ -156,11 +157,21 @@ export function logCalls(target: unknown, propertyKey: string, descriptor: Typed
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     descriptor.value = DEBUG_SUBPARSER_CALLS ? function (...args: any[]) {
+        // args.forEach(arg => {
+        // if (arg instanceof Parser) {
+        // console.log('  '.repeat(indent) + 'IN  ' + arg.tokenSource.peek().getSource());
+        // }
+        // });
         console.log(`${'  '.repeat(indent)}<${target.constructor.name}>`);
         indent++;
         const result = originalMethod.apply(this, args);
         indent--;
         console.log(`${'  '.repeat(indent)}</${target.constructor.name}>`);
+        // args.forEach(arg => {
+        // if (arg instanceof Parser) {
+        // console.log('  '.repeat(indent) + 'OUT ' + arg.tokenSource.peek().getSource());
+        // }
+        // });
         return result;
     } : originalMethod;
 

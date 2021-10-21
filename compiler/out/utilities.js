@@ -5,6 +5,7 @@ exports.showLongErrorMessages = exports.zip = exports.logCalls = exports.readFil
 const process_1 = require("process");
 const promises_1 = require("fs/promises");
 const explanations_1 = require("./explanations");
+const parser_1 = require("./parser");
 let showLongErrors = false;
 let outputFunction = console.error;
 let command = 'escurieux';
@@ -154,11 +155,21 @@ function logCalls(target, propertyKey, descriptor) {
     const originalMethod = descriptor.value; // save a reference to the original method
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     descriptor.value = DEBUG_SUBPARSER_CALLS ? function (...args) {
+        args.forEach(arg => {
+            if (arg instanceof parser_1.Parser) {
+                console.log('  '.repeat(indent) + 'IN  ' + arg.tokenSource.peek().getSource());
+            }
+        });
         console.log(`${'  '.repeat(indent)}<${target.constructor.name}>`);
         indent++;
         const result = originalMethod.apply(this, args);
         indent--;
         console.log(`${'  '.repeat(indent)}</${target.constructor.name}>`);
+        args.forEach(arg => {
+            if (arg instanceof parser_1.Parser) {
+                console.log('  '.repeat(indent) + 'OUT ' + arg.tokenSource.peek().getSource());
+            }
+        });
         return result;
     } : originalMethod;
     return descriptor;

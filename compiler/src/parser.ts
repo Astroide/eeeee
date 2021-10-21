@@ -480,6 +480,7 @@ class ListExpression extends Expression {
 }
 
 class ListSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, _token: Token): ListExpression {
         const elements: Expression[] = [];
         while (!parser.tokenSource.match(TokenType.RightBracket)) {
@@ -534,6 +535,7 @@ export class TypeCastingExpression extends Expression {
 }
 
 class TypeCastingSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, _token: Token): Expression {
         const type = parser.getType();
         parser.tokenSource.consume(TokenType.RightAngleBracket, 'expected a \'>\' after a type cast');
@@ -543,6 +545,7 @@ class TypeCastingSubparser implements PrefixSubparser {
 }
 
 class LetOrConstDeclarationSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, token: Token): LetOrConstDeclarationExpression {
         const type = (token && token.type == TokenType.Const) ? 'const' : 'let';
         const pattern = parser.getPattern(0);
@@ -838,6 +841,7 @@ export class ClassExpression extends Expression {
 }
 
 class ClassSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, _token: Token): ClassExpression {
         const name = parser.getPattern(0);
         let typeParameters = [], typeConstraints = [];
@@ -907,12 +911,36 @@ export class AssignmentExpression extends Expression {
 
 class AssignmentSubparser implements InfixSubparser {
     precedence = 0.9;
+    @logCalls
     parse(parser: Parser, left: Expression, token: Token): AssignmentExpression {
         const right = parser.getExpression(0);
         if (!(left instanceof IdentifierExpression) && !(left instanceof PropertyAccessExpression) && !(left instanceof ElementAccessExpression)) {
             panicAt(parser.tokenSource.reader, '[ESCE00019] Left expression of an assignment must be either an identifier, a property access or an indexing expression', token.line, token.char, token.getSource());
         }
         return new AssignmentExpression(left, right);
+    }
+}
+
+class AtExpression extends Expression {
+    name: Identifier;
+    expression: Expression;
+    constructor(name: Identifier, expression: Expression) {
+        super();
+        this.name = name;
+        this.expression = expression;
+    }
+
+    toString(): string {
+        return `AtExpression {IdentifierExpression[${this.name}], ${this.expression.toString()}}`;
+    }
+}
+
+class AtSubparser implements PrefixSubparser {
+    @logCalls
+    parse(parser: Parser, _token: Token): AtExpression {
+        const name = parser.tokenSource.consume(TokenType.Identifier, 'expected an identifier');
+        const expression = parser.getExpression(0);
+        return new AtExpression(<Identifier>name, expression);
     }
 }
 
@@ -929,6 +957,7 @@ export class ReturnExpression extends Expression {
 }
 
 class ReturnSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, _token: Token): ReturnExpression {
         if (parser.canReadExpression()) {
             return new ReturnExpression(parser.getExpression(0));
@@ -953,6 +982,7 @@ export class BreakExpression extends Expression {
 }
 
 class BreakSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, _token: Token): BreakExpression {
         let label: string = null;
         if (parser.tokenSource.match(TokenType.Label)) {
@@ -979,6 +1009,7 @@ export class ContinueExpression extends Expression {
 }
 
 class ContinueSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, _token: Token): ContinueExpression {
         return new ContinueExpression(parser.tokenSource.match(TokenType.Label) ? (<Label>parser.tokenSource.next()).labelText : null);
     }
@@ -998,6 +1029,7 @@ function typeConstraintToString(t: TypeConstraint): string {
 }
 
 class LabelSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, token: Token): ForExpression | LoopExpression | Block {
         parser.tokenSource.consume(TokenType.Colon, 'expected a colon after a label');
         const expression = parser.getExpression(Infinity);
@@ -1024,6 +1056,7 @@ class MapExpression {
 }
 
 class MapSubparser implements PrefixSubparser {
+    @logCalls
     parse(parser: Parser, _token: Token): MapExpression {
         const keys: Expression[] = [];
         const values: Expression[] = [];
@@ -1063,6 +1096,7 @@ class NamedPattern extends Pattern {
 }
 
 class NamedPatternSubparser implements PrefixPatternSubparser {
+    @logCalls
     parse(parser: Parser, _token: Token): NamedPattern {
         const token = <Identifier>parser.tokenSource.consume(TokenType.Identifier, 'expected a pattern name');
         const pattern = parser.getPattern(0);
@@ -1083,10 +1117,10 @@ class NamePattern extends Pattern {
 }
 
 class NamePatternSubparser implements PrefixPatternSubparser {
+    @logCalls
     parse(_parser: Parser, token: Token): NamePattern {
         return new NamePattern(<Identifier>token);
     }
-
 }
 
 export class Parser {
@@ -1125,6 +1159,7 @@ export class Parser {
         this.registerPrefix(TokenType.Label, new LabelSubparser());
         this.registerPrefix(TokenType.LeftBracket, new ListSubparser());
         this.registerPrefix(TokenType.Macro, new MapSubparser());
+        this.registerPrefix(TokenType.AtSign, new AtSubparser());
         this.conditionsOfPrefixSubparsers.set(TokenType.Macro, (token => (<Macro>token).identifier == 'map!'));
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],
@@ -1219,7 +1254,7 @@ export class Parser {
     getPattern(precedence: number): Pattern {
         let token: Token = this.tokenSource.next();
         if (!this.prefixPatternSubparsers.has(token.type)) {
-            panicAt(this.tokenSource.reader, `ESCE00027 Could not parse : '${token.getSource()}' (expected a pattern)`, token.line, token.char, token.getSource());
+            panicAt(this.tokenSource.reader, `[ESCE00027] Could not parse : '${token.getSource()}' (expected a pattern)`, token.line, token.char, token.getSource());
         }
         let left = this.prefixPatternSubparsers.get(token.type).parse(this, token);
         while (precedence < this.getPrecedenceForPattern()) {

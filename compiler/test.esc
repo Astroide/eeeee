@@ -5,7 +5,7 @@ const fustibale = (class Fustibale {
     },
     fn throw(@test snailName: string) Snail {
         #printing: for character in snailName {
-            if character == 'x {
+            if @test character == 'x {
                 continue #printing
             } else {
                 if character == 'y {
