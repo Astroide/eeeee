@@ -85,7 +85,7 @@ class Pattern {
 }
 class IdentifierSubparser {
     parse(parser, token) {
-        return new IdentifierExpression(token.getSource());
+        return new IdentifierExpression(token);
     }
 }
 __decorate([
@@ -220,9 +220,10 @@ class ElementAccessExpression extends Expression {
 }
 exports.ElementAccessExpression = ElementAccessExpression;
 class IdentifierExpression extends Expression {
-    constructor(id) {
+    constructor(token) {
         super();
-        this.id = id;
+        this.id = token.identifier;
+        this.token = token;
     }
     toString() {
         return `Identifier[${this.id}]`;
@@ -577,13 +578,13 @@ class ForSubparser {
         let init = new LiteralExpression(true, tokens_1.TokenType.BooleanLiteral);
         let condition = new LiteralExpression(true, tokens_1.TokenType.BooleanLiteral);
         let repeat = new LiteralExpression(true, tokens_1.TokenType.BooleanLiteral);
-        const state = parser.tokenSource.state();
+        // const state = parser.tokenSource.state();
         if (!parser.tokenSource.match(tokens_1.TokenType.Comma)) {
             init = parser.getExpression(0);
         }
         if (parser.tokenSource.match(tokens_1.TokenType.In)) {
-            parser.tokenSource.rewind(state);
-            const name = parser.getPattern(0);
+            // parser.tokenSource.rewind(state);
+            const name = expressionAsPattern(init); //parser.getPattern(0);
             parser.tokenSource.consume(tokens_1.TokenType.In, 'Expected an \'in\', this is an error that shouldn\'t ever happen. Report this to https://github.com/Astroide/escurieux/issues .');
             const iterator = parser.getExpression(0);
             const token = parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, 'expected a block start after a for loop\'s iterator expression');
@@ -1022,6 +1023,14 @@ class NamePatternSubparser {
 __decorate([
     utilities_1.logCalls
 ], NamePatternSubparser.prototype, "parse", null);
+function expressionAsPattern(expression) {
+    if (expression instanceof IdentifierExpression) {
+        return new NamePattern(expression.token);
+    }
+    else if (expression instanceof AtExpression) {
+        return new NamedPattern(expressionAsPattern(expression.expression), expression.name);
+    }
+}
 class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();

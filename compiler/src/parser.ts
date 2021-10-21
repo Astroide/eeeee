@@ -109,7 +109,7 @@ interface InfixPatternSubparser {
 class IdentifierSubparser implements PrefixSubparser {
     @logCalls
     parse(parser: Parser, token: Token): IdentifierExpression {
-        return new IdentifierExpression(token.getSource());
+        return new IdentifierExpression(<Identifier>token);
     }
 }
 
@@ -247,9 +247,11 @@ export class ElementAccessExpression extends Expression {
 
 export class IdentifierExpression extends Expression {
     id: string;
-    constructor(id: string) {
+    token: Identifier;
+    constructor(token: Identifier) {
         super();
-        this.id = id;
+        this.id = token.identifier;
+        this.token = token;
     }
 
     toString(): string {
@@ -654,18 +656,18 @@ class ForSubparser implements PrefixSubparser {
         let init: Expression = new LiteralExpression(true, TokenType.BooleanLiteral);
         let condition: Expression = new LiteralExpression(true, TokenType.BooleanLiteral);
         let repeat: Expression = new LiteralExpression(true, TokenType.BooleanLiteral);
-        const state = parser.tokenSource.state();
+        // const state = parser.tokenSource.state();
         if (!parser.tokenSource.match(TokenType.Comma)) {
             init = parser.getExpression(0);
         }
         if (parser.tokenSource.match(TokenType.In)) {
-            parser.tokenSource.rewind(state);
-            const name = parser.getPattern(0);
+            // parser.tokenSource.rewind(state);
+            const name = expressionAsPattern(init);//parser.getPattern(0);
             parser.tokenSource.consume(TokenType.In, 'Expected an \'in\', this is an error that shouldn\'t ever happen. Report this to https://github.com/Astroide/escurieux/issues .');
             const iterator = parser.getExpression(0);
             const token = parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'expected a block start after a for loop\'s iterator expression');
             const body = (new BlockSubparser()).parse(parser, token);
-            return new ForExpression(<ForAInB>{
+            return new ForExpression({
                 name: name,
                 iterator: iterator
             }, body, 'a in b');
@@ -1120,6 +1122,14 @@ class NamePatternSubparser implements PrefixPatternSubparser {
     @logCalls
     parse(_parser: Parser, token: Token): NamePattern {
         return new NamePattern(<Identifier>token);
+    }
+}
+
+function expressionAsPattern(expression: Expression): Pattern {
+    if (expression instanceof IdentifierExpression) {
+        return new NamePattern(expression.token);
+    } else if (expression instanceof AtExpression) {
+        return new NamedPattern(expressionAsPattern(expression.expression), expression.name);
     }
 }
 
