@@ -30,6 +30,7 @@ if x {
 } else {
     [[1, 3, 5, 7], [2, 4, 6, 8]][0] + Math.random()
 }
+x.y.{w,z,a.{b.c,d}}
 fn return_without_() {
     loop {
         break

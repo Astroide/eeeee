@@ -1131,6 +1131,27 @@ function expressionAsPattern(expression: Expression): Pattern {
     }
 }
 
+class ImportSection {
+    type: 'terminal' | 'list' | 'element';
+    next?: ImportSection[] | ImportSection;
+    content?: Identifier;
+    constructor(type: 'terminal' | 'list' | 'element', next: ImportSection[] | ImportSection, content?: Identifier) {
+        this.type = type;
+        this.next = next;
+        this.content = content;
+    }
+
+    toString(): string {
+        if (this.type == 'list') {
+            return `{${(<ImportSection[]>this.next).map(x => x.toString()).join(', ')}}`;
+        } else if (this.type == 'element') {
+            return `${this.content.identifier}.${this.next.toString()}`;
+        } else {
+            return this.content.identifier;
+        }
+    }
+}
+
 export class Parser {
     tokenSource: PeekableTokenStream;
     prefixSubparsers: Map<TokenType, PrefixSubparser> = new Map();
@@ -1386,5 +1407,38 @@ export class Parser {
             this.tokenSource.next(); // Consume the ']'
         }
         return type;
+    }
+
+    parseImport(): ImportSection {
+        if (this.tokenSource.match(TokenType.LeftCurlyBracket)) {
+            this.tokenSource.next();
+            const list: ImportSection[] = [];
+            while (!this.tokenSource.match(TokenType.RightCurlyBracket)) {
+                if (this.tokenSource.match(TokenType.Comma)) {
+                    const token = this.tokenSource.next();
+                    panicAt(this.tokenSource.reader, '[ESCE00028] No leading / double commas are allowed within imports', token.line, token.char, token.getSource());
+                }
+                list.push(this.parseImport());
+                if (this.tokenSource.match(TokenType.Comma)) {
+                    this.tokenSource.next();
+                } else if (!this.tokenSource.match(TokenType.RightCurlyBracket)) {
+                    const token = this.tokenSource.next();
+                    panicAt(this.tokenSource.reader, '[ESCE00029] Expected either \'}\' or an import section', token.line, token.char, token.getSource());
+                }
+            }
+            const token = this.tokenSource.next(); // Consume the '}'
+            if (list.length == 0) {
+                panicAt(this.tokenSource.reader, '[ESCE00030] Cannot import nothing from a module', token.line, token.char, token.getSource());
+            }
+            return new ImportSection('list', list);
+        } else if (this.tokenSource.match(TokenType.Identifier)) {
+            const token = <Identifier>this.tokenSource.next();
+            if (this.tokenSource.match(TokenType.Dot)) {
+                this.tokenSource.next();
+                return new ImportSection('element', this.parseImport(), token);
+            } else {
+                return new ImportSection('terminal', null, token);
+            }
+        }
     }
 }

@@ -161,6 +161,7 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
         }
         const parser = new Parser(tokenGenerator, tokenizer.reader);
         console.log(parser.getExpression(0).toString());
+        console.log(parser.parseImport().toString());
     }
 }
 main();
