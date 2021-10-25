@@ -578,13 +578,11 @@ class ForSubparser {
         let init = new LiteralExpression(true, tokens_1.TokenType.BooleanLiteral);
         let condition = new LiteralExpression(true, tokens_1.TokenType.BooleanLiteral);
         let repeat = new LiteralExpression(true, tokens_1.TokenType.BooleanLiteral);
-        // const state = parser.tokenSource.state();
         if (!parser.tokenSource.match(tokens_1.TokenType.Comma)) {
             init = parser.getExpression(0);
         }
         if (parser.tokenSource.match(tokens_1.TokenType.In)) {
-            // parser.tokenSource.rewind(state);
-            const name = expressionAsPattern(init); //parser.getPattern(0);
+            const name = expressionAsPattern(init);
             parser.tokenSource.consume(tokens_1.TokenType.In, 'Expected an \'in\', this is an error that shouldn\'t ever happen. Report this to https://github.com/Astroide/escurieux/issues .');
             const iterator = parser.getExpression(0);
             const token = parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, 'expected a block start after a for loop\'s iterator expression');
