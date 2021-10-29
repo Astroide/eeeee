@@ -1,3 +1,7 @@
+import meow;
+import std.util.StringReverser;
+import std.graphics.Window;
+import std.graphics.{Color, Canvas};
 const fustibale = (class Fustibale {
     map: Map[string, float] = map! {
         "twenty": 20.0,

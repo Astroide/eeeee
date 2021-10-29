@@ -1,6 +1,6 @@
 import { argv, exit } from 'process';
 import { errorAndWarningExplanations } from './explanations';
-import { Parser } from './parser';
+import { ImportSection, Parser } from './parser';
 import { Tokenizer } from './tokenizer';
 import { CharLiteral, Identifier, Keyword, Label, NumberLiteral, StringLiteral, Token, TokenType } from './tokens';
 import { panic, print, readFile, setCommand, setOutput, showLongErrorMessages } from './utilities';
@@ -160,6 +160,17 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
             print('<tokens-end>');
         }
         const parser = new Parser(tokenGenerator, tokenizer.reader);
+        const imports: ImportSection[] = [];
+        while (parser.tokenSource.match(TokenType.Import)) {
+            parser.tokenSource.next();
+            imports.push(parser.parseImport());
+            parser.tokenSource.consume(TokenType.Semicolon, 'expected a semicolon after import statement');
+        }
+        if (imports.length > 0) {
+            console.log('Imports:\n' + imports.map(x => 'import ' + x.toString()).join('\n'));
+        } else {
+            console.log('No imports');
+        }
         console.log(parser.getExpression(0).toString());
     }
 }

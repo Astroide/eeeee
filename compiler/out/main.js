@@ -172,6 +172,18 @@ Report any errors / bugs / whatever to this page : https://github.com/Astroide/e
             (0, utilities_1.print)('<tokens-end>');
         }
         const parser = new parser_1.Parser(tokenGenerator, tokenizer.reader);
+        const imports = [];
+        while (parser.tokenSource.match(tokens_1.TokenType.Import)) {
+            parser.tokenSource.next();
+            imports.push(parser.parseImport());
+            parser.tokenSource.consume(tokens_1.TokenType.Semicolon, 'expected a semicolon after import statement');
+        }
+        if (imports.length > 0) {
+            console.log('Imports:\n' + imports.map(x => 'import ' + x.toString()).join('\n'));
+        }
+        else {
+            console.log('No imports');
+        }
         console.log(parser.getExpression(0).toString());
     }
 }

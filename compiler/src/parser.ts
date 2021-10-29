@@ -1131,7 +1131,7 @@ function expressionAsPattern(expression: Expression): Pattern {
     }
 }
 
-class ImportSection {
+export class ImportSection {
     type: 'terminal' | 'list' | 'element';
     next?: ImportSection[] | ImportSection;
     content?: Identifier;
