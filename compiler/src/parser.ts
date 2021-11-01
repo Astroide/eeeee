@@ -1123,11 +1123,46 @@ class NamePatternSubparser implements PrefixPatternSubparser {
     }
 }
 
+class ListPattern extends Pattern {
+    patterns: Pattern[];
+    constructor(patterns: Pattern[]) {
+        super();
+        this.patterns = patterns;
+    }
+
+    toString(): string {
+        return `ListPattern {${this.patterns.map(x => x.toString()).join(', ')}}`;
+    }
+}
+
+class ListPatternSubparser implements PrefixPatternSubparser {
+    @logCalls
+    parse(parser: Parser, _token: Token): ListPattern {
+        const patterns: Pattern[] = [];
+        while (!parser.tokenSource.match(TokenType.RightBracket)) {
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                const errorToken = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00031] Leading / double commas are not allowed within list patterns.', errorToken.line, errorToken.char, errorToken.getSource());
+            }
+            patterns.push(parser.getPattern(0));
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                parser.tokenSource.next();
+            } else if (parser.tokenSource.peek().type != TokenType.RightBracket) {
+                const errorToken = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00032] A list pattern\'s elements should be separated by commas', errorToken.line, errorToken.char, errorToken.getSource());
+            }
+        }
+        return new ListPattern(patterns);
+    }
+}
+
 function expressionAsPattern(expression: Expression): Pattern {
     if (expression instanceof IdentifierExpression) {
         return new NamePattern(expression.token);
     } else if (expression instanceof AtExpression) {
         return new NamedPattern(expressionAsPattern(expression.expression), expression.name);
+    } else if (expression instanceof ListExpression) {
+        return new ListPattern(expression.elements.map(x => expressionAsPattern(x)));
     }
 }
 
@@ -1223,6 +1258,7 @@ export class Parser {
         // Pattern handlers registering
         this.registerPrefixPattern(TokenType.AtSign, new NamedPatternSubparser());
         this.registerPrefixPattern(TokenType.Identifier, new NamePatternSubparser());
+        this.registerPrefixPattern(TokenType.LeftBracket, new ListPatternSubparser());
     }
 
     registerPrefix(type: TokenType, subparser: PrefixSubparser): void {

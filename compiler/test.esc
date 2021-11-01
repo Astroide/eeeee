@@ -8,6 +8,9 @@ const fustibale = (class Fustibale {
         "forty": 20.0
     },
     fn throw(@test snailName: string) Snail {
+        for [key, value] in map {
+            print(`${key} = ${value}`)
+        };
         #printing: for @test character in snailName {
             if @test character == 'x {
                 continue #printing
