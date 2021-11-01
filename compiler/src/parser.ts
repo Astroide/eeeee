@@ -3,7 +3,8 @@ import { TokenStream } from './tokenizer';
 import { BooleanLiteral, CharLiteral, Identifier, Label, Macro, NumberLiteral, StringLiteral, TemplateStringElement, TemplateStringLiteral, Token, TokenType } from './tokens';
 import { logCalls, panicAt, StringReader, warnAt, zip } from './utilities';
 
-class PeekableTokenStream {
+// This class is a wrapper around the tokenizer. It allows reading, peeking, matching, skipping, and consuming tokens.
+class BetterTokenStream {
     private stream: TokenStream;
     private nextTokens: Token[] = [];
     reader: StringReader;
@@ -73,6 +74,7 @@ class PeekableTokenStream {
     }
 }
 
+// Precedence levels
 const Precedence = {
     // const ASSIGNMENT = 1;
     CONDITIONAL: 2,
@@ -84,23 +86,34 @@ const Precedence = {
     CALL: 8,
     PROPERTY_ACCESS: 9,
 };
+// Lock Precedence's properties (it being const doesn't imply its properties are constant)
 Object.seal(Precedence);
 
+// Interface for prefix subparsers. Any expression prefix subparser (identifiers, literals, if-else expressions, etc.) must implement this interface.
 interface PrefixSubparser {
     parse(parser: Parser, token: Token): Expression;
 }
 
+// Interface for infix subparsers. Any expression infix subparser (infix operators, function calls, postfix operators, etc.) must implement this interface.
 interface InfixSubparser {
     parse(parser: Parser, left: Expression, token: Token): Expression;
     precedence: number;
 }
 
-class Pattern { }
+// Base pattern class
+class Pattern {
+    // Even if this method exists, it must be overridden by subclasses.
+    toString(): string {
+        return 'Pattern';
+    }
+}
 
+// Interface for pattern prefix subparsers. Any pattern prefix subparser (@name naming patterns, plain name patterns, list patterns, etc.) must implement this interface.
 interface PrefixPatternSubparser {
     parse(parser: Parser, token: Token): Pattern;
 }
 
+// Interface for pattern infix subparsers. Any pattern infix subparsers (no examples yet) must implement this interface.
 interface InfixPatternSubparser {
     parse(parser: Parser, left: Pattern, token: Token): Pattern;
     precedence: number;
@@ -121,6 +134,7 @@ class PrefixOperatorSubparser implements PrefixSubparser {
     }
 }
 
+// All infix operators (except ;, the expression chaining operator) are implemented by this class.
 class InfixOperatorSubparser implements InfixSubparser {
     precedence: number;
     constructor(precedence: number) {
@@ -204,7 +218,13 @@ class ElementAccessSubparser implements InfixSubparser {
     }
 }
 
-export class Expression { }
+// Base expression class
+export class Expression {
+    // Although this method exists, it must be overridden by subclasses.
+    toString(): string {
+        return 'Expression';
+    }
+}
 
 export class GroupExpression extends Expression {
     content: Expression;
@@ -1228,15 +1248,16 @@ export class ImportSection {
     }
 }
 
+// Main parser class
 export class Parser {
-    tokenSource: PeekableTokenStream;
+    tokenSource: BetterTokenStream;
     prefixSubparsers: Map<TokenType, PrefixSubparser> = new Map();
     infixSubparsers: Map<TokenType, InfixSubparser> = new Map();
     prefixPatternSubparsers: Map<TokenType, PrefixPatternSubparser> = new Map();
     infixPatternSubparsers: Map<TokenType, InfixPatternSubparser> = new Map();
     conditionsOfPrefixSubparsers: Map<TokenType, (token: Token) => boolean> = new Map();
     constructor(source: TokenStream, reader: StringReader) {
-        this.tokenSource = new PeekableTokenStream(source, reader);
+        this.tokenSource = new BetterTokenStream(source, reader);
         this.registerPrefix(TokenType.Identifier, new IdentifierSubparser());
         const self = this;
         [TokenType.Plus, TokenType.Minus, TokenType.Tilde, TokenType.Bang].forEach(type => {

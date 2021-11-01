@@ -10,7 +10,8 @@ exports.Parser = exports.ImportSection = exports.ContinueExpression = exports.Br
 const explanations_1 = require("./explanations");
 const tokens_1 = require("./tokens");
 const utilities_1 = require("./utilities");
-class PeekableTokenStream {
+// This class is a wrapper around the tokenizer. It allows reading, peeking, matching, skipping, and consuming tokens.
+class BetterTokenStream {
     constructor(stream, reader) {
         this.nextTokens = [];
         this.index = 0;
@@ -69,6 +70,7 @@ class PeekableTokenStream {
         }
     }
 }
+// Precedence levels
 const Precedence = {
     // const ASSIGNMENT = 1;
     CONDITIONAL: 2,
@@ -80,8 +82,14 @@ const Precedence = {
     CALL: 8,
     PROPERTY_ACCESS: 9,
 };
+// Lock Precedence's properties (it being const doesn't imply its properties are constant)
 Object.seal(Precedence);
+// Base pattern class
 class Pattern {
+    // Even if this method exists, it must be overridden by subclasses.
+    toString() {
+        return 'Pattern';
+    }
 }
 class IdentifierSubparser {
     parse(parser, token) {
@@ -100,6 +108,7 @@ class PrefixOperatorSubparser {
 __decorate([
     utilities_1.logCalls
 ], PrefixOperatorSubparser.prototype, "parse", null);
+// All infix operators (except ;, the expression chaining operator) are implemented by this class.
 class InfixOperatorSubparser {
     constructor(precedence) {
         this.precedence = precedence;
@@ -184,7 +193,12 @@ class ElementAccessSubparser {
 __decorate([
     utilities_1.logCalls
 ], ElementAccessSubparser.prototype, "parse", null);
+// Base expression class
 class Expression {
+    // Although this method exists, it must be overridden by subclasses.
+    toString() {
+        return 'Expression';
+    }
 }
 exports.Expression = Expression;
 class GroupExpression extends Expression {
@@ -1124,6 +1138,7 @@ class ImportSection {
     }
 }
 exports.ImportSection = ImportSection;
+// Main parser class
 class Parser {
     constructor(source, reader) {
         this.prefixSubparsers = new Map();
@@ -1131,7 +1146,7 @@ class Parser {
         this.prefixPatternSubparsers = new Map();
         this.infixPatternSubparsers = new Map();
         this.conditionsOfPrefixSubparsers = new Map();
-        this.tokenSource = new PeekableTokenStream(source, reader);
+        this.tokenSource = new BetterTokenStream(source, reader);
         this.registerPrefix(tokens_1.TokenType.Identifier, new IdentifierSubparser());
         const self = this;
         [tokens_1.TokenType.Plus, tokens_1.TokenType.Minus, tokens_1.TokenType.Tilde, tokens_1.TokenType.Bang].forEach(type => {
