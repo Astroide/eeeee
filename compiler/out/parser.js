@@ -1021,6 +1021,47 @@ class NamePatternSubparser {
 __decorate([
     utilities_1.logCalls
 ], NamePatternSubparser.prototype, "parse", null);
+class ObjectPattern extends Pattern {
+    constructor(properties) {
+        super();
+        this.properties = properties;
+    }
+    toString() {
+        return `ObjectPattern {${this.properties.map(x => x[0].toString() + (x[1] ? ': ' + x[1].toString() : '')).join(', ')}}`;
+    }
+}
+class ObjectPatternSubparser {
+    parse(parser, _token) {
+        const properties = [];
+        while (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
+            if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                const token = parser.tokenSource.next();
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00033] Leading / double commas are not allowed within object literals.', token.line, token.char, token.getSource());
+            }
+            const propertyName = parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected a property name');
+            if (parser.tokenSource.match(tokens_1.TokenType.Colon)) {
+                parser.tokenSource.next();
+                const propertyPattern = parser.getPattern(0);
+                properties.push([propertyName, propertyPattern]);
+            }
+            else {
+                properties.push([propertyName, null]);
+            }
+            if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                parser.tokenSource.next();
+            }
+            else if (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
+                const token = parser.tokenSource.next();
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00034] An object pattern\'s property patterns should be separated by commas', token.line, token.char, token.getSource());
+            }
+        }
+        parser.tokenSource.next(); // Consume the '}'
+        return new ObjectPattern(properties);
+    }
+}
+__decorate([
+    utilities_1.logCalls
+], ObjectPatternSubparser.prototype, "parse", null);
 class ListPattern extends Pattern {
     constructor(patterns) {
         super();
@@ -1153,6 +1194,7 @@ class Parser {
         this.registerPrefixPattern(tokens_1.TokenType.AtSign, new NamedPatternSubparser());
         this.registerPrefixPattern(tokens_1.TokenType.Identifier, new NamePatternSubparser());
         this.registerPrefixPattern(tokens_1.TokenType.LeftBracket, new ListPatternSubparser());
+        this.registerPrefixPattern(tokens_1.TokenType.LeftCurlyBracket, new ObjectPatternSubparser());
     }
     registerPrefix(type, subparser) {
         this.prefixSubparsers.set(type, subparser);

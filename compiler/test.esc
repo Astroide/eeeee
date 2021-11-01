@@ -27,6 +27,7 @@ const fustibale = (class Fustibale {
                 break #randomPrinting 1
             }
         };
+        let {x, y} = 1;
         return Snail(snailName)
     }
 })();

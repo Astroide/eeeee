@@ -4,5 +4,6 @@
         "*.h": "c",
         "expressions": "coffeescript"
     },
-    "editor.suggest.preview": true
+    "editor.suggest.preview": true,
+    "cmake.configureOnOpen": false
 }
