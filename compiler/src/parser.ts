@@ -66,7 +66,7 @@ class BetterTokenStream {
         return this.index;
     }
 
-    rewind(state: number): void {
+    restore(state: number): void {
         while (this.index != state) {
             this.index--;
             this.nextTokens.unshift(this.stack.pop());
@@ -863,7 +863,13 @@ export class ClassExpression extends Expression {
 class ClassSubparser implements PrefixSubparser {
     @logCalls
     parse(parser: Parser, _token: Token): ClassExpression {
+        const state = parser.tokenSource.state();
         const name = parser.getPattern(0);
+        if (!(name instanceof NamePattern)) {
+            parser.tokenSource.restore(state);
+            const token = parser.tokenSource.next();
+            panicAt(parser.tokenSource.reader, '[ESCE00035] Class names must be identifiers', token.line, token.char, token.getSource());
+        }
         let typeParameters = [], typeConstraints = [];
         if (parser.tokenSource.match(TokenType.LeftBracket)) {
             [typeParameters, typeConstraints] = parser.getTypeParameters();
