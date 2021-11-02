@@ -1120,10 +1120,11 @@ function expressionAsPattern(expression) {
     }
 }
 class ImportSection {
-    constructor(type, next, content) {
+    constructor(type, next, content, alias) {
         this.type = type;
         this.next = next;
         this.content = content;
+        this.alias = alias;
     }
     toString() {
         if (this.type == 'list') {
@@ -1133,7 +1134,7 @@ class ImportSection {
             return `${this.content.identifier}.${this.next.toString()}`;
         }
         else {
-            return this.content.identifier;
+            return `${this.content.identifier}${this.alias ? ' as ' + this.alias.identifier : ''}`;
         }
     }
 }
@@ -1418,6 +1419,10 @@ class Parser {
             if (this.tokenSource.match(tokens_1.TokenType.Dot)) {
                 this.tokenSource.next();
                 return new ImportSection('element', this.parseImport(), token);
+            }
+            else if (this.tokenSource.match(tokens_1.TokenType.As)) {
+                this.tokenSource.next(); // Consume the 'as'
+                return new ImportSection('terminal', null, token, this.tokenSource.consume(tokens_1.TokenType.Identifier, 'expected an identifier after \'as\''));
             }
             else {
                 return new ImportSection('terminal', null, token);

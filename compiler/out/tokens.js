@@ -65,6 +65,7 @@ var TokenType;
     TokenType[TokenType["Label"] = 59] = "Label";
     TokenType[TokenType["Macro"] = 60] = "Macro";
     TokenType[TokenType["AtSign"] = 61] = "AtSign";
+    TokenType[TokenType["As"] = 62] = "As";
 })(TokenType || (TokenType = {}));
 exports.TokenType = TokenType;
 class Token {

@@ -1,15 +1,15 @@
 import meow;
-import std.util.StringReverser;
-import std.graphics.Window;
+import std.util.StringReverser as Reverser;
+import std.graphics as Graphics;
 import std.graphics.{Color, Canvas};
 const fustibale = (class Fustibale {
     map: Map[string, float] = map! {
         "twenty": 20.0,
         "forty": 20.0
     },
-    fn throw(@test snailName: string) Snail {
+    fn throw(@test {value}: string) Snail {
         for [key, value] in map {
-            print(`${key} = ${value}`)
+            print(`${<string>key} = ${value}`)
         };
         #printing: for @test character in snailName {
             if @test character == 'x {

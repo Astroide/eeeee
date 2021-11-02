@@ -406,7 +406,6 @@ class Tokenizer {
                             while (!self.reader.done() && /[a-zA-Z_0-9]/.test(self.reader.peek())) {
                                 tokenText += self.reader.next();
                             }
-                            const keywords = 'fn while for if else continue break let const loop in static class private public protected import return'.split(' ');
                             const keywordTokenTypes = {
                                 'fn': tokens_1.TokenType.Fn,
                                 'while': tokens_1.TokenType.While,
@@ -425,8 +424,10 @@ class Tokenizer {
                                 'protected': tokens_1.TokenType.Protected,
                                 'public': tokens_1.TokenType.Public,
                                 'import': tokens_1.TokenType.Import,
-                                'return': tokens_1.TokenType.Return
+                                'return': tokens_1.TokenType.Return,
+                                'as': tokens_1.TokenType.As
                             };
+                            const keywords = Object.keys(keywordTokenTypes);
                             if (/!/.test(self.reader.peek())) {
                                 tokenText += self.reader.next();
                                 yield (new tokens_1.Macro(self.reader.currentLine, char, self.reader.source, current, tokenText.length, tokenText));

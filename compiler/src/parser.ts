@@ -1231,10 +1231,12 @@ export class ImportSection {
     type: 'terminal' | 'list' | 'element';
     next?: ImportSection[] | ImportSection;
     content?: Identifier;
-    constructor(type: 'terminal' | 'list' | 'element', next: ImportSection[] | ImportSection, content?: Identifier) {
+    alias?: Identifier;
+    constructor(type: 'terminal' | 'list' | 'element', next: ImportSection[] | ImportSection, content?: Identifier, alias?: Identifier) {
         this.type = type;
         this.next = next;
         this.content = content;
+        this.alias = alias;
     }
 
     toString(): string {
@@ -1243,7 +1245,7 @@ export class ImportSection {
         } else if (this.type == 'element') {
             return `${this.content.identifier}.${this.next.toString()}`;
         } else {
-            return this.content.identifier;
+            return `${this.content.identifier}${this.alias ? ' as ' + this.alias.identifier : ''}`;
         }
     }
 }
@@ -1535,6 +1537,9 @@ export class Parser {
             if (this.tokenSource.match(TokenType.Dot)) {
                 this.tokenSource.next();
                 return new ImportSection('element', this.parseImport(), token);
+            } else if (this.tokenSource.match(TokenType.As)) {
+                this.tokenSource.next(); // Consume the 'as'
+                return new ImportSection('terminal', null, token, <Identifier>this.tokenSource.consume(TokenType.Identifier, 'expected an identifier after \'as\''));
             } else {
                 return new ImportSection('terminal', null, token);
             }
