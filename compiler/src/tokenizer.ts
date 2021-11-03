@@ -393,7 +393,9 @@ export class Tokenizer {
                                 'public': TokenType.Public,
                                 'import': TokenType.Import,
                                 'return': TokenType.Return,
-                                'as': TokenType.As
+                                'as': TokenType.As,
+                                'trait': TokenType.Trait,
+                                'structural': TokenType.Structural
                             };
                             const keywords = Object.keys(keywordTokenTypes);
                             if (/!/.test(self.reader.peek())) {

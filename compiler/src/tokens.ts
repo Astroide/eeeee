@@ -63,7 +63,9 @@ enum TokenType {
     Label,
     Macro,
     AtSign,
-    As
+    As,
+    Trait,
+    Structural
 }
 
 class Token {
