@@ -6,7 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Parser = exports.ImportSection = exports.ContinueExpression = exports.BreakExpression = exports.ReturnExpression = exports.AssignmentExpression = exports.ClassExpression = exports.FunctionExpression = exports.LambdaFunctionExpression = exports.ForExpression = exports.PostfixOperatorExpression = exports.LetOrConstDeclarationExpression = exports.TypeCastingExpression = exports.LoopExpression = exports.WhileExpression = exports.IfExpression = exports.InfixOperatorExpression = exports.StatementExpression = exports.PrefixOperatorExpression = exports.PropertyAccessExpression = exports.LiteralExpression = exports.IdentifierExpression = exports.ElementAccessExpression = exports.FunctionCallExpression = exports.GroupExpression = exports.Expression = void 0;
+exports.Parser = exports.ImportSection = exports.ContinueExpression = exports.BreakExpression = exports.ReturnExpression = exports.AssignmentExpression = exports.TraitSubparser = exports.TraitExpression = exports.ClassExpression = exports.FunctionExpression = exports.LambdaFunctionExpression = exports.ForExpression = exports.PostfixOperatorExpression = exports.LetOrConstDeclarationExpression = exports.TypeCastingExpression = exports.LoopExpression = exports.WhileExpression = exports.IfExpression = exports.InfixOperatorExpression = exports.StatementExpression = exports.PrefixOperatorExpression = exports.PropertyAccessExpression = exports.LiteralExpression = exports.IdentifierExpression = exports.ElementAccessExpression = exports.FunctionCallExpression = exports.GroupExpression = exports.Expression = void 0;
 const explanations_1 = require("./explanations");
 const tokens_1 = require("./tokens");
 const utilities_1 = require("./utilities");
@@ -830,6 +830,99 @@ class ClassSubparser {
 __decorate([
     utilities_1.logCalls
 ], ClassSubparser.prototype, "parse", null);
+class TraitExpression extends Expression {
+    constructor(name, typeParameters, typeConstraints, methods, properties) {
+        super();
+        this.name = name;
+        this.typeParameters = typeParameters;
+        this.typeConstraints = typeConstraints;
+        this.methods = methods;
+        this.properties = properties;
+    }
+    toString() {
+        return `TraitExpression<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
+    }
+}
+exports.TraitExpression = TraitExpression;
+class TraitSubparser {
+    parse(parser, _token) {
+        const state = parser.tokenSource.state();
+        const name = parser.getPattern(0);
+        if (!(name instanceof NamePattern)) {
+            parser.tokenSource.restore(state);
+            const token = parser.tokenSource.next();
+            (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00036] Trait names must be identifiers', token.line, token.char, token.getSource());
+        }
+        let typeParameters = [], typeConstraints = [];
+        if (parser.tokenSource.match(tokens_1.TokenType.LeftBracket)) {
+            [typeParameters, typeConstraints] = parser.getTypeParameters();
+        }
+        parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, `expected a '{' after ${typeParameters.length == 0 ? 'the trait name' : 'the type parameters'}`);
+        const methods = [];
+        const properties = [];
+        while (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
+            if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                const errorToken = parser.tokenSource.next();
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00037] Leading or double commas are not allowed in traits', errorToken.line, errorToken.char, errorToken.getSource());
+            }
+            const token = parser.tokenSource.peek();
+            if (![tokens_1.TokenType.Public, tokens_1.TokenType.Fn, tokens_1.TokenType.Identifier, tokens_1.TokenType.Private, tokens_1.TokenType.Protected, tokens_1.TokenType.Const, tokens_1.TokenType.Static].includes(token.type)) {
+                (0, utilities_1.panicAt)(parser.tokenSource.reader, `[ESCE00038] One of ('private', 'protected', 'public', 'const', 'static', <identifier>) was expected, found TokenType.${tokens_1.TokenType[token.type]} instead`, token.line, token.char, token.getSource());
+            }
+            let modifier = 'instance';
+            let accessModifier = 'private';
+            if (parser.tokenSource.match(tokens_1.TokenType.Private)) {
+                const token = parser.tokenSource.next();
+                (0, utilities_1.warnAt)(parser.tokenSource.reader, '[ESCW00002] The \'private\' access specifier is not required, properties and methods are private by default', token.line, token.char, token.getSource());
+            }
+            else if (parser.tokenSource.match(tokens_1.TokenType.Protected)) {
+                parser.tokenSource.next();
+                accessModifier = 'protected';
+            }
+            else if (parser.tokenSource.match(tokens_1.TokenType.Public)) {
+                parser.tokenSource.next();
+                accessModifier = 'public';
+            }
+            if (parser.tokenSource.match(tokens_1.TokenType.Static)) {
+                parser.tokenSource.next();
+                modifier = 'static';
+            }
+            if (parser.tokenSource.match(tokens_1.TokenType.Fn)) {
+                const method = (new FunctionSubparser()).parse(parser, parser.tokenSource.next());
+                methods.push([method, modifier, accessModifier]);
+            }
+            else if (parser.tokenSource.match(tokens_1.TokenType.Const)) {
+                const state = parser.tokenSource.state();
+                const property = (new LetOrConstDeclarationSubparser()).parse(parser, parser.tokenSource.next());
+                properties.push([property, modifier, accessModifier]);
+                if (property.type == null) {
+                    parser.tokenSource.restore(state);
+                    const token = parser.tokenSource.next();
+                    (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00039] Trait properties must be explictly typed', token.line, token.char, token.getSource());
+                }
+            }
+            else {
+                const state = parser.tokenSource.state();
+                const property = (new LetOrConstDeclarationSubparser()).parse(parser, null);
+                properties.push([property, modifier, accessModifier]);
+                if (property.type == null) {
+                    parser.tokenSource.restore(state);
+                    const token = parser.tokenSource.next();
+                    (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00039] Trait properties must be explictly typed', token.line, token.char, token.getSource());
+                }
+            }
+            if (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
+                parser.tokenSource.consume(tokens_1.TokenType.Comma, 'a comma is required after properties / methods');
+            }
+        }
+        parser.tokenSource.consume(tokens_1.TokenType.RightCurlyBracket, '!!!');
+        return new TraitExpression(name, typeParameters, typeConstraints, methods, properties);
+    }
+}
+__decorate([
+    utilities_1.logCalls
+], TraitSubparser.prototype, "parse", null);
+exports.TraitSubparser = TraitSubparser;
 class AssignmentExpression extends Expression {
     constructor(left, right) {
         super();
@@ -1182,6 +1275,7 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.LeftBracket, new ListSubparser());
         this.registerPrefix(tokens_1.TokenType.Macro, new MapSubparser());
         this.registerPrefix(tokens_1.TokenType.AtSign, new AtSubparser());
+        this.registerPrefix(tokens_1.TokenType.Trait, new TraitSubparser());
         this.conditionsOfPrefixSubparsers.set(tokens_1.TokenType.Macro, (token => token.identifier == 'map!'));
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],
