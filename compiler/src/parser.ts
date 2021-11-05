@@ -877,6 +877,7 @@ class ClassSubparser implements PrefixSubparser {
         parser.tokenSource.consume(TokenType.LeftCurlyBracket, `expected a '{' after ${typeParameters.length == 0 ? 'the class name' : 'the type parameters'}`);
         const methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][] = [];
         const properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][] = [];
+        const blocks: ['static' | 'public' | 'protected'][] = [];
         while (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
             if (parser.tokenSource.match(TokenType.Comma)) {
                 const errorToken = parser.tokenSource.next();
