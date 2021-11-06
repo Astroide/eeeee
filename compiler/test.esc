@@ -3,6 +3,7 @@ import std.util.StringReverser as Reverser;
 import std.graphics as Graphics;
 import std.graphics.{Color, Canvas};
 const fustibale = (class Fustibale {
+    x: int = 1,
     map: Map[string, float] = map! {
         "twenty": 20.0,
         "forty": 20.0

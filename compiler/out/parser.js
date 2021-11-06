@@ -524,6 +524,10 @@ class LetOrConstDeclarationSubparser {
             parser.tokenSource.next();
             value = parser.getExpression(0);
         }
+        else if (variableType == null) {
+            const token = parser.tokenSource.next();
+            (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00040] A type-inferred let / const declaration must have a value. Either specify a type or add a value.', token.line, token.char, token.getSource());
+        }
         return new LetOrConstDeclarationExpression(type, pattern, value, variableType);
     }
 }
@@ -780,6 +784,7 @@ class ClassSubparser {
         parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, `expected a '{' after ${typeParameters.length == 0 ? 'the class name' : 'the type parameters'}`);
         const methods = [];
         const properties = [];
+        const blocks = [];
         while (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
             if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
                 const errorToken = parser.tokenSource.next();

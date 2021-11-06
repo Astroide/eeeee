@@ -571,7 +571,7 @@ class LetOrConstDeclarationSubparser implements PrefixSubparser {
     parse(parser: Parser, token: Token): LetOrConstDeclarationExpression {
         const type = (token && token.type == TokenType.Const) ? 'const' : 'let';
         const pattern = parser.getPattern(0);
-        let variableType = null;
+        let variableType: Type = null;
         if (parser.tokenSource.match(TokenType.Colon)) {
             parser.tokenSource.next();
             variableType = parser.getType();
@@ -580,6 +580,9 @@ class LetOrConstDeclarationSubparser implements PrefixSubparser {
         if (parser.tokenSource.match(TokenType.Equals)) {
             parser.tokenSource.next();
             value = parser.getExpression(0);
+        } else if (variableType == null) {
+            const token = parser.tokenSource.next();
+            panicAt(parser.tokenSource.reader, '[ESCE00040] A type-inferred let / const declaration must have a value. Either specify a type or add a value.', token.line, token.char, token.getSource());
         }
         return new LetOrConstDeclarationExpression(type, pattern, value, variableType);
     }
