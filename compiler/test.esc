@@ -32,6 +32,30 @@ const fustibale = (class Fustibale {
         return Snail(snailName)
     }
 })();
+class HugeSquirrel[X, Y: X, Z <= Y] {
+    x = 1,
+    const y = 2,
+    static z = 3,
+    static const w = 4,
+    public x1 = 1,
+    public const y1 = 2,
+    public static z1 = 3,
+    public static const w1 = 4,
+    protected x2 = 1,
+    protected const y2 = 2,
+    protected static z2 = 3,
+    protected static const w2 = 4,
+    static {
+        q = 3,
+        public {
+            q1 = 3,
+        }
+    },
+    fn new(size: int = 3) HugeSquirrel[X, Y, Z] {
+        let isHuge = true;
+        isHuge = X == Y
+    },
+}
 if x {
     [1, 3, 5, 7]
 } else if y {
