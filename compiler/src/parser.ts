@@ -863,6 +863,122 @@ export class ClassExpression extends Expression {
     }
 }
 
+class NamedPattern extends Pattern {
+    name: Identifier;
+    pattern: Pattern;
+    constructor(pattern: Pattern, name: Identifier) {
+        super();
+        this.pattern = pattern;
+        this.name = name;
+    }
+
+    toString(): string {
+        return `NamedPattern(${this.name.identifier}) {${this.pattern.toString()}}`;
+    }
+}
+
+class NamedPatternSubparser implements PrefixPatternSubparser {
+    @logCalls
+    parse(parser: Parser, _token: Token): NamedPattern {
+        const token = <Identifier>parser.tokenSource.consume(TokenType.Identifier, 'expected a pattern name');
+        const pattern = parser.getPattern(0);
+        return new NamedPattern(pattern, token);
+    }
+}
+
+class NamePattern extends Pattern {
+    name: Identifier;
+    constructor(name: Identifier) {
+        super();
+        this.name = name;
+    }
+
+    toString(): string {
+        return `NamePattern[${this.name.identifier}]`;
+    }
+}
+
+class NamePatternSubparser implements PrefixPatternSubparser {
+    @logCalls
+    parse(_parser: Parser, token: Token): NamePattern {
+        return new NamePattern(<Identifier>token);
+    }
+}
+
+class ObjectPattern extends Pattern {
+    properties: [Identifier, Pattern?][];
+    constructor(properties: [Identifier, Pattern?][]) {
+        super();
+        this.properties = properties;
+    }
+
+    toString(): string {
+        return `ObjectPattern {${this.properties.map(x => x[0].toString() + (x[1] ? ': ' + x[1].toString() : '')).join(', ')}}`;
+    }
+}
+
+class ObjectPatternSubparser implements PrefixPatternSubparser {
+    @logCalls
+    parse(parser: Parser, _token: Token): ObjectPattern {
+        const properties: [Identifier, Pattern?][] = [];
+        while (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                const token = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00033] Leading / double commas are not allowed within object literals.', token.line, token.char, token.getSource());
+            }
+            const propertyName = <Identifier>parser.tokenSource.consume(TokenType.Identifier, 'expected a property name');
+            if (parser.tokenSource.match(TokenType.Colon)) {
+                parser.tokenSource.next();
+                const propertyPattern = parser.getPattern(0);
+                properties.push([propertyName, propertyPattern]);
+            } else {
+                properties.push([propertyName, null]);
+            }
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                parser.tokenSource.next();
+            } else if (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
+                const token = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00034] An object pattern\'s property patterns should be separated by commas', token.line, token.char, token.getSource());
+            }
+        }
+        parser.tokenSource.next(); // Consume the '}'
+        return new ObjectPattern(properties);
+    }
+}
+
+class ListPattern extends Pattern {
+    patterns: Pattern[];
+    constructor(patterns: Pattern[]) {
+        super();
+        this.patterns = patterns;
+    }
+
+    toString(): string {
+        return `ListPattern {${this.patterns.map(x => x.toString()).join(', ')}}`;
+    }
+}
+
+class ListPatternSubparser implements PrefixPatternSubparser {
+    @logCalls
+    parse(parser: Parser, _token: Token): ListPattern {
+        const patterns: Pattern[] = [];
+        while (!parser.tokenSource.match(TokenType.RightBracket)) {
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                const errorToken = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00031] Leading / double commas are not allowed within list patterns.', errorToken.line, errorToken.char, errorToken.getSource());
+            }
+            patterns.push(parser.getPattern(0));
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                parser.tokenSource.next();
+            } else if (parser.tokenSource.peek().type != TokenType.RightBracket) {
+                const errorToken = parser.tokenSource.next();
+                panicAt(parser.tokenSource.reader, '[ESCE00032] A list pattern\'s elements should be separated by commas', errorToken.line, errorToken.char, errorToken.getSource());
+            }
+        }
+        return new ListPattern(patterns);
+    }
+}
+
 class ClassSubparser implements PrefixSubparser {
     @logCalls
     parse(parser: Parser, _token: Token): ClassExpression {
@@ -969,10 +1085,22 @@ class ClassSubparser implements PrefixSubparser {
                     const method = (new FunctionSubparser()).parse(parser, parser.tokenSource.next());
                     methods.push([method, modifier, accessModifier]);
                 } else if (parser.tokenSource.match(TokenType.Const)) {
+                    const token = parser.tokenSource.peek();
                     const property = (new LetOrConstDeclarationSubparser()).parse(parser, parser.tokenSource.next());
+                    for (const [declaration, _, __] of properties) {
+                        if (declaration.pattern instanceof NamePattern && property.pattern instanceof NamePattern && declaration.pattern.name.identifier === property.pattern.name.identifier) {
+                            panicAt(parser.tokenSource.reader, '[ESCE00043] A property with the same name has already been defined', token.line, token.char, token.getSource());
+                        }
+                    }
                     properties.push([property, modifier, accessModifier]);
                 } else {
+                    const token = parser.tokenSource.peek();
                     const property = (new LetOrConstDeclarationSubparser()).parse(parser, null);
+                    for (const [declaration, _, __] of properties) {
+                        if (declaration.pattern instanceof NamePattern && property.pattern instanceof NamePattern && declaration.pattern.name.identifier === property.pattern.name.identifier) {
+                            panicAt(parser.tokenSource.reader, '[ESCE00043] A property with the same name has already been defined', token.line, token.char, token.getSource());
+                        }
+                    }
                     properties.push([property, modifier, accessModifier]);
                 }
                 // eslint-disable-next-line no-constant-condition
@@ -1262,122 +1390,6 @@ class MapSubparser implements PrefixSubparser {
         }
         parser.tokenSource.next(); // Consume the '}'
         return new MapExpression(keys, values);
-    }
-}
-
-class NamedPattern extends Pattern {
-    name: Identifier;
-    pattern: Pattern;
-    constructor(pattern: Pattern, name: Identifier) {
-        super();
-        this.pattern = pattern;
-        this.name = name;
-    }
-
-    toString(): string {
-        return `NamedPattern(${this.name.identifier}) {${this.pattern.toString()}}`;
-    }
-}
-
-class NamedPatternSubparser implements PrefixPatternSubparser {
-    @logCalls
-    parse(parser: Parser, _token: Token): NamedPattern {
-        const token = <Identifier>parser.tokenSource.consume(TokenType.Identifier, 'expected a pattern name');
-        const pattern = parser.getPattern(0);
-        return new NamedPattern(pattern, token);
-    }
-}
-
-class NamePattern extends Pattern {
-    name: Identifier;
-    constructor(name: Identifier) {
-        super();
-        this.name = name;
-    }
-
-    toString(): string {
-        return `NamePattern[${this.name.identifier}]`;
-    }
-}
-
-class NamePatternSubparser implements PrefixPatternSubparser {
-    @logCalls
-    parse(_parser: Parser, token: Token): NamePattern {
-        return new NamePattern(<Identifier>token);
-    }
-}
-
-class ObjectPattern extends Pattern {
-    properties: [Identifier, Pattern?][];
-    constructor(properties: [Identifier, Pattern?][]) {
-        super();
-        this.properties = properties;
-    }
-
-    toString(): string {
-        return `ObjectPattern {${this.properties.map(x => x[0].toString() + (x[1] ? ': ' + x[1].toString() : '')).join(', ')}}`;
-    }
-}
-
-class ObjectPatternSubparser implements PrefixPatternSubparser {
-    @logCalls
-    parse(parser: Parser, _token: Token): ObjectPattern {
-        const properties: [Identifier, Pattern?][] = [];
-        while (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
-            if (parser.tokenSource.match(TokenType.Comma)) {
-                const token = parser.tokenSource.next();
-                panicAt(parser.tokenSource.reader, '[ESCE00033] Leading / double commas are not allowed within object literals.', token.line, token.char, token.getSource());
-            }
-            const propertyName = <Identifier>parser.tokenSource.consume(TokenType.Identifier, 'expected a property name');
-            if (parser.tokenSource.match(TokenType.Colon)) {
-                parser.tokenSource.next();
-                const propertyPattern = parser.getPattern(0);
-                properties.push([propertyName, propertyPattern]);
-            } else {
-                properties.push([propertyName, null]);
-            }
-            if (parser.tokenSource.match(TokenType.Comma)) {
-                parser.tokenSource.next();
-            } else if (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
-                const token = parser.tokenSource.next();
-                panicAt(parser.tokenSource.reader, '[ESCE00034] An object pattern\'s property patterns should be separated by commas', token.line, token.char, token.getSource());
-            }
-        }
-        parser.tokenSource.next(); // Consume the '}'
-        return new ObjectPattern(properties);
-    }
-}
-
-class ListPattern extends Pattern {
-    patterns: Pattern[];
-    constructor(patterns: Pattern[]) {
-        super();
-        this.patterns = patterns;
-    }
-
-    toString(): string {
-        return `ListPattern {${this.patterns.map(x => x.toString()).join(', ')}}`;
-    }
-}
-
-class ListPatternSubparser implements PrefixPatternSubparser {
-    @logCalls
-    parse(parser: Parser, _token: Token): ListPattern {
-        const patterns: Pattern[] = [];
-        while (!parser.tokenSource.match(TokenType.RightBracket)) {
-            if (parser.tokenSource.match(TokenType.Comma)) {
-                const errorToken = parser.tokenSource.next();
-                panicAt(parser.tokenSource.reader, '[ESCE00031] Leading / double commas are not allowed within list patterns.', errorToken.line, errorToken.char, errorToken.getSource());
-            }
-            patterns.push(parser.getPattern(0));
-            if (parser.tokenSource.match(TokenType.Comma)) {
-                parser.tokenSource.next();
-            } else if (parser.tokenSource.peek().type != TokenType.RightBracket) {
-                const errorToken = parser.tokenSource.next();
-                panicAt(parser.tokenSource.reader, '[ESCE00032] A list pattern\'s elements should be separated by commas', errorToken.line, errorToken.char, errorToken.getSource());
-            }
-        }
-        return new ListPattern(patterns);
     }
 }
 
