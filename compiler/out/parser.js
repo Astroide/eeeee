@@ -656,12 +656,12 @@ class FunctionExpression extends Expression {
         this.typeConstraints = typeConstraints;
     }
     toString() {
-        return `Function<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.namePattern.toString()}, [${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + typeToString(type)).join(', ')}], ${this.body.toString()}]`;
+        return `Function<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.namePattern.toString()}, [${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + typeToString(type)).join(', ')}], ${this.body ? this.body.toString() : '<no body>'}]`;
     }
 }
 exports.FunctionExpression = FunctionExpression;
 class FunctionSubparser {
-    parse(parser, _token) {
+    parse(parser, _token, allowEmpty = false) {
         const functionName = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'a function name is required'));
         let typeParameters = [];
         let typeConstraints = [];
@@ -705,7 +705,14 @@ class FunctionSubparser {
             returnType = parser.getType();
         }
         const token = parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, 'expected a block start');
-        const body = (new BlockSubparser()).parse(parser, token);
+        let body;
+        if (allowEmpty && parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
+            body = null;
+            parser.tokenSource.next();
+        }
+        else {
+            body = (new BlockSubparser()).parse(parser, token);
+        }
         return new FunctionExpression(typeParameters, args, typesOfArguments, body, functionName, typeConstraints, returnType);
     }
 }
@@ -1053,60 +1060,136 @@ class TraitSubparser {
         if (parser.tokenSource.match(tokens_1.TokenType.LeftBracket)) {
             [typeParameters, typeConstraints] = parser.getTypeParameters();
         }
-        parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, `expected a '{' after ${typeParameters.length == 0 ? 'the trait name' : 'the type parameters'}`);
+        parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, `expected a '{' after ${typeParameters.length == 0 ? 'the class name' : 'the type parameters'}`);
         const methods = [];
         const properties = [];
-        while (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
-            if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
-                const errorToken = parser.tokenSource.next();
-                (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00037] Leading or double commas are not allowed in traits', errorToken.line, errorToken.char, errorToken.getSource());
-            }
-            const token = parser.tokenSource.peek();
-            if (![tokens_1.TokenType.Public, tokens_1.TokenType.Fn, tokens_1.TokenType.Identifier, tokens_1.TokenType.Private, tokens_1.TokenType.Protected, tokens_1.TokenType.Const, tokens_1.TokenType.Static].includes(token.type)) {
-                (0, utilities_1.panicAt)(parser.tokenSource.reader, `[ESCE00038] One of ('private', 'protected', 'public', 'const', 'static', <identifier>) was expected, found TokenType.${tokens_1.TokenType[token.type]} instead`, token.line, token.char, token.getSource());
-            }
-            let modifier = 'instance';
-            let accessModifier = 'private';
-            if (parser.tokenSource.match(tokens_1.TokenType.Private)) {
-                const token = parser.tokenSource.next();
-                (0, utilities_1.warnAt)(parser.tokenSource.reader, '[ESCW00002] The \'private\' access specifier is not required, properties and methods are private by default', token.line, token.char, token.getSource());
-            }
-            else if (parser.tokenSource.match(tokens_1.TokenType.Protected)) {
-                parser.tokenSource.next();
-                accessModifier = 'protected';
-            }
-            else if (parser.tokenSource.match(tokens_1.TokenType.Public)) {
-                parser.tokenSource.next();
-                accessModifier = 'public';
-            }
-            if (parser.tokenSource.match(tokens_1.TokenType.Static)) {
-                parser.tokenSource.next();
-                modifier = 'static';
-            }
-            if (parser.tokenSource.match(tokens_1.TokenType.Fn)) {
-                const method = (new FunctionSubparser()).parse(parser, parser.tokenSource.next());
-                methods.push([method, modifier, accessModifier]);
-            }
-            else if (parser.tokenSource.match(tokens_1.TokenType.Const)) {
-                const state = parser.tokenSource.state();
-                const property = (new LetOrConstDeclarationSubparser()).parse(parser, parser.tokenSource.next());
-                properties.push([property, modifier, accessModifier]);
-                if (property.type == null) {
-                    parser.tokenSource.restore(state);
-                    const token = parser.tokenSource.next();
-                    (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00039] Trait properties must be explictly typed', token.line, token.char, token.getSource());
+        const blocks = [];
+        loop: while (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket) || blocks.length > 0) {
+            toEnd: do {
+                if (parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket) && blocks.length != 0) {
+                    blocks.pop();
+                    parser.tokenSource.next();
+                    continue toEnd;
                 }
-            }
-            else {
-                const state = parser.tokenSource.state();
-                const property = (new LetOrConstDeclarationSubparser()).parse(parser, null);
-                properties.push([property, modifier, accessModifier]);
-                if (property.type == null) {
-                    parser.tokenSource.restore(state);
-                    const token = parser.tokenSource.next();
-                    (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00039] Trait properties must be explictly typed', token.line, token.char, token.getSource());
+                if (parser.tokenSource.match(tokens_1.TokenType.Comma)) {
+                    const errorToken = parser.tokenSource.next();
+                    (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00037] Leading or double commas are not allowed in traits', errorToken.line, errorToken.char, errorToken.getSource());
                 }
-            }
+                const token = parser.tokenSource.peek();
+                if (![tokens_1.TokenType.Public, tokens_1.TokenType.Fn, tokens_1.TokenType.Identifier, tokens_1.TokenType.Private, tokens_1.TokenType.Protected, tokens_1.TokenType.Const, tokens_1.TokenType.Static].includes(token.type)) {
+                    (0, utilities_1.panicAt)(parser.tokenSource.reader, `[ESCE00038] One of ('private', 'protected', 'public', 'const', 'static', <identifier>) was expected, found TokenType.${tokens_1.TokenType[token.type]} instead`, token.line, token.char, token.getSource());
+                }
+                let modifier = 'instance';
+                let accessModifier = 'private';
+                if (parser.tokenSource.match(tokens_1.TokenType.Private)) {
+                    const token = parser.tokenSource.next();
+                    if (blocks.includes('protected') || blocks.includes('public')) {
+                        const token = parser.tokenSource.next();
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00042] Privacy specifiers are not allowed within privacy blocks', token.line, token.char, token.getSource());
+                    }
+                    (0, utilities_1.warnAt)(parser.tokenSource.reader, '[ESCW00002] The \'private\' access specifier is not required, properties and methods are private by default', token.line, token.char, token.getSource());
+                }
+                else if (parser.tokenSource.match(tokens_1.TokenType.Protected)) {
+                    parser.tokenSource.next();
+                    if (parser.tokenSource.match(tokens_1.TokenType.LeftCurlyBracket)) {
+                        if (blocks.length < 2 && !blocks.includes('protected')) {
+                            blocks.push('protected');
+                            parser.tokenSource.next();
+                            continue loop;
+                        }
+                        else {
+                            const token = parser.tokenSource.next();
+                            (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00041] Privacy / staticness blocks cannot be nested more than two levels deep and there may not be two of the same type', token.line, token.char, token.getSource());
+                        }
+                    }
+                    else if (blocks.includes('protected') || blocks.includes('public')) {
+                        const token = parser.tokenSource.next();
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00042] Privacy specifiers are not allowed within privacy blocks', token.line, token.char, token.getSource());
+                    }
+                    else {
+                        accessModifier = 'protected';
+                    }
+                }
+                else if (parser.tokenSource.match(tokens_1.TokenType.Public)) {
+                    parser.tokenSource.next();
+                    if (parser.tokenSource.match(tokens_1.TokenType.LeftCurlyBracket)) {
+                        if (blocks.length < 2 && !blocks.includes('public')) {
+                            blocks.push('public');
+                            parser.tokenSource.next();
+                            continue loop;
+                        }
+                        else {
+                            const token = parser.tokenSource.next();
+                            (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00041] Privacy / staticness blocks cannot be nested more than two levels deep and there may not be two of the same type', token.line, token.char, token.getSource());
+                        }
+                    }
+                    else if (blocks.includes('protected') || blocks.includes('public')) {
+                        const token = parser.tokenSource.next();
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00042] Privacy specifiers are not allowed within privacy blocks', token.line, token.char, token.getSource());
+                    }
+                    else {
+                        accessModifier = 'public';
+                    }
+                }
+                if (parser.tokenSource.match(tokens_1.TokenType.Static)) {
+                    parser.tokenSource.next();
+                    if (parser.tokenSource.match(tokens_1.TokenType.LeftCurlyBracket)) {
+                        if (blocks.length < 2 && !blocks.includes('static')) {
+                            blocks.push('static');
+                            parser.tokenSource.next();
+                            continue loop;
+                        }
+                        else {
+                            const token = parser.tokenSource.next();
+                            (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00041] Privacy / staticness blocks cannot be nested more than two levels deep and there may not be two of the same type', token.line, token.char, token.getSource());
+                        }
+                    }
+                    else if (blocks.includes('static')) {
+                        const token = parser.tokenSource.next();
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00042] \'static\' is not allowed within static blocks', token.line, token.char, token.getSource());
+                    }
+                    else {
+                        modifier = 'static';
+                    }
+                }
+                if (blocks.includes('static')) {
+                    modifier = 'static';
+                }
+                if (blocks.includes('protected') || blocks.includes('public')) {
+                    accessModifier = blocks.includes('protected') ? 'protected' : 'public';
+                }
+                if (parser.tokenSource.match(tokens_1.TokenType.Fn)) {
+                    const method = (new FunctionSubparser()).parse(parser, parser.tokenSource.next(), true);
+                    methods.push([method, modifier, accessModifier]);
+                }
+                else if (parser.tokenSource.match(tokens_1.TokenType.Const)) {
+                    const token = parser.tokenSource.peek();
+                    const property = (new LetOrConstDeclarationSubparser()).parse(parser, parser.tokenSource.next());
+                    for (const [declaration, _, __] of properties) {
+                        if (declaration.pattern instanceof NamePattern && property.pattern instanceof NamePattern && declaration.pattern.name.identifier === property.pattern.name.identifier) {
+                            (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00043] A property with the same name has already been defined', token.line, token.char, token.getSource());
+                        }
+                    }
+                    if (!property.variableType) {
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00039] Trait properties must be explicitly typed', token.line, token.char, token.getSource());
+                    }
+                    properties.push([property, modifier, accessModifier]);
+                }
+                else {
+                    const token = parser.tokenSource.peek();
+                    const property = (new LetOrConstDeclarationSubparser()).parse(parser, null);
+                    for (const [declaration, _, __] of properties) {
+                        if (declaration.pattern instanceof NamePattern && property.pattern instanceof NamePattern && declaration.pattern.name.identifier === property.pattern.name.identifier) {
+                            (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00043] A property with the same name has already been defined', token.line, token.char, token.getSource());
+                        }
+                    }
+                    if (!property.variableType) {
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00039] Trait properties must be explicitly typed', token.line, token.char, token.getSource());
+                    }
+                    properties.push([property, modifier, accessModifier]);
+                }
+                // eslint-disable-next-line no-constant-condition
+            } while (false);
             if (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket)) {
                 parser.tokenSource.consume(tokens_1.TokenType.Comma, 'a comma is required after properties / methods');
             }

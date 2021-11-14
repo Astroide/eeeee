@@ -2,6 +2,11 @@ import meow;
 import std.util.StringReverser as Reverser;
 import std.graphics as Graphics;
 import std.graphics.{Color, Canvas};
+trait Hamster {
+    x: test = 1,
+    y: test = 2,
+    fn sort() {}
+};
 const fustibale = (class Fustibale {
     x: int = 1,
     map: Map[string, float] = map! {
