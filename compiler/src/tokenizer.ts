@@ -395,7 +395,8 @@ export class Tokenizer {
                                 'return': TokenType.Return,
                                 'as': TokenType.As,
                                 'trait': TokenType.Trait,
-                                'structural': TokenType.Structural
+                                'structural': TokenType.Structural,
+                                'struct': TokenType.Struct,
                             };
                             const keywords = Object.keys(keywordTokenTypes);
                             if (/!/.test(self.reader.peek())) {

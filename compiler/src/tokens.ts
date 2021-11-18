@@ -65,7 +65,8 @@ enum TokenType {
     AtSign,
     As,
     Trait,
-    Structural
+    Structural,
+    Struct
 }
 
 class Token {

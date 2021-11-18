@@ -762,16 +762,17 @@ __decorate([
     utilities_1.logCalls
 ], LambdaFunctionSubparser.prototype, "parse", null);
 class ClassExpression extends Expression {
-    constructor(name, typeParameters, typeConstraints, methods, properties) {
+    constructor(name, typeParameters, typeConstraints, methods, properties, isStruct) {
         super();
         this.name = name;
         this.typeParameters = typeParameters;
         this.typeConstraints = typeConstraints;
         this.methods = methods;
         this.properties = properties;
+        this.isStruct = isStruct;
     }
     toString() {
-        return `ClassExpression<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
+        return `${this.isStruct ? 'Struct' : ''}ClassExpression<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
     }
 }
 exports.ClassExpression = ClassExpression;
@@ -886,7 +887,8 @@ __decorate([
     utilities_1.logCalls
 ], ListPatternSubparser.prototype, "parse", null);
 class ClassSubparser {
-    parse(parser, _token) {
+    parse(parser, token) {
+        const isStruct = token.type === tokens_1.TokenType.Struct;
         const state = parser.tokenSource.state();
         const name = parser.getPattern(0);
         if (!(name instanceof NamePattern)) {
@@ -1027,7 +1029,7 @@ class ClassSubparser {
             }
         }
         parser.tokenSource.consume(tokens_1.TokenType.RightCurlyBracket, '!!!');
-        return new ClassExpression(name, typeParameters, typeConstraints, methods, properties);
+        return new ClassExpression(name, typeParameters, typeConstraints, methods, properties, isStruct);
     }
 }
 __decorate([
@@ -1442,6 +1444,7 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.DoublePipe, new LambdaFunctionSubparser());
         this.registerPrefix(tokens_1.TokenType.Fn, new FunctionSubparser());
         this.registerPrefix(tokens_1.TokenType.Loop, new LoopSubparser());
+        this.registerPrefix(tokens_1.TokenType.Struct, new ClassSubparser());
         this.registerPrefix(tokens_1.TokenType.Class, new ClassSubparser());
         this.registerPrefix(tokens_1.TokenType.Return, new ReturnSubparser());
         this.registerPrefix(tokens_1.TokenType.Break, new BreakSubparser());

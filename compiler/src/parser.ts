@@ -855,17 +855,19 @@ export class ClassExpression extends Expression {
     name: Pattern;
     methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][];
     properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][];
-    constructor(name: Pattern, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][], properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][]) {
+    isStruct: boolean;
+    constructor(name: Pattern, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][], properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][], isStruct: boolean) {
         super();
         this.name = name;
         this.typeParameters = typeParameters;
         this.typeConstraints = typeConstraints;
         this.methods = methods;
         this.properties = properties;
+        this.isStruct = isStruct;
     }
 
     toString(): string {
-        return `ClassExpression<${zip(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
+        return `${this.isStruct ? 'Struct' : ''}ClassExpression<${zip(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
     }
 }
 
@@ -987,7 +989,8 @@ class ListPatternSubparser implements PrefixPatternSubparser {
 
 class ClassSubparser implements PrefixSubparser {
     @logCalls
-    parse(parser: Parser, _token: Token): ClassExpression {
+    parse(parser: Parser, token: Token): ClassExpression {
+        const isStruct = token.type === TokenType.Struct;
         const state = parser.tokenSource.state();
         const name = parser.getPattern(0);
         if (!(name instanceof NamePattern)) {
@@ -1116,7 +1119,7 @@ class ClassSubparser implements PrefixSubparser {
             }
         }
         parser.tokenSource.consume(TokenType.RightCurlyBracket, '!!!');
-        return new ClassExpression(name, typeParameters, typeConstraints, methods, properties);
+        return new ClassExpression(name, typeParameters, typeConstraints, methods, properties, isStruct);
     }
 }
 
@@ -1537,6 +1540,7 @@ export class Parser {
         this.registerPrefix(TokenType.DoublePipe, new LambdaFunctionSubparser());
         this.registerPrefix(TokenType.Fn, new FunctionSubparser());
         this.registerPrefix(TokenType.Loop, new LoopSubparser());
+        this.registerPrefix(TokenType.Struct, new ClassSubparser());
         this.registerPrefix(TokenType.Class, new ClassSubparser());
         this.registerPrefix(TokenType.Return, new ReturnSubparser());
         this.registerPrefix(TokenType.Break, new BreakSubparser());

@@ -10,6 +10,10 @@ trait Hamster {
 structural trait Dog {
     fn bark() {}
 };
+struct Vector {
+    x: float,
+    y: float,
+};
 const fustibale = (class Fustibale {
     x: int = 1,
     map: Map[string, float] = map! {
