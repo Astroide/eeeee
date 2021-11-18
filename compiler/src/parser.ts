@@ -1124,25 +1124,32 @@ export class TraitExpression extends Expression {
     typeParameters: Type[];
     typeConstraints: TypeConstraint[];
     name: Pattern;
+    structural: boolean;
     methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][];
     properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][];
-    constructor(name: Pattern, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][], properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][]) {
+    constructor(name: Pattern, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][], properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][], structural: boolean) {
         super();
         this.name = name;
         this.typeParameters = typeParameters;
         this.typeConstraints = typeConstraints;
         this.methods = methods;
         this.properties = properties;
+        this.structural = structural;
     }
 
     toString(): string {
-        return `TraitExpression<${zip(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
+        return `TraitExpression${this.structural ? '.Structural' : ''}<${zip(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
     }
 }
 
 export class TraitSubparser implements PrefixSubparser {
     @logCalls
-    parse(parser: Parser, _token: Token): TraitExpression {
+    parse(parser: Parser, token: Token): TraitExpression {
+        let structural = false;
+        if (token.type === TokenType.Structural) {
+            parser.tokenSource.consume(TokenType.Trait, 'expected \'structural\' after \'trait\'');
+            structural = true;
+        }
         const state = parser.tokenSource.state();
         const name = parser.getPattern(0);
         if (!(name instanceof NamePattern)) {
@@ -1174,14 +1181,14 @@ export class TraitSubparser implements PrefixSubparser {
                     panicAt(parser.tokenSource.reader, `[ESCE00038] One of ('private', 'protected', 'public', 'const', 'static', <identifier>) was expected, found TokenType.${TokenType[token.type]} instead`, token.line, token.char, token.getSource());
                 }
                 let modifier: 'instance' | 'static' = 'instance';
-                let accessModifier: PrivacyModifier = 'private';
+                let accessModifier: PrivacyModifier = 'public';
                 if (parser.tokenSource.match(TokenType.Private)) {
                     const token = parser.tokenSource.next();
                     if (blocks.includes('protected') || blocks.includes('public')) {
                         const token = parser.tokenSource.next();
                         panicAt(parser.tokenSource.reader, '[ESCE00042] Privacy specifiers are not allowed within privacy blocks', token.line, token.char, token.getSource());
                     }
-                    warnAt(parser.tokenSource.reader, '[ESCW00002] The \'private\' access specifier is not required, properties and methods are private by default', token.line, token.char, token.getSource());
+                    warnAt(parser.tokenSource.reader, '[ESCW00003] Although nothing actually forbids this, putting private members in traits is nonsense.', token.line, token.char, token.getSource());
                 } else if (parser.tokenSource.match(TokenType.Protected)) {
                     parser.tokenSource.next();
                     if (parser.tokenSource.match(TokenType.LeftCurlyBracket)) {
@@ -1277,7 +1284,7 @@ export class TraitSubparser implements PrefixSubparser {
             }
         }
         parser.tokenSource.consume(TokenType.RightCurlyBracket, '!!!');
-        return new TraitExpression(name, typeParameters, typeConstraints, methods, properties);
+        return new TraitExpression(name, typeParameters, typeConstraints, methods, properties, structural);
     }
 }
 
@@ -1539,6 +1546,7 @@ export class Parser {
         this.registerPrefix(TokenType.Macro, new MapSubparser());
         this.registerPrefix(TokenType.AtSign, new AtSubparser());
         this.registerPrefix(TokenType.Trait, new TraitSubparser());
+        this.registerPrefix(TokenType.Structural, new TraitSubparser());
         this.conditionsOfPrefixSubparsers.set(TokenType.Macro, (token => (<Macro>token).identifier == 'map!'));
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],

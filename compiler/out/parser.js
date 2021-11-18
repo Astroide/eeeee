@@ -1034,21 +1034,27 @@ __decorate([
     utilities_1.logCalls
 ], ClassSubparser.prototype, "parse", null);
 class TraitExpression extends Expression {
-    constructor(name, typeParameters, typeConstraints, methods, properties) {
+    constructor(name, typeParameters, typeConstraints, methods, properties, structural) {
         super();
         this.name = name;
         this.typeParameters = typeParameters;
         this.typeConstraints = typeConstraints;
         this.methods = methods;
         this.properties = properties;
+        this.structural = structural;
     }
     toString() {
-        return `TraitExpression<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
+        return `TraitExpression${this.structural ? '.Structural' : ''}<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
     }
 }
 exports.TraitExpression = TraitExpression;
 class TraitSubparser {
-    parse(parser, _token) {
+    parse(parser, token) {
+        let structural = false;
+        if (token.type === tokens_1.TokenType.Structural) {
+            parser.tokenSource.consume(tokens_1.TokenType.Trait, 'expected \'structural\' after \'trait\'');
+            structural = true;
+        }
         const state = parser.tokenSource.state();
         const name = parser.getPattern(0);
         if (!(name instanceof NamePattern)) {
@@ -1080,14 +1086,14 @@ class TraitSubparser {
                     (0, utilities_1.panicAt)(parser.tokenSource.reader, `[ESCE00038] One of ('private', 'protected', 'public', 'const', 'static', <identifier>) was expected, found TokenType.${tokens_1.TokenType[token.type]} instead`, token.line, token.char, token.getSource());
                 }
                 let modifier = 'instance';
-                let accessModifier = 'private';
+                let accessModifier = 'public';
                 if (parser.tokenSource.match(tokens_1.TokenType.Private)) {
                     const token = parser.tokenSource.next();
                     if (blocks.includes('protected') || blocks.includes('public')) {
                         const token = parser.tokenSource.next();
                         (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00042] Privacy specifiers are not allowed within privacy blocks', token.line, token.char, token.getSource());
                     }
-                    (0, utilities_1.warnAt)(parser.tokenSource.reader, '[ESCW00002] The \'private\' access specifier is not required, properties and methods are private by default', token.line, token.char, token.getSource());
+                    (0, utilities_1.warnAt)(parser.tokenSource.reader, '[ESCW00003] Although nothing actually forbids this, putting private members in traits is nonsense.', token.line, token.char, token.getSource());
                 }
                 else if (parser.tokenSource.match(tokens_1.TokenType.Protected)) {
                     parser.tokenSource.next();
@@ -1195,7 +1201,7 @@ class TraitSubparser {
             }
         }
         parser.tokenSource.consume(tokens_1.TokenType.RightCurlyBracket, '!!!');
-        return new TraitExpression(name, typeParameters, typeConstraints, methods, properties);
+        return new TraitExpression(name, typeParameters, typeConstraints, methods, properties, structural);
     }
 }
 __decorate([
@@ -1445,6 +1451,7 @@ class Parser {
         this.registerPrefix(tokens_1.TokenType.Macro, new MapSubparser());
         this.registerPrefix(tokens_1.TokenType.AtSign, new AtSubparser());
         this.registerPrefix(tokens_1.TokenType.Trait, new TraitSubparser());
+        this.registerPrefix(tokens_1.TokenType.Structural, new TraitSubparser());
         this.conditionsOfPrefixSubparsers.set(tokens_1.TokenType.Macro, (token => token.identifier == 'map!'));
         [
             [tokens_1.TokenType.Ampersand, Precedence.CONDITIONAL],

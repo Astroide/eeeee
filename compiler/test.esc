@@ -7,6 +7,9 @@ trait Hamster {
     y: test = 2,
     fn sort() {}
 };
+structural trait Dog {
+    fn bark() {}
+};
 const fustibale = (class Fustibale {
     x: int = 1,
     map: Map[string, float] = map! {
