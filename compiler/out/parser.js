@@ -661,8 +661,14 @@ class FunctionExpression extends Expression {
 }
 exports.FunctionExpression = FunctionExpression;
 class FunctionSubparser {
-    parse(parser, _token, allowEmpty = false) {
-        const functionName = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'a function name is required'));
+    parse(parser, _token, allowEmpty = false, name) {
+        let functionName;
+        if (!name) {
+            functionName = (new IdentifierSubparser()).parse(parser, parser.tokenSource.consume(tokens_1.TokenType.Identifier, 'a function name is required'));
+        }
+        else {
+            functionName = new IdentifierExpression(new tokens_1.Identifier(name.line, name.char, name.getSource(), name.start, name.length, name.getSource()));
+        }
         let typeParameters = [];
         let typeConstraints = [];
         if (parser.tokenSource.match(tokens_1.TokenType.LeftBracket)) {
@@ -762,14 +768,16 @@ __decorate([
     utilities_1.logCalls
 ], LambdaFunctionSubparser.prototype, "parse", null);
 class ClassExpression extends Expression {
-    constructor(name, typeParameters, typeConstraints, methods, properties, isStruct) {
+    constructor(name, typeParameters, typeConstraints, methods, properties, isStruct, operatorOverloads) {
         super();
+        this.operatorOverloads = {};
         this.name = name;
         this.typeParameters = typeParameters;
         this.typeConstraints = typeConstraints;
         this.methods = methods;
         this.properties = properties;
         this.isStruct = isStruct;
+        this.operatorOverloads = operatorOverloads;
     }
     toString() {
         return `${this.isStruct ? 'Struct' : ''}ClassExpression<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
@@ -889,6 +897,7 @@ __decorate([
 class ClassSubparser {
     parse(parser, token) {
         const isStruct = token.type === tokens_1.TokenType.Struct;
+        const operatorOverloads = {};
         const state = parser.tokenSource.state();
         const name = parser.getPattern(0);
         if (!(name instanceof NamePattern)) {
@@ -916,7 +925,7 @@ class ClassSubparser {
                     (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00018] Leading or double commas are not allowed in classes', errorToken.line, errorToken.char, errorToken.getSource());
                 }
                 const token = parser.tokenSource.peek();
-                if (![tokens_1.TokenType.Public, tokens_1.TokenType.Fn, tokens_1.TokenType.Identifier, tokens_1.TokenType.Private, tokens_1.TokenType.Protected, tokens_1.TokenType.Const, tokens_1.TokenType.Static].includes(token.type)) {
+                if (![tokens_1.TokenType.Public, tokens_1.TokenType.Fn, tokens_1.TokenType.Identifier, tokens_1.TokenType.Private, tokens_1.TokenType.Protected, tokens_1.TokenType.Const, tokens_1.TokenType.Static, tokens_1.TokenType.Operator].includes(token.type)) {
                     (0, utilities_1.panicAt)(parser.tokenSource.reader, `[ESCE00019] One of ('private', 'protected', 'public', 'const', 'static', <identifier>) was expected, found TokenType.${tokens_1.TokenType[token.type]} instead`, token.line, token.char, token.getSource());
                 }
                 let modifier = 'instance';
@@ -1012,6 +1021,12 @@ class ClassSubparser {
                     }
                     properties.push([property, modifier, accessModifier]);
                 }
+                else if (parser.tokenSource.match(tokens_1.TokenType.Operator)) {
+                    parser.tokenSource.next();
+                    const operatorToken = parser.tokenSource.next();
+                    const func = (new FunctionSubparser()).parse(parser, null, false, operatorToken);
+                    operatorOverloads[operatorToken.getSource()] = func;
+                }
                 else {
                     const token = parser.tokenSource.peek();
                     const property = (new LetOrConstDeclarationSubparser()).parse(parser, null);
@@ -1029,7 +1044,7 @@ class ClassSubparser {
             }
         }
         parser.tokenSource.consume(tokens_1.TokenType.RightCurlyBracket, '!!!');
-        return new ClassExpression(name, typeParameters, typeConstraints, methods, properties, isStruct);
+        return new ClassExpression(name, typeParameters, typeConstraints, methods, properties, isStruct, operatorOverloads);
     }
 }
 __decorate([

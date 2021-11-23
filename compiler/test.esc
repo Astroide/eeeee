@@ -13,6 +13,9 @@ structural trait Dog {
 struct Vector {
     x: float,
     y: float,
+    operator +(other: Vector) Vector {
+        return Vector(this.x + other.x, this.y + other.y)
+    }
 };
 const fustibale = (class Fustibale {
     x: int = 1,

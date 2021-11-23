@@ -69,6 +69,7 @@ var TokenType;
     TokenType[TokenType["Trait"] = 63] = "Trait";
     TokenType[TokenType["Structural"] = 64] = "Structural";
     TokenType[TokenType["Struct"] = 65] = "Struct";
+    TokenType[TokenType["Operator"] = 66] = "Operator";
 })(TokenType || (TokenType = {}));
 exports.TokenType = TokenType;
 class Token {
