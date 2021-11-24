@@ -1051,14 +1051,16 @@ __decorate([
     utilities_1.logCalls
 ], ClassSubparser.prototype, "parse", null);
 class TraitExpression extends Expression {
-    constructor(name, typeParameters, typeConstraints, methods, properties, structural) {
+    constructor(name, typeParameters, typeConstraints, methods, properties, structural, operatorOverloads) {
         super();
+        this.operatorOverloads = {};
         this.name = name;
         this.typeParameters = typeParameters;
         this.typeConstraints = typeConstraints;
         this.methods = methods;
         this.properties = properties;
         this.structural = structural;
+        this.operatorOverloads = operatorOverloads;
     }
     toString() {
         return `TraitExpression${this.structural ? '.Structural' : ''}<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(([type, constraint]) => typeToString(type) + ' ' + typeConstraintToString(constraint)).join(', ')}> {${this.name.toString()}, [${this.properties.map(([name, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + name.toString()).join(', ')}], [${this.methods.map(([func, modifier, accessModifier]) => '(' + accessModifier + ') ' + modifier + ' ' + func.toString()).join(', ')}]}`;
@@ -1087,6 +1089,7 @@ class TraitSubparser {
         const methods = [];
         const properties = [];
         const blocks = [];
+        const operatorOverloads = {};
         loop: while (!parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket) || blocks.length > 0) {
             toEnd: do {
                 if (parser.tokenSource.match(tokens_1.TokenType.RightCurlyBracket) && blocks.length != 0) {
@@ -1099,7 +1102,7 @@ class TraitSubparser {
                     (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00037] Leading or double commas are not allowed in traits', errorToken.line, errorToken.char, errorToken.getSource());
                 }
                 const token = parser.tokenSource.peek();
-                if (![tokens_1.TokenType.Public, tokens_1.TokenType.Fn, tokens_1.TokenType.Identifier, tokens_1.TokenType.Private, tokens_1.TokenType.Protected, tokens_1.TokenType.Const, tokens_1.TokenType.Static].includes(token.type)) {
+                if (![tokens_1.TokenType.Public, tokens_1.TokenType.Fn, tokens_1.TokenType.Identifier, tokens_1.TokenType.Private, tokens_1.TokenType.Protected, tokens_1.TokenType.Const, tokens_1.TokenType.Static, tokens_1.TokenType.Operator].includes(token.type)) {
                     (0, utilities_1.panicAt)(parser.tokenSource.reader, `[ESCE00038] One of ('private', 'protected', 'public', 'const', 'static', <identifier>) was expected, found TokenType.${tokens_1.TokenType[token.type]} instead`, token.line, token.char, token.getSource());
                 }
                 let modifier = 'instance';
@@ -1198,6 +1201,12 @@ class TraitSubparser {
                     }
                     properties.push([property, modifier, accessModifier]);
                 }
+                else if (parser.tokenSource.match(tokens_1.TokenType.Operator)) {
+                    parser.tokenSource.next();
+                    const operatorToken = parser.tokenSource.next();
+                    const func = (new FunctionSubparser()).parse(parser, null, true, operatorToken);
+                    operatorOverloads[operatorToken.getSource()] = func;
+                }
                 else {
                     const token = parser.tokenSource.peek();
                     const property = (new LetOrConstDeclarationSubparser()).parse(parser, null);
@@ -1218,7 +1227,7 @@ class TraitSubparser {
             }
         }
         parser.tokenSource.consume(tokens_1.TokenType.RightCurlyBracket, '!!!');
-        return new TraitExpression(name, typeParameters, typeConstraints, methods, properties, structural);
+        return new TraitExpression(name, typeParameters, typeConstraints, methods, properties, structural, operatorOverloads);
     }
 }
 __decorate([

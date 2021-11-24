@@ -8,7 +8,12 @@ trait Hamster {
     fn sort() {}
 };
 structural trait Dog {
-    fn bark() {}
+    fn bark() {},
+    operator *(other: Dog) Dog {},
+    operator **(other: Dog) Dog {},
+    operator /(other: Dog) Dog {},
+    operator +(other: Dog) Dog {},
+    operator !() Dog {},
 };
 struct Vector {
     x: float,

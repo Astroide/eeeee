@@ -1143,7 +1143,8 @@ export class TraitExpression extends Expression {
     structural: boolean;
     methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][];
     properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][];
-    constructor(name: Pattern, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][], properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][], structural: boolean) {
+    operatorOverloads: { [operator: string]: FunctionExpression } = {};
+    constructor(name: Pattern, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][], properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][], structural: boolean, operatorOverloads: { [operator: string]: FunctionExpression }) {
         super();
         this.name = name;
         this.typeParameters = typeParameters;
@@ -1151,6 +1152,7 @@ export class TraitExpression extends Expression {
         this.methods = methods;
         this.properties = properties;
         this.structural = structural;
+        this.operatorOverloads = operatorOverloads;
     }
 
     toString(): string {
@@ -1181,6 +1183,7 @@ export class TraitSubparser implements PrefixSubparser {
         const methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][] = [];
         const properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][] = [];
         const blocks: ('static' | 'public' | 'protected')[] = [];
+        const operatorOverloads: { [operator: string]: FunctionExpression } = {};
         loop: while (!parser.tokenSource.match(TokenType.RightCurlyBracket) || blocks.length > 0) {
             toEnd: do {
                 if (parser.tokenSource.match(TokenType.RightCurlyBracket) && blocks.length != 0) {
@@ -1193,7 +1196,7 @@ export class TraitSubparser implements PrefixSubparser {
                     panicAt(parser.tokenSource.reader, '[ESCE00037] Leading or double commas are not allowed in traits', errorToken.line, errorToken.char, errorToken.getSource());
                 }
                 const token = parser.tokenSource.peek();
-                if (![TokenType.Public, TokenType.Fn, TokenType.Identifier, TokenType.Private, TokenType.Protected, TokenType.Const, TokenType.Static].includes(token.type)) {
+                if (![TokenType.Public, TokenType.Fn, TokenType.Identifier, TokenType.Private, TokenType.Protected, TokenType.Const, TokenType.Static, TokenType.Operator].includes(token.type)) {
                     panicAt(parser.tokenSource.reader, `[ESCE00038] One of ('private', 'protected', 'public', 'const', 'static', <identifier>) was expected, found TokenType.${TokenType[token.type]} instead`, token.line, token.char, token.getSource());
                 }
                 let modifier: 'instance' | 'static' = 'instance';
@@ -1280,6 +1283,11 @@ export class TraitSubparser implements PrefixSubparser {
                         panicAt(parser.tokenSource.reader, '[ESCE00039] Trait properties must be explicitly typed', token.line, token.char, token.getSource());
                     }
                     properties.push([property, modifier, accessModifier]);
+                } else if (parser.tokenSource.match(TokenType.Operator)) {
+                    parser.tokenSource.next();
+                    const operatorToken = parser.tokenSource.next();
+                    const func = (new FunctionSubparser()).parse(parser, null, true, operatorToken);
+                    operatorOverloads[operatorToken.getSource()] = func;
                 } else {
                     const token = parser.tokenSource.peek();
                     const property = (new LetOrConstDeclarationSubparser()).parse(parser, null);
@@ -1300,7 +1308,7 @@ export class TraitSubparser implements PrefixSubparser {
             }
         }
         parser.tokenSource.consume(TokenType.RightCurlyBracket, '!!!');
-        return new TraitExpression(name, typeParameters, typeConstraints, methods, properties, structural);
+        return new TraitExpression(name, typeParameters, typeConstraints, methods, properties, structural, operatorOverloads);
     }
 }
 
