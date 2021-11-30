@@ -1034,8 +1034,12 @@ class ClassSubparser implements PrefixSubparser {
 }
 
 export class EnumExpression extends Expression {
-    constructor(public name: NamePattern, public values: [NamePattern, Expression][]) {
+    constructor(public name: Pattern, public variants: [Pattern, Type[]][]) {
         super();
+    }
+
+    toString(): string {
+        return `EnumExpression {${this.name.toString()}, [${this.variants.map(([name, types]) => `${name.toString()} (${types.map(typeToString).join(', ')}`).join(', ')}]}`;
     }
 }
 

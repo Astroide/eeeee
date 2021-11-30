@@ -1064,10 +1064,13 @@ __decorate([
     utilities_1.logCalls
 ], ClassSubparser.prototype, "parse", null);
 class EnumExpression extends Expression {
-    constructor(name, values) {
+    constructor(name, variants) {
         super();
         this.name = name;
-        this.values = values;
+        this.variants = variants;
+    }
+    toString() {
+        return `EnumExpression {${this.name.toString()}, [${this.variants.map(([name, types]) => `${name.toString()} (${types.map(typeToString).join(', ')}`).join(', ')}]}`;
     }
 }
 exports.EnumExpression = EnumExpression;
