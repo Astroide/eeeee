@@ -6,7 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Parser = exports.ImportSection = exports.ContinueExpression = exports.BreakExpression = exports.ReturnExpression = exports.AssignmentExpression = exports.TraitSubparser = exports.TraitExpression = exports.ClassExpression = exports.FunctionExpression = exports.LambdaFunctionExpression = exports.ForExpression = exports.PostfixOperatorExpression = exports.LetOrConstDeclarationExpression = exports.TypeCastingExpression = exports.LoopExpression = exports.WhileExpression = exports.IfExpression = exports.InfixOperatorExpression = exports.StatementExpression = exports.PrefixOperatorExpression = exports.PropertyAccessExpression = exports.LiteralExpression = exports.IdentifierExpression = exports.ElementAccessExpression = exports.FunctionCallExpression = exports.GroupExpression = exports.Expression = void 0;
+exports.Parser = exports.ImportSection = exports.ContinueExpression = exports.BreakExpression = exports.ReturnExpression = exports.AssignmentExpression = exports.TraitSubparser = exports.TraitExpression = exports.EnumExpression = exports.ClassExpression = exports.FunctionExpression = exports.LambdaFunctionExpression = exports.ForExpression = exports.PostfixOperatorExpression = exports.LetOrConstDeclarationExpression = exports.TypeCastingExpression = exports.LoopExpression = exports.WhileExpression = exports.IfExpression = exports.InfixOperatorExpression = exports.StatementExpression = exports.PrefixOperatorExpression = exports.PropertyAccessExpression = exports.LiteralExpression = exports.IdentifierExpression = exports.ElementAccessExpression = exports.FunctionCallExpression = exports.GroupExpression = exports.Expression = void 0;
 const explanations_1 = require("./explanations");
 const tokens_1 = require("./tokens");
 const utilities_1 = require("./utilities");
@@ -236,6 +236,7 @@ exports.ElementAccessExpression = ElementAccessExpression;
 class IdentifierExpression extends Expression {
     constructor(token) {
         super();
+        this.token = token;
         this.id = token.identifier;
         this.token = token;
     }
@@ -349,8 +350,8 @@ __decorate([
 class Block extends Expression {
     constructor(expression) {
         super();
-        this.label = null;
         this.expression = expression;
+        this.label = null;
     }
     toString() {
         return `Block${this.label ? '#' + this.label : ''} {${this.expression.toString()}}`;
@@ -367,11 +368,11 @@ __decorate([
     utilities_1.logCalls
 ], BlockSubparser.prototype, "parse", null);
 class InfixOperatorExpression extends Expression {
-    constructor(operator, left, right) {
+    constructor(operator, leftOperand, rightOperand) {
         super();
         this.operator = operator;
-        this.leftOperand = left;
-        this.rightOperand = right;
+        this.leftOperand = leftOperand;
+        this.rightOperand = rightOperand;
     }
     toString() {
         return `${tokens_1.TokenType[this.operator]}.infix {${this.leftOperand.toString()}, ${this.rightOperand.toString()}}`;
@@ -404,8 +405,8 @@ exports.WhileExpression = WhileExpression;
 class LoopExpression extends Expression {
     constructor(body) {
         super();
-        this.label = null;
         this.body = body;
+        this.label = null;
     }
     toString() {
         return `Loop${this.label ? '#' + this.label : ''} {${this.body.toString()}}`;
@@ -491,8 +492,8 @@ __decorate([
 class TypeCastingExpression extends Expression {
     constructor(type, value) {
         super();
-        this.value = value;
         this.type = type;
+        this.value = value;
     }
     toString() {
         return `Typecast {${typeToString(this.type)}, ${this.value.toString()}}`;
@@ -535,10 +536,10 @@ __decorate([
     utilities_1.logCalls
 ], LetOrConstDeclarationSubparser.prototype, "parse", null);
 class LetOrConstDeclarationExpression extends Expression {
-    constructor(type, name, value, variableType) {
+    constructor(type, pattern, value, variableType) {
         super();
         this.type = type;
-        this.pattern = name;
+        this.pattern = pattern;
         this.value = value;
         this.variableType = variableType;
     }
@@ -578,10 +579,10 @@ __decorate([
 class ForExpression extends Expression {
     constructor(condition, body, kind) {
         super();
-        this.label = null;
-        this.kind = kind;
         this.condition = condition;
         this.body = body;
+        this.kind = kind;
+        this.label = null;
     }
     toString() {
         if (this.kind == 'a,b,c')
@@ -636,8 +637,8 @@ class LambdaFunctionExpression extends Expression {
     constructor(args, typesOfArguments, body) {
         super();
         this.args = args;
-        this.body = body;
         this.typesOfArguments = typesOfArguments;
+        this.body = body;
     }
     toString() {
         return `LambdaFunction {[${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + (type ? typeToString(type) : '<inferred type>')).join(', ')}], ${this.body.toString()}]`;
@@ -645,15 +646,15 @@ class LambdaFunctionExpression extends Expression {
 }
 exports.LambdaFunctionExpression = LambdaFunctionExpression;
 class FunctionExpression extends Expression {
-    constructor(typeParameters, args, typesOfArguments, body, name, typeConstraints, returnType) {
+    constructor(typeParameters, args, typesOfArguments, body, namePattern, typeConstraints, returnType) {
         super();
         this.typeParameters = typeParameters;
         this.args = args;
         this.typesOfArguments = typesOfArguments;
         this.body = body;
-        this.namePattern = name;
-        this.returnType = returnType;
+        this.namePattern = namePattern;
         this.typeConstraints = typeConstraints;
+        this.returnType = returnType;
     }
     toString() {
         return `Function<${(0, utilities_1.zip)(this.typeParameters, this.typeConstraints).map(x => `${typeToString(x[0])} ${typeConstraintToString(x[1])}`).join(', ')}> -> ${this.returnType ? typeToString(this.returnType) : 'void'} {${this.namePattern.toString()}, [${(0, utilities_1.zip)(this.args, this.typesOfArguments).map(([name, type]) => name[0].toString() + (name[1] ? '=' + name[1].toString() : '') + ': ' + typeToString(type)).join(', ')}], ${this.body ? this.body.toString() : '<no body>'}]`;
@@ -770,7 +771,6 @@ __decorate([
 class ClassExpression extends Expression {
     constructor(name, typeParameters, typeConstraints, methods, properties, isStruct, operatorOverloads) {
         super();
-        this.operatorOverloads = {};
         this.name = name;
         this.typeParameters = typeParameters;
         this.typeConstraints = typeConstraints;
@@ -1063,10 +1063,17 @@ class ClassSubparser {
 __decorate([
     utilities_1.logCalls
 ], ClassSubparser.prototype, "parse", null);
+class EnumExpression extends Expression {
+    constructor(name, values) {
+        super();
+        this.name = name;
+        this.values = values;
+    }
+}
+exports.EnumExpression = EnumExpression;
 class TraitExpression extends Expression {
     constructor(name, typeParameters, typeConstraints, methods, properties, structural, operatorOverloads) {
         super();
-        this.operatorOverloads = {};
         this.name = name;
         this.typeParameters = typeParameters;
         this.typeConstraints = typeConstraints;
@@ -1397,8 +1404,9 @@ class LabelSubparser {
 __decorate([
     utilities_1.logCalls
 ], LabelSubparser.prototype, "parse", null);
-class MapExpression {
+class MapExpression extends Expression {
     constructor(keys, values) {
+        super();
         this.keys = keys;
         this.values = values;
     }

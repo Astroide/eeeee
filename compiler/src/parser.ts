@@ -227,10 +227,8 @@ export class Expression {
 }
 
 export class GroupExpression extends Expression {
-    content: Expression;
-    constructor(content: Expression) {
+    constructor(public content: Expression) {
         super();
-        this.content = content;
     }
 
     toString(): string {
@@ -239,12 +237,8 @@ export class GroupExpression extends Expression {
 }
 
 export class FunctionCallExpression extends Expression {
-    callee: Expression;
-    args: [Expression, Identifier?][];
-    constructor(callee: Expression, args: [Expression, Identifier?][]) {
+    constructor(public callee: Expression, public args: [Expression, Identifier?][]) {
         super();
-        this.callee = callee;
-        this.args = args;
     }
 
     toString(): string {
@@ -253,12 +247,8 @@ export class FunctionCallExpression extends Expression {
 }
 
 export class ElementAccessExpression extends Expression {
-    left: Expression;
-    indices: Expression[];
-    constructor(left: Expression, indices: Expression[]) {
+    constructor(public left: Expression, public indices: Expression[]) {
         super();
-        this.left = left;
-        this.indices = indices;
     }
     toString(): string {
         return `IndexingExpression {${this.left.toString()}${this.indices.length > 0 ? ', ' + this.indices.map(x => x.toString()).join(', ') : ''}}`;
@@ -267,8 +257,7 @@ export class ElementAccessExpression extends Expression {
 
 export class IdentifierExpression extends Expression {
     id: string;
-    token: Identifier;
-    constructor(token: Identifier) {
+    constructor(public token: Identifier) {
         super();
         this.id = token.identifier;
         this.token = token;
@@ -280,12 +269,8 @@ export class IdentifierExpression extends Expression {
 }
 
 export class LiteralExpression extends Expression {
-    value: string | number | boolean | TemplateStringElement;
-    type: TokenType.NumericLiteral | TokenType.BooleanLiteral | TokenType.StringLiteral | TokenType.CharacterLiteral | TokenType.TemplateStringLiteral;
-    constructor(value: string | number | boolean | TemplateStringElement, type: TokenType.NumericLiteral | TokenType.BooleanLiteral | TokenType.StringLiteral | TokenType.CharacterLiteral | TokenType.TemplateStringLiteral) {
+    constructor(public value: string | number | boolean | TemplateStringElement, public type: TokenType.NumericLiteral | TokenType.BooleanLiteral | TokenType.StringLiteral | TokenType.CharacterLiteral | TokenType.TemplateStringLiteral) {
         super();
-        this.value = value;
-        this.type = type;
     }
 
     toString(): string {
@@ -325,12 +310,8 @@ class LiteralSubparser implements PrefixSubparser {
 }
 
 export class PropertyAccessExpression extends Expression {
-    object: Expression;
-    property: string;
-    constructor(object: Expression, property: string) {
+    constructor(public object: Expression, public property: string) {
         super();
-        this.object = object;
-        this.property = property;
     }
 
     toString(): string {
@@ -339,10 +320,7 @@ export class PropertyAccessExpression extends Expression {
 }
 
 class PropertyAccessSubparser implements InfixSubparser {
-    precedence: number;
-    constructor(precedence: number) {
-        this.precedence = precedence;
-    }
+    constructor(public precedence: number) { }
     @logCalls
     parse(parser: Parser, left: Expression, _token: Token): Expression {
         const propertyName = parser.tokenSource.consume(TokenType.Identifier, 'expected a property name after a dot').getSource();
@@ -351,12 +329,8 @@ class PropertyAccessSubparser implements InfixSubparser {
 }
 
 export class PrefixOperatorExpression extends Expression {
-    operator: TokenType;
-    operand: Expression;
-    constructor(operator: TokenType, operand: Expression) {
+    constructor(public operator: TokenType, public operand: Expression) {
         super();
-        this.operator = operator;
-        this.operand = operand;
     }
 
     toString(): string {
@@ -365,12 +339,8 @@ export class PrefixOperatorExpression extends Expression {
 }
 
 export class StatementExpression extends Expression {
-    left: Expression;
-    right: Expression;
-    constructor(left: Expression, right: Expression) {
+    constructor(public left: Expression, public right: Expression) {
         super();
-        this.left = left;
-        this.right = right;
     }
 
     toString(): string {
@@ -389,11 +359,9 @@ class StatementSubparser implements InfixSubparser {
 }
 
 class Block extends Expression {
-    expression: Expression;
     label?: string = null;
-    constructor(expression: Expression) {
+    constructor(public expression: Expression) {
         super();
-        this.expression = expression;
     }
 
     toString(): string {
@@ -411,14 +379,8 @@ class BlockSubparser implements PrefixSubparser {
 }
 
 export class InfixOperatorExpression extends Expression {
-    operator: TokenType;
-    leftOperand: Expression;
-    rightOperand: Expression;
-    constructor(operator: TokenType, left: Expression, right: Expression) {
+    constructor(public operator: TokenType, public leftOperand: Expression, public rightOperand: Expression) {
         super();
-        this.operator = operator;
-        this.leftOperand = left;
-        this.rightOperand = right;
     }
 
     toString(): string {
@@ -427,14 +389,8 @@ export class InfixOperatorExpression extends Expression {
 }
 
 export class IfExpression extends Expression {
-    condition: Expression;
-    thenBranch: Block;
-    elseBranch?: Block | IfExpression;
-    constructor(condition: Expression, thenBranch: Block, elseBranch?: Block | IfExpression) {
+    constructor(public condition: Expression, public thenBranch: Block, public elseBranch?: Block | IfExpression) {
         super();
-        this.condition = condition;
-        this.thenBranch = thenBranch;
-        this.elseBranch = elseBranch;
     }
 
     toString(): string {
@@ -443,12 +399,8 @@ export class IfExpression extends Expression {
 }
 
 export class WhileExpression extends Expression {
-    condition: Expression;
-    body: Block;
-    constructor(condition: Expression, body: Block) {
+    constructor(public condition: Expression, public body: Block) {
         super();
-        this.condition = condition;
-        this.body = body;
     }
 
     toString(): string {
@@ -457,11 +409,9 @@ export class WhileExpression extends Expression {
 }
 
 export class LoopExpression extends Expression {
-    body: Block;
     label?: string = null;
-    constructor(body: Block) {
+    constructor(public body: Block) {
         super();
-        this.body = body;
     }
 
     toString(): string {
@@ -490,10 +440,8 @@ class IfSubparser implements PrefixSubparser {
 }
 
 class ListExpression extends Expression {
-    elements: Expression[];
-    constructor(elements: Expression[]) {
+    constructor(public elements: Expression[]) {
         super();
-        this.elements = elements;
     }
 
     toString(): string {
@@ -543,12 +491,8 @@ class LoopSubparser implements PrefixSubparser {
 }
 
 export class TypeCastingExpression extends Expression {
-    value: Expression;
-    type: Type;
-    constructor(type: Type, value: Expression) {
+    constructor(public type: Type, public value: Expression) {
         super();
-        this.value = value;
-        this.type = type;
     }
 
     toString(): string {
@@ -589,16 +533,8 @@ class LetOrConstDeclarationSubparser implements PrefixSubparser {
 }
 
 export class LetOrConstDeclarationExpression extends Expression {
-    type: 'let' | 'const';
-    pattern: Pattern;
-    value?: Expression;
-    variableType?: Type;
-    constructor(type: 'let' | 'const', name: Pattern, value?: Expression, variableType?: Type) {
+    constructor(public type: 'let' | 'const', public pattern: Pattern, public value?: Expression, public variableType?: Type) {
         super();
-        this.type = type;
-        this.pattern = name;
-        this.value = value;
-        this.variableType = variableType;
     }
 
     toString(): string {
@@ -614,12 +550,8 @@ function typeToString(type: Type): string {
 }
 
 export class PostfixOperatorExpression extends Expression {
-    operator: TokenType;
-    operand: Expression;
-    constructor(operator: TokenType, operand: Expression) {
+    constructor(public operator: TokenType, public operand: Expression) {
         super();
-        this.operator = operator;
-        this.operand = operand;
     }
 
     toString(): string {
@@ -648,23 +580,10 @@ type ForABC = {
     repeat: Expression;
 }
 export class ForExpression extends Expression {
-    kind: 'a,b,c' | 'a in b';
-    condition: ForABC | ForAInB;
-    body: Block;
     label?: string = null;
 
-    constructor(condition: {
-        init: Expression;
-        condition: Expression;
-        repeat: Expression;
-    } | {
-        name: Pattern;
-        iterator: Expression;
-    }, body: Block, kind: 'a,b,c' | 'a in b') {
+    constructor(public condition: ForABC | ForAInB, public body: Block, public kind: 'a,b,c' | 'a in b') {
         super();
-        this.kind = kind;
-        this.condition = condition;
-        this.body = body;
     }
 
     toString(): string {
@@ -713,14 +632,8 @@ class ForSubparser implements PrefixSubparser {
 }
 
 export class LambdaFunctionExpression extends Expression {
-    args: [Pattern, Expression?][];
-    body: Expression;
-    typesOfArguments: Type[];
-    constructor(args: [Pattern, Expression?][], typesOfArguments: Type[], body: Expression) {
+    constructor(public args: [Pattern, Expression?][], public typesOfArguments: Type[], public body: Expression) {
         super();
-        this.args = args;
-        this.body = body;
-        this.typesOfArguments = typesOfArguments;
     }
 
     toString(): string {
@@ -729,23 +642,8 @@ export class LambdaFunctionExpression extends Expression {
 }
 
 export class FunctionExpression extends Expression {
-    typeParameters: Type[];
-    args: [Pattern, Expression?][];
-    typesOfArguments: Type[];
-    body: Block;
-    namePattern: Pattern;
-    returnType?: Type;
-    typeConstraints: TypeConstraint[];
-
-    constructor(typeParameters: Type[], args: [Pattern, Expression?][], typesOfArguments: Type[], body: Block, name: Pattern, typeConstraints: TypeConstraint[], returnType?: Type) {
+    constructor(public typeParameters: Type[], public args: [Pattern, Expression?][], public typesOfArguments: Type[], public body: Block, public namePattern: Pattern, public typeConstraints: TypeConstraint[], public returnType?: Type) {
         super();
-        this.typeParameters = typeParameters;
-        this.args = args;
-        this.typesOfArguments = typesOfArguments;
-        this.body = body;
-        this.namePattern = name;
-        this.returnType = returnType;
-        this.typeConstraints = typeConstraints;
     }
 
     toString(): string {
@@ -855,22 +753,8 @@ class LambdaFunctionSubparser implements PrefixSubparser {
 type PrivacyModifier = 'private' | 'public' | 'protected';
 
 export class ClassExpression extends Expression {
-    typeParameters: Type[];
-    typeConstraints: TypeConstraint[];
-    name: Pattern;
-    methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][];
-    properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][];
-    isStruct: boolean;
-    operatorOverloads: { [operator: string]: FunctionExpression } = {};
-    constructor(name: Pattern, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][], properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][], isStruct: boolean, operatorOverloads: { [operator: string]: FunctionExpression }) {
+    constructor(public name: Pattern, public typeParameters: Type[], public typeConstraints: TypeConstraint[], public methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][], public properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][], public isStruct: boolean, public operatorOverloads: { [operator: string]: FunctionExpression }) {
         super();
-        this.name = name;
-        this.typeParameters = typeParameters;
-        this.typeConstraints = typeConstraints;
-        this.methods = methods;
-        this.properties = properties;
-        this.isStruct = isStruct;
-        this.operatorOverloads = operatorOverloads;
     }
 
     toString(): string {
@@ -1149,23 +1033,15 @@ class ClassSubparser implements PrefixSubparser {
     }
 }
 
-export class TraitExpression extends Expression {
-    typeParameters: Type[];
-    typeConstraints: TypeConstraint[];
-    name: Pattern;
-    structural: boolean;
-    methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][];
-    properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][];
-    operatorOverloads: { [operator: string]: FunctionExpression } = {};
-    constructor(name: Pattern, typeParameters: Type[], typeConstraints: TypeConstraint[], methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][], properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][], structural: boolean, operatorOverloads: { [operator: string]: FunctionExpression }) {
+export class EnumExpression extends Expression {
+    constructor(public name: NamePattern, public values: [NamePattern, Expression][]) {
         super();
-        this.name = name;
-        this.typeParameters = typeParameters;
-        this.typeConstraints = typeConstraints;
-        this.methods = methods;
-        this.properties = properties;
-        this.structural = structural;
-        this.operatorOverloads = operatorOverloads;
+    }
+}
+
+export class TraitExpression extends Expression {
+    constructor(public name: Pattern, public typeParameters: Type[], public typeConstraints: TypeConstraint[], public methods: [FunctionExpression, 'static' | 'instance', PrivacyModifier][], public properties: [LetOrConstDeclarationExpression, 'static' | 'instance', PrivacyModifier][], public structural: boolean, public operatorOverloads: { [operator: string]: FunctionExpression }) {
+        super();
     }
 
     toString(): string {
@@ -1339,12 +1215,8 @@ export class TraitSubparser implements PrefixSubparser {
 }
 
 export class AssignmentExpression extends Expression {
-    left: Expression;
-    right: Expression;
-    constructor(left: Expression, right: Expression) {
+    constructor(public left: Expression, public right: Expression) {
         super();
-        this.left = left;
-        this.right = right;
     }
 
     toString(): string {
@@ -1365,12 +1237,8 @@ class AssignmentSubparser implements InfixSubparser {
 }
 
 class AtExpression extends Expression {
-    name: Identifier;
-    expression: Expression;
-    constructor(name: Identifier, expression: Expression) {
+    constructor(public name: Identifier, public expression: Expression) {
         super();
-        this.name = name;
-        this.expression = expression;
     }
 
     toString(): string {
@@ -1388,10 +1256,8 @@ class AtSubparser implements PrefixSubparser {
 }
 
 export class ReturnExpression extends Expression {
-    returnValue?: Expression;
-    constructor(returnValue?: Expression) {
+    constructor(public returnValue?: Expression) {
         super();
-        this.returnValue = returnValue;
     }
 
     toString(): string {
@@ -1411,12 +1277,8 @@ class ReturnSubparser implements PrefixSubparser {
 }
 
 export class BreakExpression extends Expression {
-    breakValue?: Expression;
-    label?: string;
-    constructor(breakValue?: Expression, label?: string) {
+    constructor(public breakValue?: Expression, public label?: string) {
         super();
-        this.breakValue = breakValue;
-        this.label = label;
     }
 
     toString(): string {
@@ -1440,10 +1302,8 @@ class BreakSubparser implements PrefixSubparser {
 }
 
 export class ContinueExpression extends Expression {
-    label?: string;
-    constructor(label?: string) {
+    constructor(public label?: string) {
         super();
-        this.label = label;
     }
 
     toString(): string {
@@ -1485,12 +1345,9 @@ class LabelSubparser implements PrefixSubparser {
     }
 }
 
-class MapExpression {
-    keys: Expression[];
-    values: Expression[];
-    constructor(keys: Expression[], values: Expression[]) {
-        this.keys = keys;
-        this.values = values;
+class MapExpression extends Expression {
+    constructor(public keys: Expression[], public values: Expression[]) {
+        super();
     }
 
     toString(): string {
