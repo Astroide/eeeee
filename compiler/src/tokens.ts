@@ -11,7 +11,6 @@ enum TokenType {
     Ampersand,
     DoubleAmpersand,
     Xor,
-    DoubleXor,
     LeftParenthesis,
     RightParenthesis,
     LeftBracket,
@@ -168,5 +167,44 @@ class Label extends Token {
     }
 }
 
-export { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword, TemplateStringLiteral, TemplateStringElement, Label, Macro };
+function isOperator(type: TokenType): boolean {
+    return type === TokenType.Plus
+        || type === TokenType.Minus
+        || type === TokenType.DoublePlus
+        || type === TokenType.DoubleMinus
+        || type === TokenType.Star
+        || type === TokenType.DoubleStar
+        || type === TokenType.Slash
+        || type === TokenType.DoubleEquals
+        || type === TokenType.Pipe
+        || type === TokenType.DoublePipe
+        || type === TokenType.Ampersand
+        || type === TokenType.DoubleAmpersand
+        || type === TokenType.Xor
+        || type === TokenType.LeftAngleBracket
+        || type === TokenType.RightAngleBracket
+        || type === TokenType.GreaterOrEqual
+        || type === TokenType.SmallerOrEqual
+        || type === TokenType.LeftShift
+        || type === TokenType.RightShift
+        || type === TokenType.Tilde
+        || type === TokenType.Bang;
+}
+
+function isUnaryOperator(type: TokenType): boolean {
+    return type === TokenType.Minus
+        || type === TokenType.DoublePlus
+        || type === TokenType.DoubleMinus
+        || type === TokenType.Tilde
+        || type === TokenType.Bang;
+}
+
+function isUnaryOperatorOnly(type: TokenType): boolean {
+    return type === TokenType.DoublePlus
+        || type === TokenType.DoubleMinus
+        || type === TokenType.Tilde
+        || type === TokenType.Bang;
+}
+
+export { TokenType, Token, CharLiteral, StringLiteral, NumberLiteral, BooleanLiteral, Identifier, Keyword, TemplateStringLiteral, TemplateStringElement, Label, Macro, isOperator, isUnaryOperator, isUnaryOperatorOnly };
 

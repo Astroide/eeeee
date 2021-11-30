@@ -1024,7 +1024,20 @@ class ClassSubparser {
                 else if (parser.tokenSource.match(tokens_1.TokenType.Operator)) {
                     parser.tokenSource.next();
                     const operatorToken = parser.tokenSource.next();
+                    if (!(0, tokens_1.isOperator)(operatorToken.type)) {
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, `[ESCE00044] An operator was expected, got '${operatorToken.getSource()}' instead (valid operators are ! * ** / + - | || & && ^ >> << < > >= <= == ~)`, operatorToken.line, operatorToken.char, operatorToken.getSource());
+                    }
+                    const fnToken = parser.tokenSource.peek();
                     const func = (new FunctionSubparser()).parse(parser, null, false, operatorToken);
+                    if (func.args.length > 1) {
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00045] Operator overloading functions can only have no arguments or one argument', fnToken.line, fnToken.char, fnToken.getSource());
+                    }
+                    if (!(0, tokens_1.isUnaryOperator)(operatorToken.type) && func.args.length == 0) {
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00046] Non-unary operator overloads must have exactly one argument', fnToken.line, fnToken.char, fnToken.getSource());
+                    }
+                    if ((0, tokens_1.isUnaryOperatorOnly)(operatorToken.type) && func.args.length != 0) {
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00047] Unary only operator overloads (unary only operators are ~ ++ -- !) must have no arguments', fnToken.line, fnToken.char, fnToken.getSource());
+                    }
                     operatorOverloads[operatorToken.getSource()] = func;
                 }
                 else {
@@ -1204,7 +1217,20 @@ class TraitSubparser {
                 else if (parser.tokenSource.match(tokens_1.TokenType.Operator)) {
                     parser.tokenSource.next();
                     const operatorToken = parser.tokenSource.next();
+                    if (!(0, tokens_1.isOperator)(operatorToken.type)) {
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, `[ESCE00044] An operator was expected, got '${operatorToken.getSource()}' instead (valid operators are ! * ** / + - | || & && ^ >> << < > >= <= == ~)`, operatorToken.line, operatorToken.char, operatorToken.getSource());
+                    }
+                    const fnToken = parser.tokenSource.peek();
                     const func = (new FunctionSubparser()).parse(parser, null, true, operatorToken);
+                    if (func.args.length > 1) {
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00045] Operator overloading functions can only have no arguments or one argument', fnToken.line, fnToken.char, fnToken.getSource());
+                    }
+                    if (!(0, tokens_1.isUnaryOperator)(operatorToken.type) && func.args.length == 0) {
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00046] Non-unary operator overloads must have exactly one argument', fnToken.line, fnToken.char, fnToken.getSource());
+                    }
+                    if ((0, tokens_1.isUnaryOperatorOnly)(operatorToken.type) && func.args.length != 0) {
+                        (0, utilities_1.panicAt)(parser.tokenSource.reader, '[ESCE00047] Unary only operator overloads (unary only operators are ~ ++ -- !) must have no arguments', fnToken.line, fnToken.char, fnToken.getSource());
+                    }
                     operatorOverloads[operatorToken.getSource()] = func;
                 }
                 else {

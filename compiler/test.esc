@@ -9,7 +9,7 @@ trait Hamster {
 };
 structural trait Dog {
     fn bark() {},
-    operator *(other: Dog) Dog {},
+    operator ~() Dog {},
     operator **(other: Dog) Dog {},
     operator /(other: Dog) Dog {},
     operator +(other: Dog) Dog {},
