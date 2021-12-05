@@ -430,6 +430,7 @@ class Tokenizer {
                                 'structural': tokens_1.TokenType.Structural,
                                 'struct': tokens_1.TokenType.Struct,
                                 'operator': tokens_1.TokenType.Operator,
+                                'enum': tokens_1.TokenType.Enum,
                             };
                             const keywords = Object.keys(keywordTokenTypes);
                             if (/!/.test(self.reader.peek())) {

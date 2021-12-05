@@ -398,6 +398,7 @@ export class Tokenizer {
                                 'structural': TokenType.Structural,
                                 'struct': TokenType.Struct,
                                 'operator': TokenType.Operator,
+                                'enum': TokenType.Enum,
                             };
                             const keywords = Object.keys(keywordTokenTypes);
                             if (/!/.test(self.reader.peek())) {

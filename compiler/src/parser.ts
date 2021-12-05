@@ -1034,12 +1034,51 @@ class ClassSubparser implements PrefixSubparser {
 }
 
 export class EnumExpression extends Expression {
-    constructor(public name: Pattern, public variants: [Pattern, Type[]][]) {
+    constructor(public name: Pattern, public variants: [Pattern, Type[]][], public typeParameters: [Type[], TypeConstraint[]]) {
         super();
     }
 
     toString(): string {
-        return `EnumExpression {${this.name.toString()}, [${this.variants.map(([name, types]) => `${name.toString()} (${types.map(typeToString).join(', ')}`).join(', ')}]}`;
+        return `EnumExpression {${this.name.toString()}, [${this.variants.map(([name, types]) => `${name.toString()} (${types.map(typeToString).join(', ')})`).join(', ')}]}`;
+    }
+}
+
+class EnumSubparser implements PrefixSubparser {
+    parse(parser: Parser, token: Token): EnumExpression {
+        const name = (new NamePatternSubparser()).parse(parser, parser.tokenSource.consume(TokenType.Identifier, 'a name is required for an enum'));
+        let typeParameters: [Type[], TypeConstraint[]] = null;
+        if (parser.tokenSource.match(TokenType.LeftBracket)) {
+            typeParameters = parser.getTypeParameters();
+        }
+        const variants: [Pattern, Type[]][] = [];
+        parser.tokenSource.consume(TokenType.LeftCurlyBracket, 'expected \'{\' after \'enum <Identifier>\'');
+        while (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
+            if (parser.tokenSource.match(TokenType.Comma)) {
+                panicAt(parser.tokenSource.reader, '[ESCE00048] Double / leading commas are not allowed in enums', token.line, token.char, token.getSource());
+            }
+            const variantName = (new NamePatternSubparser()).parse(parser, parser.tokenSource.consume(TokenType.Identifier, 'a name is required for an enum variant'));
+            const types: Type[] = [];
+            if (parser.tokenSource.match(TokenType.LeftParenthesis)) {
+                parser.tokenSource.next();
+                while (!parser.tokenSource.match(TokenType.RightParenthesis)) {
+                    if (parser.tokenSource.match(TokenType.Comma)) {
+                        panicAt(parser.tokenSource.reader, '[ESCE00048] Double / leading commas are not allowed in enums', token.line, token.char, token.getSource());
+                    }
+                    const type = parser.getType();
+                    types.push(type);
+                    if (!parser.tokenSource.match(TokenType.RightParenthesis)) {
+                        parser.tokenSource.consume(TokenType.Comma, 'a comma is required after enum variant types');
+                    }
+                }
+                parser.tokenSource.next();
+            }
+            variants.push([variantName, types]);
+            if (!parser.tokenSource.match(TokenType.RightCurlyBracket)) {
+                parser.tokenSource.consume(TokenType.Comma, 'a comma is required after enum variants');
+            }
+        }
+        parser.tokenSource.next();
+        return new EnumExpression(name, variants, typeParameters);
     }
 }
 
@@ -1459,6 +1498,7 @@ export class Parser {
         this.registerPrefix(TokenType.AtSign, new AtSubparser());
         this.registerPrefix(TokenType.Trait, new TraitSubparser());
         this.registerPrefix(TokenType.Structural, new TraitSubparser());
+        this.registerPrefix(TokenType.Enum, new EnumSubparser());
         this.conditionsOfPrefixSubparsers.set(TokenType.Macro, (token => (<Macro>token).identifier == 'map!'));
         (<[TokenType, number][]>[
             [TokenType.Ampersand, Precedence.CONDITIONAL],

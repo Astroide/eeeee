@@ -2,10 +2,15 @@ import meow;
 import std.util.StringReverser as Reverser;
 import std.graphics as Graphics;
 import std.graphics.{Color, Canvas};
-trait Hamster {
+trait Hamster[T] {
     x: test = 1,
     y: test = 2,
     fn sort() {}
+};
+enum Result[T, E] {
+    Ok(T),
+    Err(E),
+    Weird
 };
 structural trait Dog {
     fn bark() {},

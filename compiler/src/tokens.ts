@@ -67,6 +67,7 @@ enum TokenType {
     Structural,
     Struct,
     Operator,
+    Enum,
 }
 
 class Token {
