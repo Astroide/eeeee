@@ -4,12 +4,12 @@ This file lists what is left to do.
   - [x] Named arguments
   - [x] Default values
   - [x] Template string literals
-  - [ ] Enum parsing
+  - [x] Enum parsing
   - [ ] Class overloads
   - [ ] Function overloads
-  - [ ] Imports
+  - [x] Imports
   - [ ] Match expressions
-  - [ ] Allow patterns in `let` / `const` expressions, and in functions' arguments lists
+  - [x] Allow patterns in `let` / `const` expressions, and in functions' arguments lists
   - [x] Add `continue` and `break` expressions
     - [x] `continue`
     - [x] `break`
