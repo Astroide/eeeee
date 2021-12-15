@@ -797,9 +797,18 @@ class NamePattern extends Pattern {
     }
 }
 
+class ObjectDestructuringPattern extends Pattern {
+    constructor(public typeName: Identifier, public typeParameters: [Type[], TypeConstraint[]], public properties: Pattern[]) { }
+}
+
 class NamePatternSubparser implements PrefixPatternSubparser {
     @logCalls
-    parse(_parser: Parser, token: Token): NamePattern {
+    parse(parser: Parser, token: Token): NamePattern {
+        if (parser.tokenSource.match(TokenType.LeftBracket)) {
+            const typeParameters = parser.getTypeParameters();
+            const token = parser.tokenSource.peek();
+            parser.tokenSource.consume(TokenType.LeftCurlyBracket, `[ESCE00049] Expected '{', got '${token.getSource()} (parsing an object destructuring pattern)`);
+        }
         return new NamePattern(<Identifier>token);
     }
 }
