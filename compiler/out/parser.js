@@ -813,8 +813,21 @@ class NamePattern extends Pattern {
         return `NamePattern[${this.name.identifier}]`;
     }
 }
+class ObjectDestructuringPattern extends Pattern {
+    constructor(typeName, typeParameters, properties) {
+        super();
+        this.typeName = typeName;
+        this.typeParameters = typeParameters;
+        this.properties = properties;
+    }
+}
 class NamePatternSubparser {
-    parse(_parser, token) {
+    parse(parser, token) {
+        if (parser.tokenSource.match(tokens_1.TokenType.LeftBracket)) {
+            const typeParameters = parser.getTypeParameters();
+            const token = parser.tokenSource.peek();
+            parser.tokenSource.consume(tokens_1.TokenType.LeftCurlyBracket, `[ESCE00049] Expected '{', got '${token.getSource()} (parsing an object destructuring pattern)`);
+        }
         return new NamePattern(token);
     }
 }

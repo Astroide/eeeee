@@ -798,7 +798,9 @@ class NamePattern extends Pattern {
 }
 
 class ObjectDestructuringPattern extends Pattern {
-    constructor(public typeName: Identifier, public typeParameters: [Type[], TypeConstraint[]], public properties: Pattern[]) { }
+    constructor(public typeName: Identifier, public typeParameters: [Type[], TypeConstraint[]], public properties: Pattern[]) {
+        super();
+    }
 }
 
 class NamePatternSubparser implements PrefixPatternSubparser {
