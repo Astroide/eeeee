@@ -806,11 +806,11 @@ class ObjectDestructuringPattern extends Pattern {
 class NamePatternSubparser implements PrefixPatternSubparser {
     @logCalls
     parse(parser: Parser, token: Token): NamePattern {
-        if (parser.tokenSource.match(TokenType.LeftBracket)) {
-            const typeParameters = parser.getTypeParameters();
-            const token = parser.tokenSource.peek();
-            parser.tokenSource.consume(TokenType.LeftCurlyBracket, `[ESCE00049] Expected '{', got '${token.getSource()} (parsing an object destructuring pattern)`);
-        }
+        // if (parser.tokenSource.match(TokenType.LeftCurlyBracket)) {
+        // const typeParameters = parser.getTypeParameters();
+        // const token = parser.tokenSource.peek();
+        // parser.tokenSource.consume(TokenType.LeftCurlyBracket, `[ESCE00049] Expected '{', got '${token.getSource()} (parsing an object destructuring pattern)`);
+        // }
         return new NamePattern(<Identifier>token);
     }
 }
@@ -1112,14 +1112,20 @@ export class TraitSubparser implements PrefixSubparser {
             structural = true;
         }
         const state = parser.tokenSource.state();
+        console.log('type: ' + TokenType[parser.tokenSource.peek().type] + ', ' + parser.tokenSource.peek().getSource());
         const name = parser.getPattern(0);
+        console.log('type: ' + TokenType[parser.tokenSource.peek().type] + ', ' + parser.tokenSource.peek().getSource());
         if (!(name instanceof NamePattern)) {
             parser.tokenSource.restore(state);
             const token = parser.tokenSource.next();
             panicAt(parser.tokenSource.reader, '[ESCE00036] Trait names must be identifiers', token.line, token.char, token.getSource());
         }
         let typeParameters = [], typeConstraints = [];
+        console.log('Before Type Parameters');
+        console.log('type: ' + TokenType[parser.tokenSource.peek().type] + ', ' + parser.tokenSource.peek().getSource());
         if (parser.tokenSource.match(TokenType.LeftBracket)) {
+            console.log('Type Parameters');
+            parser.tokenSource.next();
             [typeParameters, typeConstraints] = parser.getTypeParameters();
         }
         parser.tokenSource.consume(TokenType.LeftCurlyBracket, `expected a '{' after ${typeParameters.length == 0 ? 'the class name' : 'the type parameters'}`);
