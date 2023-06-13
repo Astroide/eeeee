@@ -1,9 +1,0 @@
-{
-    "editor.formatOnSave": true,
-    "files.associations": {
-        "*.h": "c",
-        "expressions": "coffeescript"
-    },
-    "editor.suggest.preview": true,
-    "cmake.configureOnOpen": false
-}
