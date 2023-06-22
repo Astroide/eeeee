@@ -10,6 +10,6 @@
   "author": "Olie Auger (github.com/astroide)",
   "dependencies": {
     "typescript": "^4.4.2",
-    "@types/node": "^17.0.8"
+    "@types/node": "^20.3.1"
   }
 }
