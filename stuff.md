@@ -62,3 +62,17 @@ fn eee<T: Add>(arg: T) -> T {
     }
 }
 ```
+
+possibly - `duck` keyword for duck typing
+```rs
+fn do_stuff(something: duck SomeTrait) {
+    // `something` is guaranteed to have all of SomeTrait's methods but not forcedly by implementing SomeTrait
+}
+```
+other possible way:
+```rs
+fn do_stuff<T: duck SomeTrait>(something: T) {
+    // more or less the same as above
+}
+```
+this could be an interesting feature, but it might result in code simply not using traits when they are available, instead relying on the presence of `duck` - and what should happen if `T` implements a method of SomeTrait twice (in different traits' implementations)?
