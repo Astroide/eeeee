@@ -76,3 +76,12 @@ fn do_stuff<T: duck SomeTrait>(something: T) {
 }
 ```
 this could be an interesting feature, but it might result in code simply not using traits when they are available, instead relying on the presence of `duck` - and what should happen if `T` implements a method of SomeTrait twice (in different traits' implementations)?
+
+**modules** - for example `use std.fs.read_file;` or, without `use`ing it, `.std.fs.read_file(...)`
+
+**general ideas**
+(what I want this to be)
+* relatively readable
+* nice to write
+* neither too verbose nor minimalist - I think that removing everything not absolutely necessary to the syntax can make it less readable; compare `fn do_stuff(a: u8, b: i32, c: f64) { ... }` and `fn do_stuff a u8 b i32 c f64 { ... }` (this one is a bit extreme of an example)
+* expressions expressions expressions EVERYTHING IS AN EXPRESSION
