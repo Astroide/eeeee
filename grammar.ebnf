@@ -1,0 +1,26 @@
+digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
+hex_digit = digit | 'A' | 'a' | 'B' | 'b' | 'C' | 'c' | 'D' | 'd' | 'E' | 'e' | 'F' | 'f';
+binary_digit = '0' | '1';
+identifier_character = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z' | '_' | digit;
+identifier = identifier_character +; (* preferably in snake_case *)
+number_literal = ('-') ?, ((digit +) | ('.', digit +) | (digit +, '.', digit +));
+hex_literal = '0x', hex_digit +;
+binary_literal = '0b', binary_digit +;
+basically_anything = (* any character *);
+char_literal = '"', basically_anything; (* double quotes for char literals :) will probably change this at some point. Also, what of line breaks? *)
+backslash_escape_sequence = '\\\\'; (* this is two backslashes *)
+newline_escape_sequence = '\\n'; (* \n *)
+quote_escape_sequence = '\\\''; (* \' *)
+string_literal = "'", (backslash_escape_sequence | newline_escape_sequence | quote_escape_sequence | (* anything that is not a backslash *)) +, "'"; (* later: add Unicode escapes & stuff *)
+unary_operator = '-' | '~' | '!';
+binary_operator = '+' | '*' | '-' | '/' | '%' | '&' | '|' | '&&' | '||' | '>' | '==' | '<' | '>=' | '<=' | '>>' | '<<' | '^' | '**'; (* probably forgot some *)
+parenthesized_expression = '(', expression, ')';
+call_expression = expression, '(', (expression | (expression, ',') | (expression, (',', expression) +, ','?)) ')';
+bin_operator_expression = expression, binary_operator, expression;
+un_operator_expression = unary_operator, expression;
+bracketed_expression = '{', expression, '}';
+if_expression = 'if', expression, expression, ('else', expression) ?; (* might need to restrict that 2nd to parenthesized_expression | bracketed_expression for clarity *)
+while_expression = 'while', expression, expression; (* this sounds somewhat weird / wrong in some kind of way *)
+semicolon_expression = expression, ';', expression;
+expression = char_literal | string_literal | number_literal | hex_literal | binary_literal | parenthesized_expression | call_expression | bracketed_expression | if_expression | while_expression | semicolon_expression | un_operator_expression | bin_operator_expression;
+(* to do : add missing expression types (including function definitions/type definitions/trait definitions/`use` etc.), more string escape codes *)
