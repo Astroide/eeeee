@@ -85,3 +85,11 @@ this could be an interesting feature, but it might result in code simply not usi
 * nice to write
 * neither too verbose nor minimalist - I think that removing everything not absolutely necessary to the syntax can make it less readable; compare `fn do_stuff(a: u8, b: i32, c: f64) { ... }` and `fn do_stuff a u8 b i32 c f64 { ... }` (this one is a bit extreme of an example)
 * expressions expressions expressions EVERYTHING IS AN EXPRESSION
+
+**type syntax**
+type annotation format: `: Type` (e.g. `let x: f64 = 0.0`)
+
+Preferred case (for types) : PascalCase, except for built-in types (for example `u8`)  
+Generics: `SomeType<T1, T2>` -- considering Rust-like turbofish syntax (`SomeType::<T1, T2>`) for use in expressions, to avoid confusion  
+Arrays: `[Type]` (`; L` for length?)  
+Tuples: `(T1, T2,)` (trailing commas are fine; namely for the singleton, where `(T1)`, in an expression context, would evaluate to `T1`, while `(T1,)` is a 1-element tuple)
