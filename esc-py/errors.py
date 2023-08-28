@@ -170,34 +170,36 @@ def span_with_message(span, message):
             if idx >= start_line and idx <= end_line:
                 print(f'{QUOTE}{str(idx).ljust(width + 1, " ")} | {CLEAR_ALL}', end='')
                 if idx == start_line and idx == end_line:
-                    if len(line) < max_line_length:
-                        # everything's alright
-                        print(line[:start_col - 1], end='')
-                        print(f'{HIGHLIGHT}{line[start_col - 1:end_col - 1]}{CLEAR_ALL}', end='')
-                        print(line[end_col - 1:])
-                    else:
-                        # aaaaaa
-                        if start_col < max_line_length and end_col < max_line_length:
-                            lyne = line[:start_col - 1] + f'{HIGHLIGHT}{line[start_col - 1:end_col - 1]}{CLEAR_ALL}' + line[end_col - 1:]
-                            print(f'{lyne[:max_line_length - 4] + f" {QUOTE}..."}{CLEAR_ALL}')
-                            # print(WARN + '|' + lyne + '|')
+                    # I # if len(line) < max_line_length:
+                    # I #     # everything's alright
+                    print(line[:start_col - 1], end='')
+                    print(f'{HIGHLIGHT}{line[start_col - 1:end_col - 1]}{CLEAR_ALL}', end='')
+                    print(line[end_col - 1:])
+                    # I # else:
+                    # I #     # aaaaaa
+                    # I #     if start_col < max_line_length and end_col < max_line_length:
+                    # I #         lyne = line[:start_col - 1] + f'{HIGHLIGHT}{line[start_col - 1:end_col - 1]}{CLEAR_ALL}' + line[end_col - 1:]
+                    # I #         print(f'{lyne[:max_line_length - 4] + f" {QUOTE}..."}{CLEAR_ALL}')
+                    # I #         # print(WARN + '|' + lyne + '|')
 
                 elif idx == start_line:
-                    if len(line) < max_line_length:
-                        print(line[:start_col - 1], end='')
-                        print(f'{HIGHLIGHT}{line[start_col - 1:]}{CLEAR_ALL}')
-                    elif start_col < max_line_length:
-                        print(line[:start_col - 1], end='')
-                        print(f'{HIGHLIGHT}{line[start_col - 1:max_line_length - 4] + f" {QUOTE}..."}{CLEAR_ALL}')
-                    else:
-                        offset = (max_line_length - start_col) - 10
-                        lyne = QUOTE + '... ' + CLEAR_COLOR + line[-offset:]
-                        print(lyne[:(start_col + offset) - 1], end='')
-                        print(f'{HIGHLIGHT}{lyne[(start_col + offset) - 1:max_line_length - 4] + f" {QUOTE}..."}{CLEAR_ALL}')
+                    # I # if len(line) < max_line_length:
+                    print(line[:start_col - 1], end='')
+                    print(f'{HIGHLIGHT}{line[start_col - 1:]}{CLEAR_ALL}')
+                    # I # elif start_col < max_line_length:
+                    # I #     print(line[:start_col - 1], end='')
+                    # I #     print(f'{HIGHLIGHT}{line[start_col - 1:max_line_length - 4] + f" {QUOTE}..."}{CLEAR_ALL}')
+                    # I # else:
+                    # I #     offset = (max_line_length - start_col) - 10
+                    # I #     lyne = QUOTE + '... ' + CLEAR_COLOR + line[-offset:]
+                    # I #     print(lyne[:(start_col + offset) - 1], end='')
+                    # I #     print(f'{HIGHLIGHT}{lyne[(start_col + offset) - 1:max_line_length - 4] + f" {QUOTE}..."}{CLEAR_ALL}')
                 elif idx == end_line:
                     print(f'{HIGHLIGHT}{line[:end_col - 1]}{CLEAR_ALL}', end='')
                     print(line[end_col - 1:])
                 else:
-                    print(f'{HIGHLIGHT}{line if len(line) < max_line_length else line[:max_line_length - 4] + f" {QUOTE}..."}{CLEAR_ALL}')
+                    # I # print(f'{HIGHLIGHT}{line if len(line) < max_line_length else line[:max_line_length - 4] + f" {QUOTE}..."}{CLEAR_ALL}')
+                    print(f'{HIGHLIGHT}{line}{CLEAR_ALL}')
             else:
-                print(f'{QUOTE}{str(idx).ljust(width + 1, " ")} | {CLEAR_ALL}{line if len(line) < max_line_length else line[:max_line_length - 4] + f" {QUOTE}...{CLEAR_ALL}"}')
+                # I # print(f'{QUOTE}{str(idx).ljust(width + 1, " ")} | {CLEAR_ALL}{line if len(line) < max_line_length else line[:max_line_length - 4] + f" {QUOTE}...{CLEAR_ALL}"}')
+                print(f'{QUOTE}{str(idx).ljust(width + 1, " ")} | {CLEAR_ALL}{line}')

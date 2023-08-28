@@ -3,8 +3,8 @@
 # a compiler fox experimentation with the language.
 # when I will have a satisfying language prototype, this'll be rewritten in Rust. 
 
-# Things to fix:
-# * errors.py: fix ANSI code being considered multiple characters; add the `message`
+# temporarily 'fixed' the ANSI escape code issue by commenting out (I) the line length code.
+# this will eventually need to be changed; but for now, it more or less works.
 
 from errors import crash, span_with_message
 import text as Text
