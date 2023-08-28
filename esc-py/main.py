@@ -6,7 +6,9 @@
 # temporarily 'fixed' the ANSI escape code issue by commenting out (I) the line length code.
 # this will eventually need to be changed; but for now, it more or less works.
 
-from errors import crash, span_with_message
+import errors as Errors
+crash = Errors.crash
+from tokenizer import Tokenizer
 import text as Text
 import sys as Sys, os as Os
 
@@ -27,6 +29,10 @@ if Os.path.isdir(the_file):
 try:
     with open(the_file, mode='r') as handle:
         text = handle.read()
-        span_with_message(Text.Span(the_file, text, 100, 102), 'hamster')
+        tokenizer = Tokenizer(text, the_file)
+        tokens = tokenizer.generate_tokens()
+        if tokens is None:
+            Errors.info(f'compilation aborted due to {"this error" if Errors.error_count() == 1 else f"{Errors.error_count()} errors"}.')
+            exit(1)
 except PermissionError:
     crash(f'{the_file}: insufficient permissions to read')

@@ -86,7 +86,7 @@ def safe(s):
         else:
             result = unprintable_name(c)
             if result is None:
-                out += CYAN + '<0x' + ord(c) + '>' + CLEAR_COLOR
+                out += CYAN + '<0x' + str(ord(c)) + '>' + CLEAR_COLOR
             else:
                 out += CYAN + '<' + result + '>' + CLEAR_COLOR
     return out
@@ -136,6 +136,12 @@ def safe(s):
 def err(message, fatal=False):
     print(f'{ERROR}{"fatal " if fatal else ""}error:{CLEAR_ALL} {message}')
 
+def warn(message):
+    print(f'{WARN}warning:{CLEAR_ALL} {message}')
+
+def info(message):
+    print(f'{QUOTE}info:{CLEAR_ALL} {message}')
+
 def crash(reason):
     err(reason, True)
     exit(1)
@@ -154,21 +160,45 @@ def transform(source, position):
             return (line_no, col_no)
     crash(f'internal compiler error: reached EOF while converting textual position to a (line, column) tuple. <source>\n{source}\n</source>\nposition: {position}')
 
+error_counter = 0
+
+def reset_error_count():
+    global error_counter
+    error_counter = 0
+
+def error_count():
+    global error_counter
+    return error_counter
+
+def error(error_message, *span_message_pairs):
+    global error_counter
+    error_counter += 1
+    err(error_message)
+    for span, message in span_message_pairs:
+        span_with_message(span, message)
+    print()
+
+def warning(warning_message, *span_message_pairs):
+    warn(warning_message)
+    for span, message in span_message_pairs:
+        span_with_message(span, message)
+    print()
+
 def span_with_message(span, message):
-    term_width = Os.get_terminal_size().columns
+    # I # term_width = Os.get_terminal_size().columns
     start_line, start_col = transform(span.text, span.start)
     end_line, end_col = transform(span.text, span.end)
     lines = span.text.split('\n')
     visible_start = start_line - 3
     visible_end = min(end_line + 3, len(lines))
     width = max(len(str(visible_start)), len(str(visible_end)))
-    max_line_length = term_width - (width + 4)
-    print(f'{QUOTE}= {span.filename}{CLEAR_ALL}')
+    # I # max_line_length = term_width - (width + 4)
+    print(f'{QUOTE}= {span.filename}:{start_line}:{start_col}{CLEAR_ALL}')
     for idx, line in enumerate(lines):
         line = safe(line)
         if idx >= visible_start and idx < visible_end:
             if idx >= start_line and idx <= end_line:
-                print(f'{QUOTE}{str(idx).ljust(width + 1, " ")} | {CLEAR_ALL}', end='')
+                print(f'{QUOTE}{str(idx + 1).ljust(width + 1, " ")} | {CLEAR_ALL}', end='')
                 if idx == start_line and idx == end_line:
                     # I # if len(line) < max_line_length:
                     # I #     # everything's alright
@@ -202,4 +232,6 @@ def span_with_message(span, message):
                     print(f'{HIGHLIGHT}{line}{CLEAR_ALL}')
             else:
                 # I # print(f'{QUOTE}{str(idx).ljust(width + 1, " ")} | {CLEAR_ALL}{line if len(line) < max_line_length else line[:max_line_length - 4] + f" {QUOTE}...{CLEAR_ALL}"}')
-                print(f'{QUOTE}{str(idx).ljust(width + 1, " ")} | {CLEAR_ALL}{line}')
+                print(f'{QUOTE}{str(idx + 1).ljust(width + 1, " ")} | {CLEAR_ALL}{line}')
+    if message != '':
+        print(f'{QUOTE}{" " + "| ".rjust(width + 3, "*")}{message}{CLEAR_ALL}')
