@@ -1,4 +1,3 @@
-import os as Os
 ERROR = '\x1B[91m'
 WARN = '\x1B[33m'
 QUOTE = '\x1B[34m'
@@ -147,18 +146,21 @@ def crash(reason):
     exit(1)
 
 def transform(source, position):
+    # print('transform(' + str(position) + ')')
     line_no = 0
     col_no = 0
     for char_idx, char in enumerate(source):
+        if char_idx == position:
+            return (line_no, col_no)
         if char == '\n':
             line_no += 1
             col_no = 0
         else:
             col_no += 1
 
-        if char_idx == position:
-            return (line_no, col_no)
-    crash(f'internal compiler error: reached EOF while converting textual position to a (line, column) tuple. <source>\n{source}\n</source>\nposition: {position}')
+    # print('overflow')
+    return (line_no, col_no)
+    # crash(f'internal compiler error: reached EOF while converting textual position to a (line, column) tuple. <source>\n{source}\n</source>\nposition: {position}')
 
 error_counter = 0
 
@@ -185,15 +187,17 @@ def warning(warning_message, *span_message_pairs):
     print()
 
 def span_with_message(span, message):
+    # print('span_with_message //', span.start, span.end, '*' + span.content() + '*')
     # I # term_width = Os.get_terminal_size().columns
     start_line, start_col = transform(span.text, span.start)
     end_line, end_col = transform(span.text, span.end)
+    # print(f'start = ({start_line}; {start_col})\nend = ({end_line}; {end_col})')
     lines = span.text.split('\n')
     visible_start = start_line - 3
     visible_end = min(end_line + 3, len(lines))
     width = max(len(str(visible_start)), len(str(visible_end)))
     # I # max_line_length = term_width - (width + 4)
-    print(f'{QUOTE}= {span.filename}:{start_line}:{start_col}{CLEAR_ALL}')
+    print(f'{QUOTE}= {span.filename}:{start_line + 1}:{start_col + 1}{CLEAR_ALL}')
     for idx, line in enumerate(lines):
         line = safe(line)
         if idx >= visible_start and idx < visible_end:
@@ -202,9 +206,9 @@ def span_with_message(span, message):
                 if idx == start_line and idx == end_line:
                     # I # if len(line) < max_line_length:
                     # I #     # everything's alright
-                    print(line[:start_col - 1], end='')
-                    print(f'{HIGHLIGHT}{line[start_col - 1:end_col - 1]}{CLEAR_ALL}', end='')
-                    print(line[end_col - 1:])
+                    print(line[:start_col], end='')
+                    print(f'{HIGHLIGHT}{line[start_col:end_col]}{CLEAR_ALL}', end='')
+                    print(line[end_col:])
                     # I # else:
                     # I #     # aaaaaa
                     # I #     if start_col < max_line_length and end_col < max_line_length:
@@ -214,8 +218,8 @@ def span_with_message(span, message):
 
                 elif idx == start_line:
                     # I # if len(line) < max_line_length:
-                    print(line[:start_col - 1], end='')
-                    print(f'{HIGHLIGHT}{line[start_col - 1:]}{CLEAR_ALL}')
+                    print(line[:start_col], end='')
+                    print(f'{HIGHLIGHT}{line[start_col:]}{CLEAR_ALL}')
                     # I # elif start_col < max_line_length:
                     # I #     print(line[:start_col - 1], end='')
                     # I #     print(f'{HIGHLIGHT}{line[start_col - 1:max_line_length - 4] + f" {QUOTE}..."}{CLEAR_ALL}')
@@ -225,8 +229,8 @@ def span_with_message(span, message):
                     # I #     print(lyne[:(start_col + offset) - 1], end='')
                     # I #     print(f'{HIGHLIGHT}{lyne[(start_col + offset) - 1:max_line_length - 4] + f" {QUOTE}..."}{CLEAR_ALL}')
                 elif idx == end_line:
-                    print(f'{HIGHLIGHT}{line[:end_col - 1]}{CLEAR_ALL}', end='')
-                    print(line[end_col - 1:])
+                    print(f'{HIGHLIGHT}{line[:end_col]}{CLEAR_ALL}', end='')
+                    print(line[end_col:])
                 else:
                     # I # print(f'{HIGHLIGHT}{line if len(line) < max_line_length else line[:max_line_length - 4] + f" {QUOTE}..."}{CLEAR_ALL}')
                     print(f'{HIGHLIGHT}{line}{CLEAR_ALL}')

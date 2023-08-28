@@ -7,3 +7,6 @@ class Span:
         self.start = start
         self.end = end
     
+    def content(self):
+        return self.text[self.start:self.end]
+    

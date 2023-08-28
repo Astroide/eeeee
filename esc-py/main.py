@@ -5,6 +5,8 @@
 
 # temporarily 'fixed' the ANSI escape code issue by commenting out (I) the line length code.
 # this will eventually need to be changed; but for now, it more or less works.
+#
+# identifiers are currently only [A-Za-z_][A-Za-z0-9_]*, as this is a testing version. Unicode identifiers are planned in the future.
 
 import errors as Errors
 crash = Errors.crash
@@ -34,5 +36,6 @@ try:
         if tokens is None:
             Errors.info(f'compilation aborted due to {"this error" if Errors.error_count() == 1 else f"{Errors.error_count()} errors"}.')
             exit(1)
+        print(tokens)
 except PermissionError:
     crash(f'{the_file}: insufficient permissions to read')

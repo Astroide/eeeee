@@ -35,11 +35,41 @@ class TokenType(Enum):
     Dot = 29       # .
     Not = 30       # !
     Colon = 31     # :
+    Fn = 32        # fn
+
+single_char_dict = {
+    '(': TokenType.LParen,
+    ')': TokenType.RParen,
+    '[': TokenType.LBracket,
+    ']': TokenType.RBracket,
+    '{': TokenType.LCBrace,
+    '}': TokenType.RCBrace,
+    ';': TokenType.Semicolon,
+    '.': TokenType.Dot,
+    ':': TokenType.Colon,
+}
+
+language = 'en' # for fun
+keyword_dict = {'en': {
+    'let': TokenType.Let,
+    'if': TokenType.If,
+    'fn': TokenType.Fn,
+    'return': TokenType.Return,
+}, 'fr': {
+    'si': TokenType.If,
+    'fn': TokenType.Fn,
+    'retourner': TokenType.Return,
+    'let': TokenType.Let, # there is probably a better keyword name
+}}
 
 class Token:
-    def __init__(self, type, span):
+    def __init__(self, type, span, something_else):
         self.type = type
         self.span = span
+        self.something_else = something_else
+    
+    def __repr__(self) -> str:
+        return f'<Token {str(self.type).removeprefix("TokenType.")} `{self.span.content()}`{" " + str(self.something_else) if self.something_else is not None else ""}>'
 
 class Tokenizer:
     def __init__(self, source_string, source_filename):
@@ -47,14 +77,46 @@ class Tokenizer:
         self.source_filename = source_filename
         self.position = 0
     
+    def peek(self, n = 1):
+        return self.source_string[self.position + 1:self.position + n + 1]
+    
     def generate_tokens(self):
         tokens = []
         while self.position < len(self.source_string):
+            token_type = TokenType.ILiteral
+            token_start = self.position
+            token_extra = None
             match self.source_string[self.position]:
                 case ' ' | '\n' | '\r' | '\t':
-                    pass
+                    self.position += 1
+                    continue
+                case '_' | 'a' | 'A' | 'b' | 'B' | 'c' | 'C' | 'd' | 'D' | 'e' | 'E' | 'f' | 'F' | 'g' | 'G' | 'h' | 'H' | 'i' | 'I' | 'j' | 'J' | 'k' | 'K' | 'l' | 'L' | 'm' | 'M' | 'n' | 'N' | 'o' | 'O' | 'p' | 'P' | 'q' | 'Q' | 'r' | 'R' | 's' | 'S' | 't' | 'T' | 'u' | 'U' | 'v' | 'V' | 'w' | 'W' | 'x' | 'X' | 'y' | 'Y' | 'z' | 'Z':
+                    # Unicode identifiers will be added... later.
+                    ident = self.source_string[self.position]
+                    while True:
+                        next_char = self.peek()
+                        if next_char != '' and next_char in '_aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ0123456789':
+                            ident += next_char
+                            self.position += 1
+                        else:
+                            break
+                    if ident in keyword_dict[language].keys():
+                        token_type = keyword_dict[language][ident]
+                    else:
+                        token_type = TokenType.Ident
+                        token_extra = ident
+                case '(' | ')' | '[' | ']' | '{' | '}' | ';' | '.' | ':':
+                    token_type = single_char_dict[self.source_string[self.position]]
+                case '=':
+                    if self.peek() == '=':
+                        self.position += 1
+                        token_type = TokenType.EqEq
+                    else:
+                        token_type = TokenType.Eq
                 case _:
+                    # print(self.position, '*' + Text.Span(self.source_filename, self.source_string, self.position, self.position + 1).content() + '*')
                     Errors.error(f'Unrecognized character \'{self.source_string[self.position]}\'', (Text.Span(self.source_filename, self.source_string, self.position, self.position + 1), ''))
                     return None
             self.position += 1
+            tokens.append(Token(token_type, Text.Span(self.source_filename, self.source_string, token_start, self.position), token_extra))
         return tokens
