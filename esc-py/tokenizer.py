@@ -268,6 +268,8 @@ class Tokenizer:
                             Errors.error('text literals tagged as char must be exactly 1 character long', (Text.Span(self.source_filename, self.source_string, token_start, self.position + 1), ''))
                             return None
                         token_type_hint = 'char'
+                    elif hint == 'string':
+                        token_type_hint = 'string'
                     elif hint != '':
                         Errors.error(f'`_{hint}` is not a valid type hint for a text literal', (Text.Span(self.source_filename, self.source_string, position_before_hint + 1, self.position + 1), ''))
                         return None

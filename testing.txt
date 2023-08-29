@@ -10,3 +10,4 @@ comment */
 'q'_char // this is a comment /* */
 + - * / ** = ! < >
 += -= *= /= **= == != <= >=
+'a'_string
