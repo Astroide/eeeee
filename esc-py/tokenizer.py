@@ -13,41 +13,39 @@ class TokenType(Enum):
     RParen = 6     # )
     LBracket = 7   # [
     RBracket = 8   # ]
-    SQuote = 9     # '
-    DQuote = 10    # "
-    Lt = 11        # <
-    Gt = 12        # >
-    Leq = 13       # <=
-    Geq = 14       # >=
-    EqEq = 15      # ==
-    LCBrace = 16   # {
-    RCBrace = 17   # }
-    Ident = 18     # Identifier
-    If = 19        # if
-    Neq = 20       # !=
-    Minus = 21     # -
-    Plus = 22      # +
-    Star = 23      # *
-    Slash = 24     # /
-    Ret = 25       # ->
-    Return = 26    # return
-    Exp = 27       # **
-    Semicolon = 28 # ;
-    Dot = 29       # .
-    Not = 30       # !
-    Colon = 31     # :
-    Fn = 32        # fn
-    Else = 33      # else
-    Match = 34     # match
-    Type = 35      # type
-    Const = 36     # const
-    Continue = 37  # continue
-    Break = 38     # break
-    MinusEq = 39   # -=
-    PlusEq = 40    # +=
-    StarEq = 41    # *=
-    SlashEq = 42   # /=
-    ExpEq = 43     # **=
+    Lt = 9         # <
+    Gt = 10        # >
+    Leq = 11       # <=
+    Geq = 12       # >=
+    EqEq = 13      # ==
+    LCBrace = 14   # {
+    RCBrace = 15   # }
+    Ident = 16     # Identifier
+    If = 17        # if
+    Neq = 18       # !=
+    Minus = 19     # -
+    Plus = 20      # +
+    Star = 21      # *
+    Slash = 22     # /
+    Ret = 23       # ->
+    Return = 24    # return
+    Exp = 25       # **
+    Semicolon = 26 # ;
+    Dot = 27       # .
+    Not = 28       # !
+    Colon = 29     # :
+    Fn = 30        # fn
+    Else = 31      # else
+    Match = 32     # match
+    Type = 33      # type
+    Const = 34     # const
+    Continue = 35  # continue
+    Break = 36     # break
+    MinusEq = 37   # -=
+    PlusEq = 38    # +=
+    StarEq = 39    # *=
+    SlashEq = 40   # /=
+    ExpEq = 41     # **=
 
 single_char_dict = {
     '(': TokenType.LParen,
@@ -143,17 +141,17 @@ class Tokenizer:
                 char = self.peek()
                 if char not in '0123456789abcdefABCDEF':
                     Errors.error('Unclosed Unicode escape' if char == "'" else 'Non-hexadecimal character in Unicode escape', (Text.Span(self.source_filename, self.source_string, self.position + 1, self.position + 2), ''))
-                    return None
-                if char == '':
                     return ''
+                if char == '':
+                    return '' # let the upstream EOF handler catch it
                 acc += char
                 self.position += 1
             if len(acc) == 0:
                 Errors.error('Empty Unicode escape', (Text.Span(self.source_filename, self.source_string, self.position - 2, self.position + 2), ''))
-                return None
+                return ''
             if len(acc) > 6:
                 Errors.error('Unicode escapes have a maximum of 6 hexadecimal digits', (Text.Span(self.source_filename, self.source_string, self.position - len(acc) - 2, self.position + 2), ''))
-                return None
+                return ''
             return chr(int(acc, 16))
     
     def generate_tokens(self):
@@ -194,6 +192,26 @@ class Tokenizer:
                         else:
                             self.position += 1
                     continue
+                case '-' if self.peek() == '>':
+                    self.position += 1
+                    token_type = TokenType.Ret
+                case '0' if self.peek() == 'x':
+                    self.position += 1
+                    token_type = TokenType.ILiteral
+                    lit = ''
+                    while True:
+                        next_char = self.peek()
+                        if next_char != '' and next_char in '0123456789abcdefABCDEF':
+                            lit += next_char
+                            self.position += 1
+                        else:
+                            break
+                    val = 0
+                    if len(lit) == 0:
+                        Errors.error('an hexadecimal literal must contain at least one digit', (Text.Span(self.source_filename, self.source_string, token_start, token_start + 2), ''))
+                    else:
+                        val = int(lit, 16)
+                    token_extra = val
                 case '_' | 'a' | 'A' | 'b' | 'B' | 'c' | 'C' | 'd' | 'D' | 'e' | 'E' | 'f' | 'F' | 'g' | 'G' | 'h' | 'H' | 'i' | 'I' | 'j' | 'J' | 'k' | 'K' | 'l' | 'L' | 'm' | 'M' | 'n' | 'N' | 'o' | 'O' | 'p' | 'P' | 'q' | 'Q' | 'r' | 'R' | 's' | 'S' | 't' | 'T' | 'u' | 'U' | 'v' | 'V' | 'w' | 'W' | 'x' | 'X' | 'y' | 'Y' | 'z' | 'Z':
                     # Unicode identifiers will be added... later.
                     ident = self.source_string[self.position]
