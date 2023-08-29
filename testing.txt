@@ -17,3 +17,6 @@ comment */
 0.12
 42
 0_i32
+0xFF
+0xFe
+0x1

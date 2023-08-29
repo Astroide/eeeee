@@ -1,3 +1,5 @@
+import typing as Typing
+
 ERROR = '\x1B[91m'
 WARN = '\x1B[33m'
 QUOTE = '\x1B[34m'
@@ -172,7 +174,7 @@ def error_count():
     global error_counter
     return error_counter
 
-def error(error_message, *span_message_pairs):
+def error(error_message: str, *span_message_pairs):
     global error_counter
     error_counter += 1
     err(error_message)

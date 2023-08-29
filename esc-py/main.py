@@ -10,7 +10,7 @@
 
 import errors as Errors
 crash = Errors.crash
-from tokenizer import Tokenizer
+import tokens as Tokens
 import text as Text
 import sys as Sys, os as Os
 
@@ -31,11 +31,16 @@ if Os.path.isdir(the_file):
 try:
     with open(the_file, mode='r') as handle:
         text = handle.read()
-        tokenizer = Tokenizer(text, the_file)
+        tokenizer = Tokens.Tokenizer(text, the_file)
         tokens = tokenizer.generate_tokens()
         if tokens is None:
             Errors.info(f'compilation aborted due to {"this error" if Errors.error_count() == 1 else f"{Errors.error_count()} errors"}.')
             exit(1)
+        hex_tokens = list(filter(lambda t: t.type == Tokens.TokenType.ILiteral and t.span.content().startswith('0x'), tokens))
+        hex_text = ' '.join(map(lambda t: t.span.content()[2:], hex_tokens))
+        if hex_text.lower() != hex_text and hex_text.upper() != hex_text:
+            parts = tuple(map(lambda token: (token.span, 'this literal uses ' + ('upper' if token.span.content()[2:] == token.span.content()[2:].upper() else ('lower' if token.span.content()[2:] == token.span.content()[2:].lower() else 'mixed')) + ' case'), hex_tokens))
+            Errors.warning('mixed case in hexadecimal literals', *parts)
         print(tokens)
 except PermissionError:
     crash(f'{the_file}: insufficient permissions to read')

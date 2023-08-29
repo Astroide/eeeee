@@ -81,7 +81,7 @@ keyword_dict = {'en': {
 }}
 
 class Token:
-    def __init__(self, type, span, something_else, type_hint):
+    def __init__(self, type: TokenType, span: Text.Span, something_else, type_hint: str):
         self.type = type
         self.span = span
         self.something_else = something_else
@@ -90,8 +90,9 @@ class Token:
     def __repr__(self) -> str:
         return f'<Token {str(self.type).removeprefix("TokenType.")} `{self.span.content()}`{" [" + self.type_hint + "]" if self.type_hint is not None else ""}{" " + str(self.something_else) if self.something_else is not None else ""}>'
 
+
 class Tokenizer:
-    def __init__(self, source_string, source_filename):
+    def __init__(self, source_string: str, source_filename: str):
         self.source_string = source_string
         self.source_filename = source_filename
         self.position = 0
@@ -169,7 +170,7 @@ class Tokenizer:
         else:
             return (TokenType.ILiteral, int(lit))
 
-    def generate_tokens(self):
+    def generate_tokens(self) -> list[Token]:
         tokens = []
         while self.position < len(self.source_string):
             token_type = TokenType.ILiteral

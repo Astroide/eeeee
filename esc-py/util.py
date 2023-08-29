@@ -1,4 +1,4 @@
-def ordinal(n):
+def ordinal(n: int) -> str:
     nstr = str(n)
     if nstr[-1] == '1':
         return nstr + 'st'
