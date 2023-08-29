@@ -1,6 +1,7 @@
 from enum import Enum
 import errors as Errors
 import text as Text
+from util import ordinal
 
 class TokenType(Enum):
     ILiteral = 0   # Integer literal
@@ -165,6 +166,33 @@ class Tokenizer:
             match self.source_string[self.position]:
                 case ' ' | '\n' | '\r' | '\t':
                     self.position += 1
+                    continue
+                case '/' if self.peek() == '/': # // comments
+                    self.position += 1
+                    while self.peek() != '\n' and self.peek() != '':
+                        self.position += 1
+                    continue
+                case '/' if self.peek() == '*': # /* comments */
+                    self.position += 1
+                    depth = 1
+                    comment_starts = [token_start]
+                    while depth > 0:
+                        next_two = self.peek(2)
+                        if len(next_two) < 2:
+                            unmatched_openers = []
+                            for i in range(depth):
+                                unmatched_openers.append((Text.Span(self.source_filename, self.source_string, comment_starts[i], comment_starts[i] + 2), f'{ordinal(i + 1)} unclosed comment started here'))
+                            Errors.error(f'encountered EOF while in a multiline comment ({depth} unclosed comment{"s" if depth > 1 else ""})', *tuple(unmatched_openers))
+                            return None
+                        if next_two == '*/':
+                            self.position += 2
+                            depth -= 1
+                        elif next_two == '/*':
+                            comment_starts.append(self.position + 1)
+                            self.position += 2
+                            depth += 1
+                        else:
+                            self.position += 1
                     continue
                 case '_' | 'a' | 'A' | 'b' | 'B' | 'c' | 'C' | 'd' | 'D' | 'e' | 'E' | 'f' | 'F' | 'g' | 'G' | 'h' | 'H' | 'i' | 'I' | 'j' | 'J' | 'k' | 'K' | 'l' | 'L' | 'm' | 'M' | 'n' | 'N' | 'o' | 'O' | 'p' | 'P' | 'q' | 'Q' | 'r' | 'R' | 's' | 'S' | 't' | 'T' | 'u' | 'U' | 'v' | 'V' | 'w' | 'W' | 'x' | 'X' | 'y' | 'Y' | 'z' | 'Z':
                     # Unicode identifiers will be added... later.
