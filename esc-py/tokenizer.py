@@ -42,6 +42,11 @@ class TokenType(Enum):
     Const = 36     # const
     Continue = 37  # continue
     Break = 38     # break
+    MinusEq = 39   # -=
+    PlusEq = 40    # +=
+    StarEq = 41    # *=
+    SlashEq = 42   # /=
+    ExpEq = 43     # **=
 
 single_char_dict = {
     '(': TokenType.LParen,
@@ -178,12 +183,38 @@ class Tokenizer:
                         token_extra = ident
                 case '(' | ')' | '[' | ']' | '{' | '}' | ';' | '.' | ':':
                     token_type = single_char_dict[self.source_string[self.position]]
-                case '=':
+                case '!' | '/' | '+' | '-' | '=' | '<' | '>':
+                    char = self.source_string[self.position]
                     if self.peek() == '=':
                         self.position += 1
-                        token_type = TokenType.EqEq
+                        token_type = {
+                            '/': TokenType.SlashEq,
+                            '+': TokenType.PlusEq,
+                            '!': TokenType.Neq,
+                            '-': TokenType.MinusEq,
+                            '=': TokenType.EqEq,
+                            '<': TokenType.Leq,
+                            '>': TokenType.Geq,
+                        }[char]
                     else:
-                        token_type = TokenType.Eq
+                        token_type = {
+                            '/': TokenType.Slash,
+                            '+': TokenType.Plus,
+                            '!': TokenType.Not,
+                            '-': TokenType.Minus,
+                            '=': TokenType.Eq,
+                            '<': TokenType.Lt,
+                            '>': TokenType.Gt,
+                        }[char]
+                case '*':
+                    is_exp = self.peek() == '*'
+                    if is_exp:
+                        self.position += 1
+                    if self.peek() == '=':
+                        self.position += 1
+                        token_type = TokenType.ExpEq if is_exp else TokenType.StarEq
+                    else:
+                        token_type = TokenType.Exp if is_exp else TokenType.Star
                 case "'":
                     string_contents = ''
                     while self.peek() != "'":

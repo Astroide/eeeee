@@ -5,3 +5,5 @@ a
 multiline
 string'
 'q'_char
++ - * / ** = ! < >
++= -= *= /= **= == != <= >=
