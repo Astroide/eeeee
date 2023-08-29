@@ -5,7 +5,7 @@ import text as Text
 class TokenType(Enum):
     ILiteral = 0   # Integer literal
     FLiteral = 1   # Float literal
-    SLiteral = 2   # String literal
+    SLiteral = 2   # String or char literal; idea from danielrab (https://discord.com/channels/273534239310479360/490356824420122645/1145878910953848932)
     Let = 3        # let
     Eq = 4         # =
     LParen = 5     # (
@@ -36,6 +36,12 @@ class TokenType(Enum):
     Not = 30       # !
     Colon = 31     # :
     Fn = 32        # fn
+    Else = 33      # else
+    Match = 34     # match
+    Type = 35      # type
+    Const = 36     # const
+    Continue = 37  # continue
+    Break = 38     # break
 
 single_char_dict = {
     '(': TokenType.LParen,
@@ -55,11 +61,19 @@ keyword_dict = {'en': {
     'if': TokenType.If,
     'fn': TokenType.Fn,
     'return': TokenType.Return,
+    'const': TokenType.Const,
+    'else': TokenType.Else,
+    'match': TokenType.Match,
+    'type': TokenType.Type,
+    'const': TokenType.Const,
+    'continue': TokenType.Continue,
+    'break': TokenType.Break,
 }, 'fr': {
     'si': TokenType.If,
     'fn': TokenType.Fn,
     'retourner': TokenType.Return,
     'let': TokenType.Let, # there is probably a better keyword name
+    # later : add missing keywords
 }}
 
 class Token:
@@ -79,6 +93,45 @@ class Tokenizer:
     
     def peek(self, n = 1):
         return self.source_string[self.position + 1:self.position + n + 1]
+    
+    def read_escape(self):
+        self.position += 1
+        nxt = self.peek()
+        if nxt == 'n':
+            return '\n'
+        elif nxt == 't':
+            return '\t'
+        elif nxt == 'r':
+            return '\r'
+        elif nxt == '\\':
+            return '\\'
+        elif nxt == '\'':
+            return '\''
+        elif nxt == '\0':
+            return '\x00'
+        elif nxt == 'u':
+            self.position += 1
+            if self.peek() != '{':
+                Errors.error('\\u must be followed by a {', (Text.Span(self.source_filename, self.source_string, self.position + 1, self.position + 2), ''))
+                return None
+            self.position += 1
+            acc = ''
+            while self.peek() != '}':
+                char = self.peek()
+                if char not in '0123456789abcdefABCDEF':
+                    Errors.error('Unclosed Unicode escape' if char == "'" else 'Non-hexadecimal character in Unicode escape', (Text.Span(self.source_filename, self.source_string, self.position + 1, self.position + 2), ''))
+                    return None
+                if char == '':
+                    return ''
+                acc += char
+                self.position += 1
+            if len(acc) == 0:
+                Errors.error('Empty Unicode escape', (Text.Span(self.source_filename, self.source_string, self.position - 2, self.position + 2), ''))
+                return None
+            if len(acc) > 6:
+                Errors.error('Unicode escapes have a maximum of 6 hexadecimal digits', (Text.Span(self.source_filename, self.source_string, self.position - len(acc) - 2, self.position + 2), ''))
+                return None
+            return chr(int(acc, 16))
     
     def generate_tokens(self):
         tokens = []
@@ -113,6 +166,24 @@ class Tokenizer:
                         token_type = TokenType.EqEq
                     else:
                         token_type = TokenType.Eq
+                case "'":
+                    string_contents = ''
+                    while self.peek() != "'":
+                        char = self.peek()
+                        if char == '':
+                            Errors.error(f'Encountered EOF while reading a string literal', (Text.Span(self.source_filename, self.source_string, token_start, token_start + 1), 'string was started here'))
+                            return None
+                        elif char == '\\':
+                            result = self.read_escape()
+                            if result is None:
+                                return None
+                            string_contents += result
+                        else:
+                            string_contents += char
+                        self.position += 1
+                    self.position += 1
+                    token_type = TokenType.SLiteral
+                    token_extra = string_contents
                 case _:
                     # print(self.position, '*' + Text.Span(self.source_filename, self.source_string, self.position, self.position + 1).content() + '*')
                     Errors.error(f'Unrecognized character \'{self.source_string[self.position]}\'', (Text.Span(self.source_filename, self.source_string, self.position, self.position + 1), ''))
