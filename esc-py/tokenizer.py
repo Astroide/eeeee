@@ -153,7 +153,22 @@ class Tokenizer:
                 Errors.error('Unicode escapes have a maximum of 6 hexadecimal digits', (Text.Span(self.source_filename, self.source_string, self.position - len(acc) - 2, self.position + 2), ''))
                 return ''
             return chr(int(acc, 16))
-    
+        
+    def read_num_literal(self):
+        lit = self.source_string[self.position]
+        while self.peek() in '0123456789' and self.peek() != '':
+            lit += self.peek()
+            self.position += 1
+        if self.peek() == '.':
+            self.position += 1
+            lit += '.'
+            while self.peek() in '0123456789' and self.peek() != '':
+                lit += self.peek()
+                self.position += 1
+            return (TokenType.FLiteral, float(lit))
+        else:
+            return (TokenType.ILiteral, int(lit))
+
     def generate_tokens(self):
         tokens = []
         while self.position < len(self.source_string):
@@ -246,6 +261,36 @@ class Tokenizer:
                     else:
                         val = int(lit, 2)
                     token_extra = val
+                case '.' if self.peek() in '0123456789':
+                    lit = '0.'
+                    while self.peek() in '0123456789' and self.peek() != '':
+                        lit += self.peek()
+                        self.position += 1
+                    token_type = TokenType.FLiteral
+                    token_extra = float(lit)
+                    Errors.error('a float literal must have an integer part', (Text.Span(self.source_filename, self.source_string, token_start, token_start + len(lit) - 1), f'help: add a `0` before it: {lit}'))
+
+                case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9':
+                    token_type, token_extra = self.read_num_literal()
+                    hint_start = self.position
+                    hint = self.get_type_hint()
+                    if hint is None:
+                        hint = ''
+                    if hint in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', 'i128', 'u128']:
+                        if token_type == TokenType.FLiteral:
+                            Errors.error('int type hints are invalid for float literals', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), 'a valid type would be one of f32, f64'))
+                        else:
+                            token_type_hint = hint
+                    elif hint in ['f32', 'f64']:
+                        if token_type == TokenType.ILiteral:
+                            Errors.error('float type hints are invalid for int literals', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), 'a valid type would be one of u8, i8, u16, i16, u32, i32, u64, i64, u128, i128'))
+                        else:
+                            token_type_hint = hint
+                    elif len(hint) > 0:
+                        if hint[0] in 'uif' and all(map(lambda x: x in '0123456789', hint[1:])):
+                            Errors.error(f'invalid width {hint[1:]} for {"float" if hint[0] == "f" else "integer"} literal', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), f'valid widths for {"float" if hint[0] == "f" else "integer"}s are {"32 and 64" if hint[0] == "f" else "8, 16, 32, 64 and 128"}'))
+                        else:
+                            Errors.error(f'invalid type hint for number literal: `_{hint}`', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), ''))
                 case '_' | 'a' | 'A' | 'b' | 'B' | 'c' | 'C' | 'd' | 'D' | 'e' | 'E' | 'f' | 'F' | 'g' | 'G' | 'h' | 'H' | 'i' | 'I' | 'j' | 'J' | 'k' | 'K' | 'l' | 'L' | 'm' | 'M' | 'n' | 'N' | 'o' | 'O' | 'p' | 'P' | 'q' | 'Q' | 'r' | 'R' | 's' | 'S' | 't' | 'T' | 'u' | 'U' | 'v' | 'V' | 'w' | 'W' | 'x' | 'X' | 'y' | 'Y' | 'z' | 'Z':
                     # Unicode identifiers will be added... later.
                     ident = self.source_string[self.position]
@@ -314,7 +359,7 @@ class Tokenizer:
                     position_before_hint = self.position
                     hint = self.get_type_hint()
                     if hint is None:
-                        return None
+                        hint = ''
                     if hint == 'char':
                         if len(string_contents) != 1:
                             Errors.error('text literals tagged as char must be exactly 1 character long', (Text.Span(self.source_filename, self.source_string, token_start, self.position + 1), ''))
