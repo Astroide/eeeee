@@ -195,7 +195,7 @@ class Tokenizer:
                 case '-' if self.peek() == '>':
                     self.position += 1
                     token_type = TokenType.Ret
-                case '0' if self.peek() == 'x':
+                case '0' if self.peek() == 'x': # hex literal
                     self.position += 1
                     token_type = TokenType.ILiteral
                     lit = ''
@@ -211,6 +211,40 @@ class Tokenizer:
                         Errors.error('an hexadecimal literal must contain at least one digit', (Text.Span(self.source_filename, self.source_string, token_start, token_start + 2), ''))
                     else:
                         val = int(lit, 16)
+                    token_extra = val
+                case '0' if self.peek() == 'o': # octal literal
+                    self.position += 1
+                    token_type = TokenType.ILiteral
+                    lit = ''
+                    while True:
+                        next_char = self.peek()
+                        if next_char != '' and next_char in '01234567':
+                            lit += next_char
+                            self.position += 1
+                        else:
+                            break
+                    val = 0
+                    if len(lit) == 0:
+                        Errors.error('an octal literal must contain at least one digit', (Text.Span(self.source_filename, self.source_string, token_start, token_start + 2), ''))
+                    else:
+                        val = int(lit, 8)
+                    token_extra = val
+                case '0' if self.peek() == 'b': # binary literal
+                    self.position += 1
+                    token_type = TokenType.ILiteral
+                    lit = ''
+                    while True:
+                        next_char = self.peek()
+                        if next_char != '' and next_char in '01':
+                            lit += next_char
+                            self.position += 1
+                        else:
+                            break
+                    val = 0
+                    if len(lit) == 0:
+                        Errors.error('a binary literal must contain at least one digit', (Text.Span(self.source_filename, self.source_string, token_start, token_start + 2), ''))
+                    else:
+                        val = int(lit, 2)
                     token_extra = val
                 case '_' | 'a' | 'A' | 'b' | 'B' | 'c' | 'C' | 'd' | 'D' | 'e' | 'E' | 'f' | 'F' | 'g' | 'G' | 'h' | 'H' | 'i' | 'I' | 'j' | 'J' | 'k' | 'K' | 'l' | 'L' | 'm' | 'M' | 'n' | 'N' | 'o' | 'O' | 'p' | 'P' | 'q' | 'Q' | 'r' | 'R' | 's' | 'S' | 't' | 'T' | 'u' | 'U' | 'v' | 'V' | 'w' | 'W' | 'x' | 'X' | 'y' | 'Y' | 'z' | 'Z':
                     # Unicode identifiers will be added... later.
