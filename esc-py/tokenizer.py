@@ -77,13 +77,14 @@ keyword_dict = {'en': {
 }}
 
 class Token:
-    def __init__(self, type, span, something_else):
+    def __init__(self, type, span, something_else, type_hint):
         self.type = type
         self.span = span
         self.something_else = something_else
+        self.type_hint = type_hint
     
     def __repr__(self) -> str:
-        return f'<Token {str(self.type).removeprefix("TokenType.")} `{self.span.content()}`{" " + str(self.something_else) if self.something_else is not None else ""}>'
+        return f'<Token {str(self.type).removeprefix("TokenType.")} `{self.span.content()}`{" [" + self.type_hint + "]" if self.type_hint is not None else ""}{" " + str(self.something_else) if self.something_else is not None else ""}>'
 
 class Tokenizer:
     def __init__(self, source_string, source_filename):
@@ -93,6 +94,22 @@ class Tokenizer:
     
     def peek(self, n = 1):
         return self.source_string[self.position + 1:self.position + n + 1]
+    
+    def get_type_hint(self):
+        if self.peek() != '_':
+            return ''
+        self.position += 1
+        hint = ''
+        while self.peek() in 'qwertyuiopasdfghjklzxcvbnm1234567890':
+            char = self.peek()
+            if char == '':
+                break
+            hint += char
+            self.position += 1
+        if hint == '':
+            Errors.error('a trailing underscore is not a valid type hint', (Text.Span(self.source_filename, self.source_string, self.position, self.position + 1), ''))
+            return None
+        return hint
     
     def read_escape(self):
         self.position += 1
@@ -139,6 +156,7 @@ class Tokenizer:
             token_type = TokenType.ILiteral
             token_start = self.position
             token_extra = None
+            token_type_hint = None
             match self.source_string[self.position]:
                 case ' ' | '\n' | '\r' | '\t':
                     self.position += 1
@@ -171,7 +189,7 @@ class Tokenizer:
                     while self.peek() != "'":
                         char = self.peek()
                         if char == '':
-                            Errors.error(f'Encountered EOF while reading a string literal', (Text.Span(self.source_filename, self.source_string, token_start, token_start + 1), 'string was started here'))
+                            Errors.error(f'Encountered EOF while reading a text literal', (Text.Span(self.source_filename, self.source_string, token_start, token_start + 1), 'string was started here'))
                             return None
                         elif char == '\\':
                             result = self.read_escape()
@@ -182,6 +200,18 @@ class Tokenizer:
                             string_contents += char
                         self.position += 1
                     self.position += 1
+                    position_before_hint = self.position
+                    hint = self.get_type_hint()
+                    if hint is None:
+                        return None
+                    if hint == 'char':
+                        if len(string_contents) != 1:
+                            Errors.error('text literals tagged as char must be exactly 1 character long', (Text.Span(self.source_filename, self.source_string, token_start, self.position + 1), ''))
+                            return None
+                        token_type_hint = 'char'
+                    elif hint != '':
+                        Errors.error(f'`_{hint}` is not a valid type hint for a text literal', (Text.Span(self.source_filename, self.source_string, position_before_hint + 1, self.position + 1), ''))
+                        return None
                     token_type = TokenType.SLiteral
                     token_extra = string_contents
                 case _:
@@ -189,5 +219,5 @@ class Tokenizer:
                     Errors.error(f'Unrecognized character \'{self.source_string[self.position]}\'', (Text.Span(self.source_filename, self.source_string, self.position, self.position + 1), ''))
                     return None
             self.position += 1
-            tokens.append(Token(token_type, Text.Span(self.source_filename, self.source_string, token_start, self.position), token_extra))
+            tokens.append(Token(token_type, Text.Span(self.source_filename, self.source_string, token_start, self.position), token_extra, token_type_hint))
         return tokens
