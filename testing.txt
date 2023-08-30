@@ -1,9 +1,9 @@
-2 * {
+a.b.c.d - 1.2.test * {
     true; false;
     some_function('e', 2);
     3 + (4 / -5) - 1; /* commentaire */
     5 // autre commentaire
-} /*
+}.sqrt() /*
 comment
 comment
 comment */

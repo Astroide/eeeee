@@ -36,13 +36,13 @@ PREC_LITERAL = 100
 
 class Expression:
     def __repr__(self):
-        raise BaseException("undefined __repr__")
+        raise BaseException(f'undefined __repr__ (in {repr(type(self))})')
     
     def source_span(self) -> Text.Span:
-        raise BaseException("undefined source_span")
+        raise BaseException(f'undefined source_span (in {repr(type(self))})')
     
     def lispfmt(self, indentation: int, idt) -> int:
-        print(idt(indentation) + '(???)')
+        print(idt(indentation) + f'(??? {repr(type(self))})')
 
 class Block(Expression):
     def __init__(self, inner: Expression, span: Text.Span):
@@ -202,6 +202,23 @@ class CallExpression(Expression):
     def __repr__(self) -> str:
         return 'call(' + repr(self.callee) + ('' if len(self.args) == 0 else ' @ ' + ', '.join(map(repr, self.args))) + ')'
 
+class PropertyAccessExpression(Expression):
+    def __init__(self, object: Expression, property: str | int, span: Text.Span):
+        self.object = object
+        self.property = property
+        self.span = span
+
+    def __repr__(self) -> str:
+        return repr(self.object) + '->' + self.property
+    
+    def lispfmt(self, indentation: int, idt) -> int:
+        print(idt(indentation) + '(-> ' + self.property)
+        self.object.lispfmt(indentation + 1, idt)
+        print(idt(indentation) + ')')
+    
+    def source_span(self) -> Text.Span:
+        return self.span
+
 class FatalParseError(BaseException):
     pass
 
@@ -234,6 +251,7 @@ class Parser:
             TokenType.Exp: PREC_MUL_DIV_EXP,
             TokenType.Semicolon: PREC_SEMICOLON,
             TokenType.LParen: PREC_CALL,
+            TokenType.Dot: PREC_CALL,
         }
         fx = lambda lhs, t: self.infix(lhs, t)
         self.infixes = {
@@ -244,6 +262,7 @@ class Parser:
             TokenType.Exp: fx,
             TokenType.Semicolon: fx,
             TokenType.LParen: lambda lhs, t: self.fcall(lhs, t),
+            TokenType.Dot: lambda lhs, t: self.property(lhs, t),
         }
         self.postfixes = {}
     
@@ -331,3 +350,8 @@ class Parser:
             else:
                 closing = self.expect(TokenType.RParen, 'expected <ET>, got <AT>')
                 return CallExpression(lhs, Text.merge_spans(lhs.source_span(), token.span, closing.span), *args)
+    
+    def property(self, lhs: Expression, token: Tokens.Token) -> PropertyAccessExpression:
+        # todo: add support for .<x> on tuples
+        id = self.expect(TokenType.Ident, 'expected <ET>, got <AT>')
+        return PropertyAccessExpression(lhs, id.something_else, Text.merge_spans(lhs.source_span(), token.span, id.span))
