@@ -2,6 +2,29 @@ import tokens as Tokens
 TokenType = Tokens.TokenType
 import text as Text
 import errors as Errors
+from sys import setrecursionlimit, getrecursionlimit, _getframe
+from itertools import count
+
+def stack_size3a(size=2): # from: https://stackoverflow.com/a/47956089, stack_size3a()
+    frame = _getframe(size)
+    try:
+        for size in count(size, 8):
+            frame = frame.f_back.f_back.f_back.f_back.\
+                f_back.f_back.f_back.f_back
+    except AttributeError:
+        while frame:
+            frame = frame.f_back
+            size += 1
+        return size - 1
+
+
+def safe_recurse():
+    limit = getrecursionlimit()
+    depth = stack_size3a()
+    if depth + 10 > limit:
+        setrecursionlimit(limit + 10)
+    elif limit > 2 * depth and limit > 1000:
+        setrecursionlimit(max(1000, depth + 100))
 
 PREC_SEMICOLON = 1
 PREC_LOGICAL = 10
@@ -20,6 +43,23 @@ class Expression:
     def lispfmt(self, indentation: int, idt) -> int:
         print(idt(indentation) + '(???)')
 
+class Block(Expression):
+    def __init__(self, inner: Expression, span: Text.Span):
+        self.inner = inner
+        self.span = span
+    
+    def __repr__(self):
+        return f'{{{repr(self.inner)}}}'
+    
+    def source_span(self) -> Text.Span:
+        return self.span
+    
+    def lispfmt(self, indentation: int, idt) -> int:
+        print(idt(indentation) + '{')
+        safe_recurse()
+        self.inner.lispfmt(indentation + 1, idt)
+        print(idt(indentation) + '}')
+
 class BinaryExpression(Expression):
     def __init__(self, left: Expression, operator: Tokens.Token, right: Expression, span: Text.Span):
         self.left = left
@@ -31,6 +71,7 @@ class BinaryExpression(Expression):
         return f'bin({repr(self.left)} {str(self.operator.type).replace("TokenType.", "")} {repr(self.right)})'
     
     def lispfmt(self, indentation: int, idt) -> int:
+        safe_recurse()
         print(idt(indentation) + '(' + Tokens.lit[self.operator.type])
         self.left.lispfmt(indentation + 1, idt)
         self.right.lispfmt(indentation + 1, idt)
@@ -120,6 +161,7 @@ class Parser:
             TokenType.SLiteral: lambda t: self.literal(t),
             TokenType.FLiteral: lambda t: self.literal(t),
             TokenType.LParen: lambda t: self.parenthesized(t),
+            TokenType.LCBrace: lambda t: self.block(t),
             TokenType.Ident: lambda t: self.identifier(t),
         }
         self.infix_precedences = {
@@ -128,6 +170,7 @@ class Parser:
             TokenType.Star: PREC_MUL_DIV_EXP,
             TokenType.Slash: PREC_MUL_DIV_EXP,
             TokenType.Exp: PREC_MUL_DIV_EXP,
+            TokenType.Semicolon: PREC_SEMICOLON,
         }
         fx = lambda lhs, t: self.infix(lhs, t)
         self.infixes = {
@@ -136,6 +179,7 @@ class Parser:
             TokenType.Star: fx,
             TokenType.Slash: fx,
             TokenType.Exp: fx,
+            TokenType.Semicolon: fx,
         }
         self.postfixes = {}
     
@@ -149,11 +193,12 @@ class Parser:
     def back(self):
         self.cursor -= 1
     
-    def expect(self, token_type: TokenType, message: str, message_2: str = ''):
+    def expect(self, token_type: TokenType, message: str, message_2: str = '') -> Tokens.Token:
         token = self.next()
         if token.type != token_type:
             Errors.error(message.replace('<ET>', Tokens.reverse_type_map[token_type]).replace('<AT>', Tokens.reverse_type_map[token.type]), (token.span, message_2))
             raise FatalParseError()
+        return token
     
     def literal(self, token: Tokens.Token) -> LiteralExpression:
         if token.type == TokenType.FLiteral:
@@ -177,6 +222,7 @@ class Parser:
             return 0
 
     def expression(self, level = 0) -> Expression:
+        safe_recurse()
         token = self.next()
         if token.type not in self.prefixes.keys():
             self.back()
@@ -193,3 +239,8 @@ class Parser:
         expr = self.expression()
         self.expect(TokenType.RParen, 'expected a closing parenthesis, got <AT>')
         return expr
+    
+    def block(self, start: Tokens.Token) -> Expression:
+        expr = self.expression()
+        end = self.expect(TokenType.RCBrace, 'expected <ET>, got <AT>')
+        return Block(expr, Text.merge_spans(start.span, end.span))

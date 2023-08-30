@@ -281,6 +281,7 @@ class Tokenizer:
                     self.position += 1
                     while self.peek() != '\n' and self.peek() != '':
                         self.position += 1
+                    self.position += 1
                     continue
                 case '/' if self.peek() == '*': # /* comments */
                     self.position += 1
@@ -303,6 +304,8 @@ class Tokenizer:
                             depth += 1
                         else:
                             self.position += 1
+                    self.position += 1
+                        
                     continue
                 case '-' if self.peek() == '>':
                     self.position += 1

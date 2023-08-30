@@ -45,7 +45,7 @@ try:
         if hex_text.lower() != hex_text and hex_text.upper() != hex_text:
             parts = tuple(map(lambda token: (token.span, 'this literal uses ' + ('upper' if token.span.content()[2:] == token.span.content()[2:].upper() else ('lower' if token.span.content()[2:] == token.span.content()[2:].lower() else 'mixed')) + ' case'), hex_tokens))
             Errors.warning('mixed case in hexadecimal literals', *parts)
-        # print(tokens)
+        print('\n'.join(map(repr, tokens)))
         parser = Parser.Parser(tokens)
         try:
             stuff = parser.expression()
