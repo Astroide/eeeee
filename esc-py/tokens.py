@@ -46,6 +46,55 @@ class TokenType(Enum):
     StarEq = 39    # *=
     SlashEq = 40   # /=
     ExpEq = 41     # **=
+    EEE = 42
+    EOF = 43
+
+reverse_type_map = {
+    TokenType.ILiteral : 'an integer literal',
+    TokenType.FLiteral : 'a float literal',
+    TokenType.SLiteral : 'a string literal',
+    TokenType.Let      : "'let'",
+    TokenType.Eq       : "'='",
+    TokenType.LParen   : "'('",
+    TokenType.RParen   : "')'",
+    TokenType.LBracket : "'['",
+    TokenType.RBracket : "']'",
+    TokenType.Lt       : "'<'",
+    TokenType.Gt       : "'>'",
+    TokenType.Leq      : "'<='",
+    TokenType.Geq      : "'>='",
+    TokenType.EqEq     : "'=='",
+    TokenType.LCBrace  : "'{'",
+    TokenType.RCBrace  : "'}'",
+    TokenType.Ident    : "an identifier",
+    TokenType.If       : "'if'",
+    TokenType.Neq      : "'!='",
+    TokenType.Minus    : "'-'",
+    TokenType.Plus     : "'+'",
+    TokenType.Star     : "'*'",
+    TokenType.Slash    : "'/'",
+    TokenType.Ret      : "'->'",
+    TokenType.Return   : "'return'",
+    TokenType.Exp      : "'**'",
+    TokenType.Semicolon: "';'",
+    TokenType.Dot      : "'.'",
+    TokenType.Not      : "'!'",
+    TokenType.Colon    : "':'",
+    TokenType.Fn       : "'fn'",
+    TokenType.Else     : "'else'",
+    TokenType.Match    : "'match'",
+    TokenType.Type     : "'type'",
+    TokenType.Const    : "'const'",
+    TokenType.Continue : "'continue'",
+    TokenType.Break    : "'break'",
+    TokenType.MinusEq  : "'-='",
+    TokenType.PlusEq   : "'+='",
+    TokenType.StarEq   : "'*='",
+    TokenType.SlashEq  : "'/='",
+    TokenType.ExpEq    : "'**='",
+    TokenType.EEE      : Errors.ice('you should never see this (TokenType.EEE)'),
+    TokenType.EOF      : 'EOF',
+}
 
 single_char_dict = {
     '(': TokenType.LParen,
@@ -228,6 +277,19 @@ class Tokenizer:
                     else:
                         val = int(lit, 16)
                     token_extra = val
+                    hint_start = self.position + 1
+                    hint = self.get_type_hint()
+                    if hint is None:
+                        hint = ''
+                    if hint in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', 'i128', 'u128']:
+                        token_type_hint = hint
+                    elif hint in ['f32', 'f64']:
+                        Errors.error('float type hints are invalid for int literals', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), 'a valid type would be one of u8, i8, u16, i16, u32, i32, u64, i64, u128, i128'))
+                    elif len(hint) > 0:
+                        if hint[0] in 'uif' and all(map(lambda x: x in '0123456789', hint[1:])):
+                            Errors.error(f'invalid width {hint[1:]} for {"float" if hint[0] == "f" else "integer"} literal', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), f'valid widths for {"float" if hint[0] == "f" else "integer"}s are {"32 and 64" if hint[0] == "f" else "8, 16, 32, 64 and 128"}'))
+                        else:
+                            Errors.error(f'invalid type hint for number literal: `_{hint}`', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), ''))
                 case '0' if self.peek() == 'o': # octal literal
                     self.position += 1
                     token_type = TokenType.ILiteral
@@ -245,6 +307,19 @@ class Tokenizer:
                     else:
                         val = int(lit, 8)
                     token_extra = val
+                    hint_start = self.position + 1
+                    hint = self.get_type_hint()
+                    if hint is None:
+                        hint = ''
+                    if hint in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', 'i128', 'u128']:
+                        token_type_hint = hint
+                    elif hint in ['f32', 'f64']:
+                        Errors.error('float type hints are invalid for int literals', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), 'a valid type would be one of u8, i8, u16, i16, u32, i32, u64, i64, u128, i128'))
+                    elif len(hint) > 0:
+                        if hint[0] in 'uif' and all(map(lambda x: x in '0123456789', hint[1:])):
+                            Errors.error(f'invalid width {hint[1:]} for {"float" if hint[0] == "f" else "integer"} literal', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), f'valid widths for {"float" if hint[0] == "f" else "integer"}s are {"32 and 64" if hint[0] == "f" else "8, 16, 32, 64 and 128"}'))
+                        else:
+                            Errors.error(f'invalid type hint for number literal: `_{hint}`', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), ''))
                 case '0' if self.peek() == 'b': # binary literal
                     self.position += 1
                     token_type = TokenType.ILiteral
@@ -262,11 +337,37 @@ class Tokenizer:
                     else:
                         val = int(lit, 2)
                     token_extra = val
+                    hint_start = self.position + 1
+                    hint = self.get_type_hint()
+                    if hint is None:
+                        hint = ''
+                    if hint in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', 'i128', 'u128']:
+                        token_type_hint = hint
+                    elif hint in ['f32', 'f64']:
+                        Errors.error('float type hints are invalid for int literals', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), 'a valid type would be one of u8, i8, u16, i16, u32, i32, u64, i64, u128, i128'))
+                    elif len(hint) > 0:
+                        if hint[0] in 'uif' and all(map(lambda x: x in '0123456789', hint[1:])):
+                            Errors.error(f'invalid width {hint[1:]} for {"float" if hint[0] == "f" else "integer"} literal', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), f'valid widths for {"float" if hint[0] == "f" else "integer"}s are {"32 and 64" if hint[0] == "f" else "8, 16, 32, 64 and 128"}'))
+                        else:
+                            Errors.error(f'invalid type hint for number literal: `_{hint}`', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), ''))
                 case '.' if self.peek() in '0123456789':
                     lit = '0.'
                     while self.peek() in '0123456789' and self.peek() != '':
                         lit += self.peek()
                         self.position += 1
+                    hint_start = self.position + 1
+                    hint = self.get_type_hint()
+                    if hint is None:
+                        hint = ''
+                    if hint in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', 'i128', 'u128']:
+                        Errors.error('int type hints are invalid for float literals', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), 'a valid type would be one of f32, f64'))
+                    elif hint in ['f32', 'f64']:
+                        token_type_hint = hint
+                    elif len(hint) > 0:
+                        if hint[0] in 'uif' and all(map(lambda x: x in '0123456789', hint[1:])):
+                            Errors.error(f'invalid width {hint[1:]} for {"float" if hint[0] == "f" else "integer"} literal', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), f'valid widths for {"float" if hint[0] == "f" else "integer"}s are {"32 and 64" if hint[0] == "f" else "8, 16, 32, 64 and 128"}'))
+                        else:
+                            Errors.error(f'invalid type hint for number literal: `_{hint}`', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), ''))
                     token_type = TokenType.FLiteral
                     token_extra = float(lit)
                     Errors.error('a float literal must have an integer part', (Text.Span(self.source_filename, self.source_string, token_start, token_start + len(lit) - 1), f'help: add a `0` before it: {lit}'))

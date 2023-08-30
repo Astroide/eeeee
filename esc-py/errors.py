@@ -147,6 +147,9 @@ def crash(reason):
     err(reason, True)
     exit(1)
 
+def ice(s):
+    return ERROR + 'internal compiler error ' + CYAN + '(please report this): ' + WARN + s + CLEAR_COLOR
+
 def transform(source, position):
     # print('transform(' + str(position) + ')')
     line_no = 0

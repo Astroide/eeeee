@@ -13,9 +13,14 @@ crash = Errors.crash
 import tokens as Tokens
 import text as Text
 import sys as Sys, os as Os
+import parser_ as Parser # the underscore is to have my Python extension shut up about overriding a default module
 
 if __name__ != '__main__':
     crash('this is meant to be invoked directly, not as a module')
+
+def die():
+    Errors.info(f'compilation aborted due to {"this error" if Errors.error_count() == 1 else f"{Errors.error_count()} errors"}.')
+    exit(1)
 
 if len(Sys.argv) < 2:
     crash('a filename must be provided')
@@ -34,13 +39,18 @@ try:
         tokenizer = Tokens.Tokenizer(text, the_file)
         tokens = tokenizer.generate_tokens()
         if tokens is None:
-            Errors.info(f'compilation aborted due to {"this error" if Errors.error_count() == 1 else f"{Errors.error_count()} errors"}.')
-            exit(1)
+            die()
         hex_tokens = list(filter(lambda t: t.type == Tokens.TokenType.ILiteral and t.span.content().startswith('0x'), tokens))
-        hex_text = ' '.join(map(lambda t: t.span.content()[2:], hex_tokens))
+        hex_text = ' '.join(map(lambda t: t.span.content()[2:].split('_')[0], hex_tokens))
         if hex_text.lower() != hex_text and hex_text.upper() != hex_text:
             parts = tuple(map(lambda token: (token.span, 'this literal uses ' + ('upper' if token.span.content()[2:] == token.span.content()[2:].upper() else ('lower' if token.span.content()[2:] == token.span.content()[2:].lower() else 'mixed')) + ' case'), hex_tokens))
             Errors.warning('mixed case in hexadecimal literals', *parts)
-        print(tokens)
+        # print(tokens)
+        parser = Parser.Parser(tokens)
+        try:
+            stuff = parser.expression()
+            print(stuff)
+        except Parser.FatalParseError:
+            die()
 except PermissionError:
     crash(f'{the_file}: insufficient permissions to read')

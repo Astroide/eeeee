@@ -1,4 +1,4 @@
-if return fn let sample_identifier eeee___1__ 'inside t\n\'he string' e 'eee \u{21} eee'
+(1+'e'+2)if return fn let sample_identifier eeee___1__ 'inside t\n\'he string' e 'eee \u{21} eee'
 'this
 is
 a
@@ -11,7 +11,7 @@ comment */
 + - * / ** = ! < >
 += -= *= /= **= == != <= >=
 'a'_string
-0x1235abc
+0x1235ABC
 0o27
 0b11
 0.12
