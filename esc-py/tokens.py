@@ -46,8 +46,9 @@ class TokenType(Enum):
     StarEq = 39    # *=
     SlashEq = 40   # /=
     ExpEq = 41     # **=
-    EEE = 42
-    EOF = 43
+    BLiteral = 43  # true | false
+    EEE = 43
+    EOF = 44
 
 reverse_type_map = {
     TokenType.ILiteral : 'an integer literal',
@@ -92,6 +93,7 @@ reverse_type_map = {
     TokenType.StarEq   : "'*='",
     TokenType.SlashEq  : "'/='",
     TokenType.ExpEq    : "'**='",
+    TokenType.BLiteral : "a boolean literal ('true' or 'false')",
     TokenType.EEE      : Errors.ice('you should never see this (TokenType.EEE)'),
     TokenType.EOF      : 'EOF',
 }
@@ -139,6 +141,7 @@ lit = {
     TokenType.StarEq   : "*=",
     TokenType.SlashEq  : "/=",
     TokenType.ExpEq    : "**=",
+    TokenType.BLiteral : "a boolean literal ('true' or 'false')",
     TokenType.EEE      : Errors.ice('you should never see this (TokenType.EEE)'),
     TokenType.EOF      : 'EOF',
 }
@@ -443,6 +446,14 @@ class Tokenizer:
                             Errors.error(f'invalid width {hint[1:]} for {"float" if hint[0] == "f" else "integer"} literal', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), f'valid widths for {"float" if hint[0] == "f" else "integer"}s are {"32 and 64" if hint[0] == "f" else "8, 16, 32, 64 and 128"}'))
                         else:
                             Errors.error(f'invalid type hint for number literal: `_{hint}`', (Text.Span(self.source_filename, self.source_string, hint_start, self.position + 1), ''))
+                case 't' if self.peek(3) == 'rue':
+                    token_type = TokenType.BLiteral
+                    token_extra = True
+                    self.position += 3
+                case 'f' if self.peek(4) == 'alse':
+                    token_type = TokenType.BLiteral
+                    token_extra = False
+                    self.position += 4
                 case '_' | 'a' | 'A' | 'b' | 'B' | 'c' | 'C' | 'd' | 'D' | 'e' | 'E' | 'f' | 'F' | 'g' | 'G' | 'h' | 'H' | 'i' | 'I' | 'j' | 'J' | 'k' | 'K' | 'l' | 'L' | 'm' | 'M' | 'n' | 'N' | 'o' | 'O' | 'p' | 'P' | 'q' | 'Q' | 'r' | 'R' | 's' | 'S' | 't' | 'T' | 'u' | 'U' | 'v' | 'V' | 'w' | 'W' | 'x' | 'X' | 'y' | 'Y' | 'z' | 'Z':
                     # Unicode identifiers will be added... later.
                     ident = self.source_string[self.position]

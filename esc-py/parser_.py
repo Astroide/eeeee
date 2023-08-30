@@ -136,6 +136,21 @@ class FloatLiteral(LiteralExpression):
     def lispfmt(self, indentation: int, idt) -> int:
         print(idt(indentation) + Errors.CYAN + str(self.value) + Errors.CLEAR_COLOR)
 
+class BooleanLiteral(LiteralExpression):
+    def __init__(self, value: bool, source: Text.Span):
+        self.value = value
+        self.type = None
+        self.source = source
+    
+    def source_span(self) -> Text.Span:
+        return self.source
+    
+    def __repr__(self) -> str:
+        return '$true' if self.value else '$false'
+    
+    def lispfmt(self, indentation: int, idt) -> int:
+        print(idt(indentation) + Errors.ERROR + ('true' if self.value else 'false') + Errors.CLEAR_COLOR)
+
 class StringLiteral(LiteralExpression):
     def __init__(self, value: str, type_hint: str | None, source: Text.Span):
         self.value = value
@@ -180,6 +195,7 @@ class Parser:
             TokenType.ILiteral: lambda t: self.literal(t),
             TokenType.SLiteral: lambda t: self.literal(t),
             TokenType.FLiteral: lambda t: self.literal(t),
+            TokenType.BLiteral: lambda t: self.literal(t),
             TokenType.LParen: lambda t: self.parenthesized(t),
             TokenType.LCBrace: lambda t: self.block(t),
             TokenType.Ident: lambda t: self.identifier(t),
@@ -233,6 +249,8 @@ class Parser:
             return IntLiteral(token.something_else, token.type_hint, token.span)
         elif token.type == TokenType.SLiteral:
             return StringLiteral(token.something_else, token.type_hint, token.span)
+        elif token.type == TokenType.BLiteral:
+            return BooleanLiteral(token.something_else, token.span)
         
     def identifier(self, token: Tokens.Token) -> IdentifierExpression:
         return IdentifierExpression(token.something_else, token.span)

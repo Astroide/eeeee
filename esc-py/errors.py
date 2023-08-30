@@ -1,6 +1,4 @@
-import typing as Typing
-
-ERROR = '\x1B[91m'
+ERROR = '\x1B[31m'
 WARN = '\x1B[33m'
 QUOTE = '\x1B[34m'
 HIGHLIGHT = '\x1B[7m'
