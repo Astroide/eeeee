@@ -31,6 +31,7 @@ PREC_LOGICAL = 10
 PREC_ADD_SUB = 20
 PREC_MUL_DIV_EXP = 30
 PREC_UNARY = 40
+PREC_CALL = 50
 PREC_LITERAL = 100
 
 class Expression:
@@ -182,6 +183,25 @@ class IdentifierExpression(Expression):
     def __repr__(self) -> str:
         return f'$id({self.id})'
 
+class CallExpression(Expression):
+    def __init__(self, callee: Expression, span: Text.Span, *args):
+        self.callee = callee
+        self.span = span
+        self.args = args
+    
+    def source_span(self) -> Text.Span:
+        return self.span
+    
+    def lispfmt(self, indentation: int, idt) -> int:
+        print(idt(indentation) + '(call')
+        self.callee.lispfmt(indentation + 1, idt)
+        for arg in self.args:
+            arg.lispfmt(indentation + 1, idt)
+        print(idt(indentation) + ')')
+    
+    def __repr__(self) -> str:
+        return 'call(' + repr(self.callee) + ('' if len(self.args) == 0 else ' @ ' + ', '.join(map(repr, self.args))) + ')'
+
 class FatalParseError(BaseException):
     pass
 
@@ -213,6 +233,7 @@ class Parser:
             TokenType.Slash: PREC_MUL_DIV_EXP,
             TokenType.Exp: PREC_MUL_DIV_EXP,
             TokenType.Semicolon: PREC_SEMICOLON,
+            TokenType.LParen: PREC_CALL,
         }
         fx = lambda lhs, t: self.infix(lhs, t)
         self.infixes = {
@@ -222,6 +243,7 @@ class Parser:
             TokenType.Slash: fx,
             TokenType.Exp: fx,
             TokenType.Semicolon: fx,
+            TokenType.LParen: lambda lhs, t: self.fcall(lhs, t),
         }
         self.postfixes = {}
     
@@ -292,3 +314,20 @@ class Parser:
     def unary(self, token: Tokens.Token) -> UnaryExpression:
         expr = self.expression(self.prefix_precedences[token.type])
         return UnaryExpression(token, expr, Text.merge_spans(token.span, expr.source_span()))
+    
+    def fcall(self, lhs: Expression, token: Tokens.Token) -> CallExpression:
+        next = self.peek()
+        if next.type == TokenType.RParen:
+            self.next()
+            return CallExpression(lhs, Text.merge_spans(lhs.source_span(), token.span, next.span))
+        args = []
+        while True:
+            args.append(self.expression())
+            if self.peek().type == TokenType.Comma:
+                self.next()
+                if self.peek().type == TokenType.RParen:
+                    closing = self.next()
+                    return CallExpression(lhs, Text.merge_spans(lhs.source_span(), token.span, closing.span), *args)
+            else:
+                closing = self.expect(TokenType.RParen, 'expected <ET>, got <AT>')
+                return CallExpression(lhs, Text.merge_spans(lhs.source_span(), token.span, closing.span), *args)

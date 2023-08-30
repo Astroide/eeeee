@@ -46,9 +46,10 @@ class TokenType(Enum):
     StarEq = 39    # *=
     SlashEq = 40   # /=
     ExpEq = 41     # **=
-    BLiteral = 43  # true | false
-    EEE = 43
-    EOF = 44
+    BLiteral = 42  # true | false
+    Comma = 43     # ,
+    EEE = 44
+    EOF = 45
 
 reverse_type_map = {
     TokenType.ILiteral : 'an integer literal',
@@ -94,6 +95,7 @@ reverse_type_map = {
     TokenType.SlashEq  : "'/='",
     TokenType.ExpEq    : "'**='",
     TokenType.BLiteral : "a boolean literal ('true' or 'false')",
+    TokenType.Comma    : "','",
     TokenType.EEE      : Errors.ice('you should never see this (TokenType.EEE)'),
     TokenType.EOF      : 'EOF',
 }
@@ -142,6 +144,7 @@ lit = {
     TokenType.SlashEq  : "/=",
     TokenType.ExpEq    : "**=",
     TokenType.BLiteral : "a boolean literal ('true' or 'false')",
+    TokenType.Comma    : ',',
     TokenType.EEE      : Errors.ice('you should never see this (TokenType.EEE)'),
     TokenType.EOF      : 'EOF',
 }
@@ -156,6 +159,7 @@ single_char_dict = {
     ';': TokenType.Semicolon,
     '.': TokenType.Dot,
     ':': TokenType.Colon,
+    ',': TokenType.Comma,
 }
 
 language = 'en' # for fun
@@ -469,7 +473,7 @@ class Tokenizer:
                     else:
                         token_type = TokenType.Ident
                         token_extra = ident
-                case '(' | ')' | '[' | ']' | '{' | '}' | ';' | '.' | ':':
+                case '(' | ')' | '[' | ']' | '{' | '}' | ';' | '.' | ':' | ',':
                     token_type = single_char_dict[self.source_string[self.position]]
                 case '!' | '/' | '+' | '-' | '=' | '<' | '>':
                     char = self.source_string[self.position]

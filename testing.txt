@@ -1,5 +1,6 @@
 2 * {
     true; false;
+    some_function('e', 2);
     3 + (4 / -5) - 1; /* commentaire */
     5 // autre commentaire
 } /*
