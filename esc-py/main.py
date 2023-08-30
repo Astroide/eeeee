@@ -49,6 +49,7 @@ try:
         parser = Parser.Parser(tokens)
         try:
             stuff = parser.expression()
+            print(stuff.lispfmt(0, lambda k: '  ' * k))
             print(stuff)
         except Parser.FatalParseError:
             die()
