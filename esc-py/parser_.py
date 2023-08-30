@@ -38,7 +38,7 @@ class Expression:
         raise BaseException("undefined __repr__")
     
     def source_span(self) -> Text.Span:
-        return Text.Span('(this expression type has no override for source_span())', '...', 0, 3)
+        raise BaseException("undefined source_span")
     
     def lispfmt(self, indentation: int, idt) -> int:
         print(idt(indentation) + '(???)')
@@ -76,6 +76,26 @@ class BinaryExpression(Expression):
         self.left.lispfmt(indentation + 1, idt)
         self.right.lispfmt(indentation + 1, idt)
         print(idt(indentation) + ')')
+
+    def source_span(self) -> Text.Span:
+        return self.span
+
+class UnaryExpression(Expression):
+    def __init__(self, operator: Tokens.Token, expr: Expression, span: Text.Span):
+        self.operator = operator
+        self.expr = expr
+        self.span = span
+    
+    def __repr__(self) -> str:
+        return f'unary({str(self.operator.type).replace("TokenType.", "")} {repr(self.expr)})'
+    
+    def lispfmt(self, indentation: int, idt) -> int:
+        print(idt(indentation) + '(' + Tokens.lit[self.operator.type])
+        self.expr.lispfmt(indentation + 1, idt)
+        print(idt(indentation) + ')')
+
+    def source_span(self) -> Text.Span:
+        return self.span
 
 class LiteralExpression(Expression):
     def __repr__(self) -> str:
@@ -163,6 +183,12 @@ class Parser:
             TokenType.LParen: lambda t: self.parenthesized(t),
             TokenType.LCBrace: lambda t: self.block(t),
             TokenType.Ident: lambda t: self.identifier(t),
+            TokenType.Not: lambda t: self.unary(t),
+            TokenType.Minus: lambda t: self.unary(t),
+        }
+        self.prefix_precedences = {
+            TokenType.Not: PREC_UNARY,
+            TokenType.Minus: PREC_UNARY,
         }
         self.infix_precedences = {
             TokenType.Plus: PREC_ADD_SUB,
@@ -244,3 +270,7 @@ class Parser:
         expr = self.expression()
         end = self.expect(TokenType.RCBrace, 'expected <ET>, got <AT>')
         return Block(expr, Text.merge_spans(start.span, end.span))
+    
+    def unary(self, token: Tokens.Token) -> UnaryExpression:
+        expr = self.expression(self.prefix_precedences[token.type])
+        return UnaryExpression(token, expr, Text.merge_spans(token.span, expr.source_span()))
