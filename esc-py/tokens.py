@@ -4,53 +4,53 @@ import text as Text
 from util import ordinal
 
 class TokenType(Enum):
-    ILiteral = 0   # Integer literal
-    FLiteral = 1   # Float literal
-    SLiteral = 2   # String or char literal; idea from danielrab (https://discord.com/channels/273534239310479360/490356824420122645/1145878910953848932)
-    Let = 3        # let
-    Eq = 4         # =
-    LParen = 5     # (
-    RParen = 6     # )
-    LBracket = 7   # [
-    RBracket = 8   # ]
-    Lt = 9         # <
-    Gt = 10        # >
-    Leq = 11       # <=
-    Geq = 12       # >=
-    EqEq = 13      # ==
-    LCBrace = 14   # {
-    RCBrace = 15   # }
-    Ident = 16     # Identifier
-    If = 17        # if
-    Neq = 18       # !=
-    Minus = 19     # -
-    Plus = 20      # +
-    Star = 21      # *
-    Slash = 22     # /
-    Ret = 23       # ->
-    Return = 24    # return
-    Exp = 25       # **
+    ILiteral  = 0  # Integer literal
+    FLiteral  = 1  # Float literal
+    SLiteral  = 2  # String or char literal; idea from danielrab (https://discord.com/channels/273534239310479360/490356824420122645/1145878910953848932)
+    Let       = 3  # let
+    Eq        = 4  # =
+    LParen    = 5  # (
+    RParen    = 6  # )
+    LBracket  = 7  # [
+    RBracket  = 8  # ]
+    Lt        = 9  # <
+    Gt        = 10 # >
+    Leq       = 11 # <=
+    Geq       = 12 # >=
+    EqEq      = 13 # ==
+    LCBrace   = 14 # {s
+    RCBrace   = 15 # }
+    Ident     = 16 # Identifier
+    If        = 17 # if
+    Neq       = 18 # !=
+    Minus     = 19 # -
+    Plus      = 20 # +
+    Star      = 21 # *
+    Slash     = 22 # /
+    Ret       = 23 # ->
+    Return    = 24 # return
+    Exp       = 25 # **
     Semicolon = 26 # ;
-    Dot = 27       # .
-    Not = 28       # !
-    Colon = 29     # :
-    Fn = 30        # fn
-    Else = 31      # else
-    Match = 32     # match
-    Type = 33      # type
-    Const = 34     # const
-    Continue = 35  # continue
-    Break = 36     # break
-    MinusEq = 37   # -=
-    PlusEq = 38    # +=
-    StarEq = 39    # *=
-    SlashEq = 40   # /=
-    ExpEq = 41     # **=
-    BLiteral = 42  # true | false
-    Comma = 43     # ,
-    Loop = 44      # loop
-    EEE = 45
-    EOF = 46
+    Dot       = 27 # .
+    Not       = 28 # !
+    Colon     = 29 # :
+    Fn        = 30 # fn
+    Else      = 31 # else
+    Match     = 32 # match
+    Type      = 33 # type
+    Const     = 34 # const
+    Continue  = 35 # continue
+    Break     = 36 # break
+    MinusEq   = 37 # -=
+    PlusEq    = 38 # +=
+    StarEq    = 39 # *=
+    SlashEq   = 40 # /=
+    ExpEq     = 41 # **=
+    BLiteral  = 42 # true | false
+    Comma     = 43 # ,
+    Loop      = 44 # loop
+    EEE       = 45
+    EOF       = 46
 
 reverse_type_map = {
     TokenType.ILiteral : 'an integer literal',
@@ -167,32 +167,32 @@ single_char_dict = {
 
 language = 'en' # for fun
 keyword_dict = {'en': {
-    'let': TokenType.Let,
-    'if': TokenType.If,
-    'fn': TokenType.Fn,
-    'return': TokenType.Return,
-    'const': TokenType.Const,
-    'else': TokenType.Else,
-    'match': TokenType.Match,
-    'type': TokenType.Type,
-    'const': TokenType.Const,
-    'continue': TokenType.Continue,
-    'break': TokenType.Break,
-    'loop': TokenType.Loop,
+    'let'      : TokenType.Let,
+    'if'       : TokenType.If,
+    'fn'       : TokenType.Fn,
+    'return'   : TokenType.Return,
+    'const'    : TokenType.Const,
+    'else'     : TokenType.Else,
+    'match'    : TokenType.Match,
+    'type'     : TokenType.Type,
+    'const'    : TokenType.Const,
+    'continue' : TokenType.Continue,
+    'break'    : TokenType.Break,
+    'loop'     : TokenType.Loop,
 }, 'fr': {
-    'si': TokenType.If,
-    'fn': TokenType.Fn,
-    'retourner': TokenType.Return,
-    'let': TokenType.Let, # there is probably a better keyword name
+    'si'        : TokenType.If,
+    'fn'        : TokenType.Fn,
+    'retourner' : TokenType.Return,
+    'let'       : TokenType.Let, # there is probably a better keyword name
     # later : add missing keywords
 }}
 
 class Token:
     def __init__(self, type: TokenType, span: Text.Span, something_else, type_hint: str):
-        self.type = type
-        self.span = span
+        self.type           = type
+        self.span           = span
         self.something_else = something_else
-        self.type_hint = type_hint
+        self.type_hint      = type_hint
     
     def __repr__(self) -> str:
         return f'<Token {str(self.type).removeprefix("TokenType.")} `{self.span.content()}`{" [" + self.type_hint + "]" if self.type_hint is not None else ""}{" " + str(self.something_else) if self.something_else is not None else ""}>'
@@ -200,9 +200,9 @@ class Token:
 
 class Tokenizer:
     def __init__(self, source_string: str, source_filename: str):
-        self.source_string = source_string
+        self.source_string   = source_string
         self.source_filename = source_filename
-        self.position = 0
+        self.position        = 0
     
     def peek(self, n = 1):
         return self.source_string[self.position + 1:self.position + n + 1]
@@ -280,9 +280,9 @@ class Tokenizer:
     def generate_tokens(self) -> list[Token]:
         tokens = []
         while self.position < len(self.source_string):
-            token_type = TokenType.ILiteral
-            token_start = self.position
-            token_extra = None
+            token_type      = TokenType.ILiteral
+            token_start     = self.position
+            token_extra     = None
             token_type_hint = None
             match self.source_string[self.position]:
                 case ' ' | '\n' | '\r' | '\t':

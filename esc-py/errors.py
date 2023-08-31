@@ -1,11 +1,11 @@
-ERROR = '\x1B[31m'
-WARN = '\x1B[33m'
-QUOTE = '\x1B[34m'
-HIGHLIGHT = '\x1B[7m'
+ERROR       = '\x1B[31m'
+WARN        = '\x1B[33m'
+QUOTE       = '\x1B[34m'
+HIGHLIGHT   = '\x1B[7m'
 CLEAR_COLOR = '\x1B[39m'
-CLEAR_ALL = '\x1B[0m'
-CYAN = '\x1B[36m'
-KEYWORD = '\x1B[35m'
+CLEAR_ALL   = '\x1B[0m'
+CYAN        = '\x1B[36m'
+KEYWORD     = '\x1B[35m'
 
 def unprintable_name(x):
     match x:
@@ -194,12 +194,12 @@ def span_with_message(span, message):
     # print('span_with_message //', span.start, span.end, '*' + span.content() + '*')
     # I # term_width = Os.get_terminal_size().columns
     start_line, start_col = transform(span.text, span.start)
-    end_line, end_col = transform(span.text, span.end)
+    end_line, end_col     = transform(span.text, span.end)
     # print(f'start = ({start_line}; {start_col})\nend = ({end_line}; {end_col})')
-    lines = span.text.split('\n')
+    lines         = span.text.split('\n')
     visible_start = start_line - 3
-    visible_end = min(end_line + 3, len(lines))
-    width = max(len(str(visible_start)), len(str(visible_end)))
+    visible_end   = min(end_line + 3, len(lines))
+    width         = max(len(str(visible_start)), len(str(visible_end)))
     # I # max_line_length = term_width - (width + 4)
     print(f'{QUOTE}= {span.filename}:{start_line + 1}:{start_col + 1}{CLEAR_ALL}')
     for idx, line in enumerate(lines):

@@ -14,7 +14,6 @@
 import errors as Errors
 crash = Errors.crash
 import tokens as Tokens
-import text as Text
 import sys as Sys, os as Os
 import parser_ as Parser # the underscore is to have my Python extension shut up about overriding a default module
 

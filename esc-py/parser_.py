@@ -26,15 +26,15 @@ def safe_recurse():
     elif limit > 2 * depth and limit > 1000:
         setrecursionlimit(max(1000, depth + 100))
 
-PREC_SEMICOLON = 1
-PREC_BREAK = 5
-PREC_LOGICAL = 10
-PREC_EQ = 15
-PREC_ADD_SUB = 20
+PREC_SEMICOLON   = 1
+PREC_BREAK       = 5
+PREC_LOGICAL     = 10
+PREC_EQ          = 15
+PREC_ADD_SUB     = 20
 PREC_MUL_DIV_EXP = 30
-PREC_UNARY = 40
-PREC_CALL = 50
-PREC_LITERAL = 100
+PREC_UNARY       = 40
+PREC_CALL        = 50
+PREC_LITERAL     = 100
 
 class Expression:
     def __repr__(self):
@@ -49,7 +49,7 @@ class Expression:
 class Block(Expression):
     def __init__(self, inner: Expression, span: Text.Span):
         self.inner = inner
-        self.span = span
+        self.span  = span
     
     def __repr__(self):
         return f'{{{repr(self.inner)}}}'
@@ -65,10 +65,10 @@ class Block(Expression):
 
 class BinaryExpression(Expression):
     def __init__(self, left: Expression, operator: Tokens.Token, right: Expression, span: Text.Span):
-        self.left = left
+        self.left     = left
         self.operator = operator
-        self.right = right
-        self.span = span
+        self.right    = right
+        self.span     = span
     
     def __repr__(self) -> str:
         return f'bin({repr(self.left)} {str(self.operator.type).replace("TokenType.", "")} {repr(self.right)})'
@@ -86,8 +86,8 @@ class BinaryExpression(Expression):
 class UnaryExpression(Expression):
     def __init__(self, operator: Tokens.Token, expr: Expression, span: Text.Span):
         self.operator = operator
-        self.expr = expr
-        self.span = span
+        self.expr     = expr
+        self.span     = span
     
     def __repr__(self) -> str:
         return f'unary({str(self.operator.type).replace("TokenType.", "")} {repr(self.expr)})'
@@ -109,10 +109,10 @@ class LiteralExpression(Expression):
 
 class IntLiteral(LiteralExpression):
     def __init__(self, value: int, type_hint: str | None, source: Text.Span):
-        self.value = value
-        self.type = None
+        self.value     = value
+        self.type      = None
         self.type_hint = type_hint
-        self.source = source
+        self.source    = source
     
     def source_span(self) -> Text.Span:
         return self.source
@@ -125,10 +125,10 @@ class IntLiteral(LiteralExpression):
 
 class FloatLiteral(LiteralExpression):
     def __init__(self, value: float, type_hint: str | None, source: Text.Span):
-        self.value = value
-        self.type = None
+        self.value     = value
+        self.type      = None
         self.type_hint = type_hint
-        self.source = source
+        self.source    = source
     
     def source_span(self) -> Text.Span:
         return self.source
@@ -141,8 +141,8 @@ class FloatLiteral(LiteralExpression):
 
 class BooleanLiteral(LiteralExpression):
     def __init__(self, value: bool, source: Text.Span):
-        self.value = value
-        self.type = None
+        self.value  = value
+        self.type   = None
         self.source = source
     
     def source_span(self) -> Text.Span:
@@ -156,10 +156,10 @@ class BooleanLiteral(LiteralExpression):
 
 class StringLiteral(LiteralExpression):
     def __init__(self, value: str, type_hint: str | None, source: Text.Span):
-        self.value = value
-        self.type = None
+        self.value     = value
+        self.type      = None
         self.type_hint = type_hint
-        self.source = source
+        self.source    = source
     
     def source_span(self) -> Text.Span:
         return self.source
@@ -173,7 +173,7 @@ class StringLiteral(LiteralExpression):
 
 class IdentifierExpression(Expression):
     def __init__(self, id: str, source: Text.Span):
-        self.id = id
+        self.id     = id
         self.source = source
     
     def source_span(self) -> Text.Span:
@@ -188,8 +188,8 @@ class IdentifierExpression(Expression):
 class CallExpression(Expression):
     def __init__(self, callee: Expression, span: Text.Span, *args):
         self.callee = callee
-        self.span = span
-        self.args = args
+        self.span   = span
+        self.args   = args
     
     def source_span(self) -> Text.Span:
         return self.span
@@ -206,9 +206,9 @@ class CallExpression(Expression):
 
 class PropertyAccessExpression(Expression):
     def __init__(self, object: Expression, property: str | int, span: Text.Span):
-        self.object = object
+        self.object   = object
         self.property = property
-        self.span = span
+        self.span     = span
 
     def __repr__(self) -> str:
         return repr(self.object) + '->' + self.property
@@ -224,10 +224,10 @@ class PropertyAccessExpression(Expression):
 class IfExpression(Expression):
     def __init__(self, condition: Expression, body: Expression, elifs: list[tuple[Expression, Expression]], else_: Expression | None, span: Text.Span):
         self.condition = condition
-        self.body = body
-        self.elifs = elifs
-        self.else_ = else_
-        self.span = span
+        self.body      = body
+        self.elifs     = elifs
+        self.else_     = else_
+        self.span      = span
     
     def __repr__(self):
         return f'If({repr(self.condition)}) {{{repr(self.body)}}}' + (' ' + ' '.join(map(lambda x: f'ElseIf({repr(x[0])}) {{{repr(x[1])}}}', self.elifs)) if len(self.elifs) > 0 else '') + (f' Else{{{repr(self.else_)}}}' if self.else_ is not None else '')
@@ -300,22 +300,22 @@ class Parser:
         self.tokens.append(Tokens.Token(TokenType.EOF, source_span, 'EOF', 'EOF'))
         self.cursor = 0
         self.prefixes = {
-            TokenType.ILiteral: self.literal,
-            TokenType.SLiteral: self.literal,
-            TokenType.FLiteral: self.literal,
-            TokenType.BLiteral: self.literal,
-            TokenType.LParen: self.parenthesized,
-            TokenType.LCBrace: self.block,
-            TokenType.Ident: self.identifier,
-            TokenType.Not: self.unary,
-            TokenType.Minus: self.unary,
-            TokenType.If: self.if_,
-            TokenType.Loop: self.loop,
-            TokenType.Break: self.break_,
+            TokenType.ILiteral : self.literal,
+            TokenType.SLiteral : self.literal,
+            TokenType.FLiteral : self.literal,
+            TokenType.BLiteral : self.literal,
+            TokenType.LParen   : self.parenthesized,
+            TokenType.LCBrace  : self.block,
+            TokenType.Ident    : self.identifier,
+            TokenType.Not      : self.unary,
+            TokenType.Minus    : self.unary,
+            TokenType.If       : self.if_,
+            TokenType.Loop     : self.loop,
+            TokenType.Break    : self.break_,
         }
         self.prefix_precedences = {
-            TokenType.Not: PREC_UNARY,
-            TokenType.Minus: PREC_UNARY,
+            TokenType.Not   : PREC_UNARY,
+            TokenType.Minus : PREC_UNARY,
         }
         self.infix_precedences = {
             TokenType.Plus      : PREC_ADD_SUB,
