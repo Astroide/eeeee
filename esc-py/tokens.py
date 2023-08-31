@@ -512,12 +512,14 @@ class Tokenizer:
                     while self.peek() != "'":
                         char = self.peek()
                         if char == '':
-                            Errors.error(f'Encountered EOF while reading a text literal', (Text.Span(self.source_filename, self.source_string, token_start, token_start + 1), 'string was started here'))
+                            Errors.error(f'encountered EOF while reading a text literal', (Text.Span(self.source_filename, self.source_string, token_start, token_start + 1), 'string was started here'))
                             return None
                         elif char == '\\':
+                            position = self.position + 1
                             result = self.read_escape()
                             if result is None:
-                                return None
+                                Errors.error('invalid escape sequence', (Text.Span(self.source_filename, self.source_string, position, position + 2), ''))
+                                result = ''
                             string_contents += result
                         else:
                             string_contents += char

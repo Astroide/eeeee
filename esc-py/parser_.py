@@ -315,9 +315,15 @@ class Parser:
             raise FatalParseError()
         return token
     
-    def literal(self, token: Tokens.Token) -> LiteralExpression:
+    def literal(self, token: Tokens.Token) -> LiteralExpression | PropertyAccessExpression:
         if token.type == TokenType.FLiteral:
-            return FloatLiteral(token.something_else, token.type_hint, token.span)
+            exp = FloatLiteral(token.something_else, token.type_hint, token.span)
+            if self.match(TokenType.Ident) and token.span.content().removesuffix('_' + ('' if token.type_hint is None else token.type_hint)).endswith('.'):
+                Errors.error('wrap integers in parentheses when calling methods upon them', (token.span, f'help: replace this with \x1B[32m({token.span.content().replace(".", "")}).{Errors.CLEAR_COLOR}'))
+                exp = IntLiteral(int(token.something_else), None, token.span)
+                return self.property(exp, token)
+            else:
+                return exp
         elif token.type == TokenType.ILiteral:
             return IntLiteral(token.something_else, token.type_hint, token.span)
         elif token.type == TokenType.SLiteral:
