@@ -27,6 +27,7 @@ def safe_recurse():
         setrecursionlimit(max(1000, depth + 100))
 
 PREC_SEMICOLON = 1
+PREC_BREAK = 5
 PREC_LOGICAL = 10
 PREC_ADD_SUB = 20
 PREC_MUL_DIV_EXP = 30
@@ -250,6 +251,44 @@ class IfExpression(Expression):
             print(idt(indentation + 1) + ')')
         print(idt(indentation) + ')')
 
+class LoopExpression(Expression):
+    def __init__(self, body: Expression | None, span: Text.Span):
+        self.body = body
+        self.span = span
+    
+    def source_span(self) -> Text.Span:
+        return self.span
+    
+    def __repr__(self) -> str:
+        return f'Loop({repr(self.body) if self.body is not None else ""})'
+    
+    def lispfmt(self, indentation: int, idt) -> int:
+        if self.body is None:
+            print(idt(indentation) + '(' + Errors.KEYWORD + 'loop' + Errors.CLEAR_COLOR + ')')
+        else:
+            print(idt(indentation) + '(' + Errors.KEYWORD + 'loop' + Errors.CLEAR_COLOR)
+            self.body.lispfmt(indentation + 1, idt)
+            print(idt(indentation) + ')')
+
+class BreakExpression(Expression):
+    def __init__(self, body: Expression | None, span: Text.Span):
+        self.body = body
+        self.span = span
+    
+    def source_span(self) -> Text.Span:
+        return self.span
+    
+    def __repr__(self) -> str:
+        return f'Break({repr(self.body) if self.body is not None else ""})'
+    
+    def lispfmt(self, indentation: int, idt) -> int:
+        if self.body is None:
+            print(idt(indentation) + '(' + Errors.KEYWORD + 'break' + Errors.CLEAR_COLOR + ')')
+        else:
+            print(idt(indentation) + '(' + Errors.KEYWORD + 'break' + Errors.CLEAR_COLOR)
+            self.body.lispfmt(indentation + 1, idt)
+            print(idt(indentation) + ')')
+
 class FatalParseError(BaseException):
     pass
 
@@ -260,16 +299,18 @@ class Parser:
         self.tokens.append(Tokens.Token(TokenType.EOF, source_span, 'EOF', 'EOF'))
         self.cursor = 0
         self.prefixes = {
-            TokenType.ILiteral: lambda t: self.literal(t),
-            TokenType.SLiteral: lambda t: self.literal(t),
-            TokenType.FLiteral: lambda t: self.literal(t),
-            TokenType.BLiteral: lambda t: self.literal(t),
-            TokenType.LParen: lambda t: self.parenthesized(t),
-            TokenType.LCBrace: lambda t: self.block(t),
-            TokenType.Ident: lambda t: self.identifier(t),
-            TokenType.Not: lambda t: self.unary(t),
-            TokenType.Minus: lambda t: self.unary(t),
-            TokenType.If: lambda t: self.if_(t),
+            TokenType.ILiteral: self.literal,
+            TokenType.SLiteral: self.literal,
+            TokenType.FLiteral: self.literal,
+            TokenType.BLiteral: self.literal,
+            TokenType.LParen: self.parenthesized,
+            TokenType.LCBrace: self.block,
+            TokenType.Ident: self.identifier,
+            TokenType.Not: self.unary,
+            TokenType.Minus: self.unary,
+            TokenType.If: self.if_,
+            TokenType.Loop: self.loop,
+            TokenType.Break: self.break_,
         }
         self.prefix_precedences = {
             TokenType.Not: PREC_UNARY,
@@ -285,16 +326,15 @@ class Parser:
             TokenType.LParen: PREC_CALL,
             TokenType.Dot: PREC_CALL,
         }
-        fx = lambda lhs, t: self.infix(lhs, t)
         self.infixes = {
-            TokenType.Plus: fx,
-            TokenType.Minus: fx,
-            TokenType.Star: fx,
-            TokenType.Slash: fx,
-            TokenType.Exp: fx,
-            TokenType.Semicolon: fx,
-            TokenType.LParen: lambda lhs, t: self.fcall(lhs, t),
-            TokenType.Dot: lambda lhs, t: self.property(lhs, t),
+            TokenType.Plus: self.infix,
+            TokenType.Minus: self.infix,
+            TokenType.Star: self.infix,
+            TokenType.Slash: self.infix,
+            TokenType.Exp: self.infix,
+            TokenType.Semicolon: self.infix,
+            TokenType.LParen: self.fcall,
+            TokenType.Dot: self.property,
         }
         self.postfixes = {}
     
@@ -422,3 +462,16 @@ class Parser:
             else_ = self.expression()
             last_token = self.expect(TokenType.RCBrace, 'expected <ET> after \'else\' body, got <AT>')
         return IfExpression(condition, body, elifs, else_, Text.merge_spans(if_token.span, opening.span, condition.source_span(), last_token.span))
+    
+    def has_expression(self) -> bool:
+        return self.peek().type in self.prefixes.keys()
+    
+    def loop(self, token: Tokens.Token) -> LoopExpression:
+        opening = self.expect(TokenType.LCBrace, 'expected <ET> after \'loop\', got <AT>')
+        inside = self.expression() if self.has_expression() else None
+        closing = self.expect(TokenType.RCBrace, 'expected <ET> after \'loop\' body, got <AT>')
+        return LoopExpression(inside, Text.merge_spans(token.span, opening.span, closing.span))
+    
+    def break_(self, token: Tokens.Token) -> BreakExpression:
+        content = self.expression(PREC_BREAK) if self.has_expression() else None
+        return BreakExpression(content, token.span if content is None else Text.merge_spans(token.span, content.source_span()))

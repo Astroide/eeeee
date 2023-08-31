@@ -48,8 +48,9 @@ class TokenType(Enum):
     ExpEq = 41     # **=
     BLiteral = 42  # true | false
     Comma = 43     # ,
-    EEE = 44
-    EOF = 45
+    Loop = 44      # loop
+    EEE = 45
+    EOF = 46
 
 reverse_type_map = {
     TokenType.ILiteral : 'an integer literal',
@@ -96,6 +97,7 @@ reverse_type_map = {
     TokenType.ExpEq    : "'**='",
     TokenType.BLiteral : "a boolean literal ('true' or 'false')",
     TokenType.Comma    : "','",
+    TokenType.Loop     : "'loop'",
     TokenType.EEE      : Errors.ice('you should never see this (TokenType.EEE)'),
     TokenType.EOF      : 'EOF',
 }
@@ -145,6 +147,7 @@ lit = {
     TokenType.ExpEq    : "**=",
     TokenType.BLiteral : "a boolean literal ('true' or 'false')",
     TokenType.Comma    : ',',
+    TokenType.Loop     : 'loop',
     TokenType.EEE      : Errors.ice('you should never see this (TokenType.EEE)'),
     TokenType.EOF      : 'EOF',
 }
@@ -175,6 +178,7 @@ keyword_dict = {'en': {
     'const': TokenType.Const,
     'continue': TokenType.Continue,
     'break': TokenType.Break,
+    'loop': TokenType.Loop,
 }, 'fr': {
     'si': TokenType.If,
     'fn': TokenType.Fn,
