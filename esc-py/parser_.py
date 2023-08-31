@@ -290,6 +290,26 @@ class BreakExpression(Expression):
             self.body.lispfmt(indentation + 1, idt)
             print(idt(indentation) + ')')
 
+class WhileExpression(Expression):
+    def __init__(self, condition: Expression, body: Expression | None, span: Text.Span):
+        self.condition = condition
+        self.body      = body
+        self.span      = span
+    
+    def source_span(self):
+        return self.span
+    
+    def __repr__(self) -> str:
+        return f'While({self.condition}) {{{repr(self.body) if self.body is not None else ""}}}'
+    
+    def lispfmt(self, indentation: int, idt) -> int:
+        print(idt(indentation) + '(' + Errors.KEYWORD + 'while' + Errors.CLEAR_COLOR)
+        self.condition.lispfmt(indentation + 1, idt)
+        print(idt(indentation + 1) + Errors.KEYWORD + 'do' + (' nothing' if self.body is None else '') + Errors.CLEAR_COLOR)
+        if self.body is not None:
+            self.body.lispfmt(indentation + 1, idt)
+        print(idt(indentation) + ')')
+
 class FatalParseError(BaseException):
     pass
 
@@ -312,6 +332,7 @@ class Parser:
             TokenType.If       : self.if_,
             TokenType.Loop     : self.loop,
             TokenType.Break    : self.break_,
+            TokenType.While    : self.while_,
         }
         self.prefix_precedences = {
             TokenType.Not   : PREC_UNARY,
@@ -488,3 +509,12 @@ class Parser:
     def break_(self, token: Tokens.Token) -> BreakExpression:
         content = self.expression(PREC_BREAK) if self.has_expression() else None
         return BreakExpression(content, token.span if content is None else Text.merge_spans(token.span, content.source_span()))
+    
+    def while_(self, token: Tokens.Token) -> WhileExpression:
+        condition = self.expression()
+        if type(condition) == BooleanLiteral and condition.value:
+            Errors.warning('use \'loop\' instead of \'while true\'', (Text.merge_spans(token.span, condition.source_span()), ''))
+        opening = self.expect(TokenType.LCBrace, 'expected <ET> after \'while\' condition, got <AT>')
+        inside = self.expression() if self.has_expression() else None
+        closing = self.expect(TokenType.RCBrace, 'expected <ET> after \'loop\' body, got <AT>')
+        return WhileExpression(condition, inside, Text.merge_spans(token.span, opening.span, closing.span))

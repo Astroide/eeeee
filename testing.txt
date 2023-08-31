@@ -5,7 +5,7 @@ print(a.b.c.d - 1.2.test * if 1 + (2).sqrt() != 3 {
     5; // autre commentaire
     loop { break 4 }
 } else if false { 4 } else { 3 }.sqrt()); loop {
-    1 >  2;
+    while 1 > 2 { 3; while true {} };
     3 >= 4;
     5 == 6;
     7 <  8;
