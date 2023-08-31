@@ -29,6 +29,7 @@ def safe_recurse():
 PREC_SEMICOLON = 1
 PREC_BREAK = 5
 PREC_LOGICAL = 10
+PREC_EQ = 15
 PREC_ADD_SUB = 20
 PREC_MUL_DIV_EXP = 30
 PREC_UNARY = 40
@@ -317,24 +318,34 @@ class Parser:
             TokenType.Minus: PREC_UNARY,
         }
         self.infix_precedences = {
-            TokenType.Plus: PREC_ADD_SUB,
-            TokenType.Minus: PREC_ADD_SUB,
-            TokenType.Star: PREC_MUL_DIV_EXP,
-            TokenType.Slash: PREC_MUL_DIV_EXP,
-            TokenType.Exp: PREC_MUL_DIV_EXP,
-            TokenType.Semicolon: PREC_SEMICOLON,
-            TokenType.LParen: PREC_CALL,
-            TokenType.Dot: PREC_CALL,
+            TokenType.Plus      : PREC_ADD_SUB,
+            TokenType.Minus     : PREC_ADD_SUB,
+            TokenType.Star      : PREC_MUL_DIV_EXP,
+            TokenType.Slash     : PREC_MUL_DIV_EXP,
+            TokenType.Exp       : PREC_MUL_DIV_EXP,
+            TokenType.Semicolon : PREC_SEMICOLON,
+            TokenType.LParen    : PREC_CALL,
+            TokenType.Dot       : PREC_CALL,
+            TokenType.EqEq      : PREC_EQ,
+            TokenType.Lt        : PREC_EQ,
+            TokenType.Leq       : PREC_EQ,
+            TokenType.Gt        : PREC_EQ,
+            TokenType.Geq       : PREC_EQ,
         }
         self.infixes = {
-            TokenType.Plus: self.infix,
-            TokenType.Minus: self.infix,
-            TokenType.Star: self.infix,
-            TokenType.Slash: self.infix,
-            TokenType.Exp: self.infix,
-            TokenType.Semicolon: self.infix,
-            TokenType.LParen: self.fcall,
-            TokenType.Dot: self.property,
+            TokenType.Plus      : self.infix,
+            TokenType.Minus     : self.infix,
+            TokenType.Star      : self.infix,
+            TokenType.Slash     : self.infix,
+            TokenType.Exp       : self.infix,
+            TokenType.Semicolon : self.infix,
+            TokenType.EqEq      : self.infix,
+            TokenType.Lt        : self.infix,
+            TokenType.Gt        : self.infix,
+            TokenType.Leq       : self.infix,
+            TokenType.Geq       : self.infix,
+            TokenType.LParen    : self.fcall,
+            TokenType.Dot       : self.property,
         }
         self.postfixes = {}
     

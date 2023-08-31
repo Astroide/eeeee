@@ -1,10 +1,16 @@
-print(a.b.c.d - 1.2.test * if 1 + (2).sqrt() {
+print(a.b.c.d - 1.2.test * if 1 + (2).sqrt() > 3 {
     true; loop { false; if math.floor(random()) { break } };
     some_function('e', 2);
     3 + (4 / -5) - 1; /* commentaire */
     5; // autre commentaire
     loop { break 4 }
-} else if false { 4 } else { 3 }.sqrt()); loop {} /*
+} else if false { 4 } else { 3 }.sqrt()); loop {
+    1 >  2;
+    3 >= 4;
+    5 == 6;
+    7 <  8;
+    9 <= 10
+} /*
 comment
 comment
 comment */
