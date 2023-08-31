@@ -218,6 +218,37 @@ class PropertyAccessExpression(Expression):
     
     def source_span(self) -> Text.Span:
         return self.span
+    
+class IfExpression(Expression):
+    def __init__(self, condition: Expression, body: Expression, elifs: list[tuple[Expression, Expression]], else_: Expression | None, span: Text.Span):
+        self.condition = condition
+        self.body = body
+        self.elifs = elifs
+        self.else_ = else_
+        self.span = span
+    
+    def __repr__(self):
+        return f'If({repr(self.condition)}) {{{repr(self.body)}}}' + (' ' + ' '.join(map(lambda x: f'ElseIf({repr(x[0])}) {{{repr(x[1])}}}', self.elifs)) if len(self.elifs) > 0 else '') + (f' Else{{{repr(self.else_)}}}' if self.else_ is not None else '')
+    
+    def source_span(self) -> Text.Span:
+        return self.span
+    
+    def lispfmt(self, indentation: int, idt) -> int:
+        print(idt(indentation) + '(' + Errors.KEYWORD + 'if' + Errors.CLEAR_COLOR)
+        self.condition.lispfmt(indentation + 1, idt)
+        print(idt(indentation + 1) + Errors.KEYWORD + 'then' + Errors.CLEAR_COLOR)
+        self.body.lispfmt(indentation + 1, idt)
+        for condition, body in self.elifs:
+            print(idt(indentation + 1) + '(' + Errors.KEYWORD + 'elif' + Errors.CLEAR_COLOR)
+            condition.lispfmt(indentation + 2, idt)
+            print(idt(indentation + 2) + Errors.KEYWORD + 'then' + Errors.CLEAR_COLOR)
+            body.lispfmt(indentation + 2, idt)
+            print(idt(indentation + 1) + ')')
+        if self.else_ is not None:
+            print(idt(indentation + 1) + '(' + Errors.KEYWORD + 'else' + Errors.CLEAR_COLOR)
+            self.else_.lispfmt(indentation + 2, idt)
+            print(idt(indentation + 1) + ')')
+        print(idt(indentation) + ')')
 
 class FatalParseError(BaseException):
     pass
@@ -238,6 +269,7 @@ class Parser:
             TokenType.Ident: lambda t: self.identifier(t),
             TokenType.Not: lambda t: self.unary(t),
             TokenType.Minus: lambda t: self.unary(t),
+            TokenType.If: lambda t: self.if_(t),
         }
         self.prefix_precedences = {
             TokenType.Not: PREC_UNARY,
@@ -355,3 +387,32 @@ class Parser:
         # todo: add support for .<x> on tuples
         id = self.expect(TokenType.Ident, 'expected <ET>, got <AT>')
         return PropertyAccessExpression(lhs, id.something_else, Text.merge_spans(lhs.source_span(), token.span, id.span))
+    
+    def match(self, *types):
+        for idx, type in enumerate(types):
+            if self.tokens[self.cursor + idx].type != type:
+                return False
+        return True
+    
+    def if_(self, if_token: Tokens.Token) -> IfExpression:
+        condition = self.expression()
+        opening = self.expect(TokenType.LCBrace, 'expected <ET> after \'if\' condition, got <AT>')
+        body = self.expression()
+        closing = self.expect(TokenType.RCBrace, 'expected <ET> after \'if\' expression body, got <AT>')
+        elifs = []
+        else_ = None
+        last_token = closing
+        while self.match(TokenType.Else, TokenType.If):
+            self.next()
+            self.next()
+            elif_condition = self.expression()
+            self.expect(TokenType.LCBrace, 'expected <ET> after \'else if\' condition, got <AT>')
+            elif_body = self.expression()
+            last_token = self.expect(TokenType.RCBrace, 'expected <ET> after \'else if\' body, got <AT>')
+            elifs.append((elif_condition, elif_body))
+        if self.match(TokenType.Else):
+            self.next()
+            self.expect(TokenType.LCBrace, 'expected <ET> after \'else\', got <AT>')
+            else_ = self.expression()
+            last_token = self.expect(TokenType.RCBrace, 'expected <ET> after \'else\' body, got <AT>')
+        return IfExpression(condition, body, elifs, else_, Text.merge_spans(if_token.span, opening.span, condition.source_span(), last_token.span))

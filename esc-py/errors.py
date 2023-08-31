@@ -5,6 +5,7 @@ HIGHLIGHT = '\x1B[7m'
 CLEAR_COLOR = '\x1B[39m'
 CLEAR_ALL = '\x1B[0m'
 CYAN = '\x1B[36m'
+KEYWORD = '\x1B[35m'
 
 def unprintable_name(x):
     match x:

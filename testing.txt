@@ -1,9 +1,9 @@
-a.b.c.d - 1.2.test * {
+print(a.b.c.d - 1.2.test * if 1 + (2).sqrt() {
     true; false;
     some_function('e', 2);
     3 + (4 / -5) - 1; /* commentaire */
     5 // autre commentaire
-}.sqrt() /*
+} else if false { 4 } else { 3 }.sqrt()) /*
 comment
 comment
 comment */

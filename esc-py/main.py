@@ -9,6 +9,8 @@
 # identifiers are currently only [A-Za-z_][A-Za-z0-9_]*, as this is a testing version. Unicode identifiers are planned in the future.
 #
 # eventually tuple properties will be accessible as tuple.0, .1, .2, etc., like in Rust.
+#
+# currently 1.method() just ends the expression with '1.', add an error message for this later.
 
 import errors as Errors
 crash = Errors.crash
