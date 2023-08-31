@@ -331,6 +331,7 @@ class Parser:
             TokenType.Leq       : PREC_EQ,
             TokenType.Gt        : PREC_EQ,
             TokenType.Geq       : PREC_EQ,
+            TokenType.Neq       : PREC_EQ,
         }
         self.infixes = {
             TokenType.Plus      : self.infix,
@@ -344,6 +345,7 @@ class Parser:
             TokenType.Gt        : self.infix,
             TokenType.Leq       : self.infix,
             TokenType.Geq       : self.infix,
+            TokenType.Neq       : self.infix,
             TokenType.LParen    : self.fcall,
             TokenType.Dot       : self.property,
         }
