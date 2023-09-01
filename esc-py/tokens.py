@@ -50,8 +50,10 @@ class TokenType(Enum):
     Comma     = 43 # ,
     Loop      = 44 # loop
     While     = 45 # while
-    EEE       = 46
-    EOF       = 47
+    Use       = 46 # use
+    As        = 47 # as
+    EEE       = 48
+    EOF       = 49
 
 reverse_type_map = {
     TokenType.ILiteral : 'an integer literal',
@@ -100,6 +102,8 @@ reverse_type_map = {
     TokenType.Comma    : "','",
     TokenType.Loop     : "'loop'",
     TokenType.While    : "'while'",
+    TokenType.Use      : "'use'",
+    TokenType.As       : "'as'",
     TokenType.EEE      : Errors.ice('you should never see this (TokenType.EEE)'),
     TokenType.EOF      : 'EOF',
 }
@@ -151,6 +155,8 @@ lit = {
     TokenType.Comma    : ',',
     TokenType.Loop     : 'loop',
     TokenType.While    : 'while',
+    TokenType.Use      : 'use',
+    TokenType.As       : 'as',
     TokenType.EEE      : Errors.ice('you should never see this (TokenType.EEE)'),
     TokenType.EOF      : 'EOF',
 }
@@ -183,6 +189,8 @@ keyword_dict = {'en': {
     'break'    : TokenType.Break,
     'loop'     : TokenType.Loop,
     'while'    : TokenType.While,
+    'use'      : TokenType.Use,
+    'as'       : TokenType.As,
 }, 'fr': {
     'si'        : TokenType.If,
     'fn'        : TokenType.Fn,

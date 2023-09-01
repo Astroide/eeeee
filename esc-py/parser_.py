@@ -310,8 +310,33 @@ class WhileExpression(Expression):
             self.body.lispfmt(indentation + 1, idt)
         print(idt(indentation) + ')')
 
+class UseExpression(Expression):
+    def __init__(self, imports: list[list[str]], span: Text.Span):
+        self.imports = imports
+        self.span    = span
+    
+    def source_span(self) -> Text.Span:
+        return self.span
+    
+    def __repr__(self) -> str:
+        return f'Use({", ".join(map(lambda i: ".".join(i), self.imports))})'
+    
+    def lispfmt(self, indentation: int, idt) -> int:
+        print(idt(indentation) + '(' + Errors.KEYWORD + 'use' + Errors.CLEAR_COLOR)
+        for import_ in self.imports:
+            print(idt(indentation + 1) + '\x1B[32m' + '.'.join(import_) + Errors.CLEAR_COLOR)
+        print(idt(indentation) + ')')
+
 class FatalParseError(BaseException):
     pass
+
+def popped(k: tuple) -> tuple:
+    l = list(k)
+    l.pop()
+    return tuple(l)
+
+def copy(x: list) -> list:
+    return list(iter(x))
 
 class Parser:
     def __init__(self, tokens: list[Tokens.Token]):
@@ -333,6 +358,7 @@ class Parser:
             TokenType.Loop     : self.loop,
             TokenType.Break    : self.break_,
             TokenType.While    : self.while_,
+            TokenType.Use      : self.use,
         }
         self.prefix_precedences = {
             TokenType.Not   : PREC_UNARY,
@@ -470,8 +496,12 @@ class Parser:
     
     def match(self, *types):
         for idx, type in enumerate(types):
-            if self.tokens[self.cursor + idx].type != type:
-                return False
+            if isinstance(type, tuple):
+                if self.tokens[self.cursor + idx].type not in type:
+                    return False
+            else:
+                if self.tokens[self.cursor + idx].type != type:
+                    return False
         return True
     
     def if_(self, if_token: Tokens.Token) -> IfExpression:
@@ -518,3 +548,46 @@ class Parser:
         inside = self.expression() if self.has_expression() else None
         closing = self.expect(TokenType.RCBrace, 'expected <ET> after \'loop\' body, got <AT>')
         return WhileExpression(condition, inside, Text.merge_spans(token.span, opening.span, closing.span))
+    
+    def recursive_parse_use(self) -> tuple[Tokens.Token, list[list[str]]]:
+        path = []
+        imports = []
+        last_token = self.expect(TokenType.Ident, 'expected <ET>, got <AT>')
+        path.append(last_token.something_else)
+        if self.match(TokenType.Dot):
+            while self.match(TokenType.Dot):
+                last_token = self.next()
+                if self.match(TokenType.Star):
+                    last_token = self.next()
+                    path.append('*')
+                    imports.append(copy(path))
+                    return (last_token, imports)
+                if self.match(TokenType.Ident):
+                    last_token = self.next()
+                    path.append(last_token.something_else)
+                    if not self.match(TokenType.Dot):
+                        imports.append(copy(path))
+                        return (last_token, imports)
+                elif self.match(TokenType.LCBrace):
+                    last_token = self.next()
+                    while True:
+                        last_token, lst = self.recursive_parse_use()
+                        for item in lst:
+                            cpy = copy(path)
+                            cpy.extend(item)
+                            imports.append(cpy)
+                        if self.peek().type == TokenType.Comma:
+                            self.next()
+                            if self.peek().type == TokenType.RCBrace:
+                                last_token = self.next()
+                                return (last_token, imports)
+                        else:
+                            last_token = self.expect(TokenType.RCBrace, 'expected <ET>, got <AT>')
+                            return (last_token, imports)
+        else:
+            imports.append(copy(path))
+        return (last_token, imports)
+    
+    def use(self, token: Tokens.Token) -> UseExpression:
+        last_token, imports = self.recursive_parse_use()
+        return UseExpression(imports, Text.merge_spans(token.span, last_token.span))

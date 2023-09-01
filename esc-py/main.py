@@ -10,6 +10,7 @@
 #
 # eventually tuple properties will be accessible as tuple.0, .1, .2, etc., like in Rust.
 # loop/block labels are also missing for now.
+# also: support `as` in `use`; allow things like `use a.{*, x as b}` (which would import everything from `a`, but would import `x` as `b` instead of `x` )
 
 import errors as Errors
 crash = Errors.crash
