@@ -2,3 +2,7 @@
 **/__pycache__
 scratch
 out.ansi
+
+# Added by cargo
+
+/target

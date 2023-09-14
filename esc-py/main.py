@@ -56,6 +56,8 @@ try:
             print(stuff)
             if Errors.error_count() > 0:
                 die()
+            import modules
+            print(modules.mod)
         except Parser.FatalParseError:
             die()
 except PermissionError:
