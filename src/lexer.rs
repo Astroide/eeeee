@@ -40,6 +40,16 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
             };
         }
 
+        macro_rules! two_char_token {
+            ($type:expr) => {{
+                idx += 1;
+                Some(Token {
+                    span: Span::new(file, n, idx + 1),
+                    tt: $type,
+                })
+            }};
+        }
+
         macro_rules! keyword {
             ($type:expr) => {
                 Some(Token {
@@ -107,6 +117,36 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
             '.' => simple_token!(Dot),
             ':' => simple_token!(Colon),
             ',' => simple_token!(Comma),
+            '-' if matches!(peek!(), Some('>')) => two_char_token!(Ret),
+            '-' if matches!(peek!(), Some('=')) => two_char_token!(MinusEq),
+            '+' if matches!(peek!(), Some('=')) => two_char_token!(PlusEq),
+            '!' if matches!(peek!(), Some('=')) => two_char_token!(Neq),
+            '/' if matches!(peek!(), Some('=')) => two_char_token!(SlashEq),
+            '=' if matches!(peek!(), Some('=')) => two_char_token!(EqEq),
+            '<' if matches!(peek!(), Some('=')) => two_char_token!(Leq),
+            '>' if matches!(peek!(), Some('=')) => two_char_token!(Geq),
+            '-' => simple_token!(Minus),
+            '+' => simple_token!(Plus),
+            '!' => simple_token!(Not),
+            '/' => simple_token!(Slash),
+            '=' => simple_token!(Eq),
+            '<' => simple_token!(Lt),
+            '>' => simple_token!(Gt),
+            '*' => {
+                if let Some('*') = peek!() {
+                    if let Some('=') = peek!() {
+                        idx += 2;
+                        Some(Token {
+                            span: Span::new(file, n, idx + 1),
+                            tt: ExpEq,
+                        })
+                    } else {
+                        two_char_token!(Exp)
+                    }
+                } else {
+                    simple_token!(Star)
+                }
+            },
             x if x == '_' || x.is_xid_start() => {
                 let mut text = x.to_string();
                 while peek!().is_some_and(|x| x.is_xid_continue()) {
