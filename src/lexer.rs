@@ -22,6 +22,12 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
         };
     }
 
+    macro_rules! early_exit {
+        () => {
+            return (tokens, Err(error_accumulator))
+        };
+    }
+
     while idx < chars.len() {
         let n = idx;
 
@@ -57,6 +63,40 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
           | '\u{200F}' /* RTL */
           | '\u{2028}' /* line separator */
           | '\u{2029}' /* paragraph separator */ => None,
+            '/' if matches!(peek!(), Some('/')) => {
+                while let Some(c) = peek!() {
+                    idx += 1;
+                    if c == '\n' {
+                        break
+                    }
+                };
+                None
+            },
+            '/' if matches!(peek!(), Some('*')) => {
+                let mut depth = 1;
+                let mut starts = vec![n];
+                let mut past_two = ('@', '@');
+                while depth > 0 {
+                    idx += 1;
+                    let next = peek!();
+                    if let Some(c) = next {
+                        past_two.0 = past_two.1;
+                        past_two.1 = c;
+                        if past_two == ('/', '*') {
+                            depth += 1;
+                            starts.push(idx);
+                        } else if past_two == ('*', '/') {
+                            depth -= 1;
+                            starts.pop();
+                        }
+                    } else {
+                        error_accumulator.push(make_error!(diagnostics::E0002.0, true, "unmatched /*", Span::new(file, starts[starts.len() - 1], starts[starts.len() - 1] + 2 )));
+                        early_exit!()
+                    }
+                };
+                idx += 1;
+                None
+            },
             '(' => simple_token!(LParen),
             ')' => simple_token!(RParen),
             '[' => simple_token!(LBracket),

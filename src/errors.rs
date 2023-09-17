@@ -12,6 +12,7 @@ pub mod diagnostics {
         E0001,
         "todo: add explanation for this error (unrecognized character)"
     );
+    d!(E0002, "todo: add explanation for this error (unmatched /*)");
 }
 
 #[rustfmt::skip]

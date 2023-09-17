@@ -105,7 +105,7 @@ impl Loader {
         }
         let mut end = span.end as usize;
         if end + right > self.files[span.file].string.len() {
-            end = self.files[span.file].string.len() - 1;
+            end = self.files[span.file].string.len();
         } else {
             end = end + right;
         }
