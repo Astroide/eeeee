@@ -8,9 +8,10 @@ macro_rules! ice {
 }
 pub(crate) use ice;
 
+/// note: use only when the value should really be there, and there's no real risk of failing.
 macro_rules! unwrap_err {
     ($e:expr) => {
-        $e.unwrap_or_else(|_| ice!("called unwrap() on a None/Err"))
+        $e.unwrap_or_else(|e| ice!("called unwrap() on an Err ({:?})", e))
     };
 }
 pub(crate) use unwrap_err;

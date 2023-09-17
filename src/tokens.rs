@@ -1,6 +1,6 @@
 use crate::loader::Span;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum TokenType {
     ILiteral,
     FLiteral,
@@ -18,7 +18,7 @@ pub enum TokenType {
     EqEq,
     LCBrace,
     RCBrace,
-    Ident,
+    Ident(String),
     If,
     Neq,
     Minus,
@@ -50,6 +50,7 @@ pub enum TokenType {
     While,
     Use,
     As,
+    Mut,
 }
 
 #[derive(Debug, Clone)]
