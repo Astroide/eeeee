@@ -96,12 +96,12 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                 }
             },
             _ => {
-                // error_accumulator.push(make_error!(
-                //     diagnostics::E0001.0,
-                //     false,
-                //     format!("unrecognized character: {}", next),
-                //     Span::new(file, idx, idx + 1)
-                // ));
+                error_accumulator.push(make_error!(
+                    diagnostics::E0001.0,
+                    false,
+                    format!("unrecognized character: {}", next),
+                    Span::new(file, idx, idx + 1)
+                ));
                 None
             }
         } {

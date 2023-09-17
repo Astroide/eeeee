@@ -1,6 +1,6 @@
 use std::hint::black_box;
 
-use crate::loader::Span;
+use crate::loader::{Loader, Span};
 
 pub mod diagnostics {
     macro_rules! d {
@@ -41,3 +41,13 @@ macro_rules! make_error {
     }}
 }
 pub(crate) use make_error;
+
+/// temporary implementation, to be improved.
+pub fn print_error(error: &Error, sources: &Loader) {
+    eprint!("\x1B[31merror ({}):\x1B[0m ", error.code);
+    for i in 0..error.pieces.len() {
+        eprintln!("\x1B[34m{}\x1B[0m", error.pieces[i]);
+        let (left, mid, right) = sources.span_content_with_margins(error.spans[i], 5, 5);
+        eprintln!("{}\x1B[35m{}\x1B[0m{}", left, mid, right);
+    }
+}

@@ -86,4 +86,33 @@ impl Loader {
     pub fn get_file(&self, index: usize) -> &Source {
         &self.files[index]
     }
+
+    pub fn span_content(&self, span: Span) -> &str {
+        &self.files[span.file].string[span.start as usize..span.end as usize]
+    }
+
+    pub fn span_content_with_margins(
+        &self,
+        span: Span,
+        left: usize,
+        right: usize,
+    ) -> (&str, &str, &str) {
+        let mut start = span.start as usize;
+        if left > start {
+            start = 0;
+        } else {
+            start = start - left;
+        }
+        let mut end = span.end as usize;
+        if end + right > self.files[span.file].string.len() {
+            end = self.files[span.file].string.len() - 1;
+        } else {
+            end = end + right;
+        }
+        (
+            &self.files[span.file].string[start..span.start as usize],
+            &self.files[span.file].string[span.start as usize..span.end as usize],
+            &self.files[span.file].string[span.end as usize..end],
+        )
+    }
 }
