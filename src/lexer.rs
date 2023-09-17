@@ -59,6 +59,15 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
             };
         }
 
+        macro_rules! bool {
+            ($val:literal) => {
+                Some(Token {
+                    span: Span::new(file, n, idx + 1),
+                    tt: BLiteral($val),
+                })
+            };
+        }
+
         let next = chars[idx];
         use TokenType::*;
         if let Some(token) = match next {
@@ -169,6 +178,8 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                     "while" => keyword!(While),
                     "use" => keyword!(Use),
                     "as" => keyword!(As),
+                    "true" => bool!(true),
+                    "false" => bool!(false),
                     _ => Some(Token {
                         span: Span::new(file, n, idx + 1),
                         tt: Ident(text),

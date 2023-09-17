@@ -44,7 +44,7 @@ pub enum TokenType {
     StarEq,
     SlashEq,
     ExpEq,
-    BLiteral,
+    BLiteral(bool),
     Comma,
     Loop,
     While,
