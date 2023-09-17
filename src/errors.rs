@@ -13,6 +13,10 @@ pub mod diagnostics {
         "todo: add explanation for this error (unrecognized character)"
     );
     d!(E0002, "todo: add explanation for this error (unmatched /*)");
+    d!(
+        E0003,
+        "todo: add explanation for this error (empty hex/octal literal)"
+    );
 }
 
 #[rustfmt::skip]

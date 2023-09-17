@@ -3,7 +3,7 @@ use unicode_xid::UnicodeXID;
 use crate::{
     errors::{diagnostics, make_error, Error},
     loader::Span,
-    tokens::{Token, TokenType},
+    tokens::{IntLiteralType, Token, TokenType},
 };
 
 pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>) {
@@ -156,6 +156,77 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                     simple_token!(Star)
                 }
             },
+            '0' if matches!(peek!(), Some('x')) => {
+                idx += 1;
+                let mut value = "0x".to_owned();
+                while let Some(c @ ('0'..='9' | 'a'..='f' | 'A'..='F')) = peek!() {
+                    value.push(c);
+                    idx += 1;
+                };
+                if value.len() == 2 {
+                    error_accumulator.push(make_error!(diagnostics::E0003.0, false, "empty hexadecimal literal", Span::new(file, n, idx + 1)));
+                    value.push('0');
+                };
+                Some(Token { span: Span::new(file, n, idx + 1), tt: ILiteral { value, kind: IntLiteralType::Hexadecimal } })
+            },
+            '0' if matches!(peek!(), Some('o')) => {
+                idx += 1;
+                let mut value = "0o".to_owned();
+                while let Some(c @ '0'..='7') = peek!() {
+                    value.push(c);
+                    idx += 1;
+                };
+                if value.len() == 2 {
+                    error_accumulator.push(make_error!(diagnostics::E0003.0, false, "empty octal literal", Span::new(file, n, idx + 1)));
+                    value.push('0');
+                };
+                Some(Token { span: Span::new(file, n, idx + 1), tt: ILiteral { value, kind: IntLiteralType::Octal } })
+            },
+            '0' if matches!(peek!(), Some('b')) => {
+                idx += 1;
+                let mut value = "0b".to_owned();
+                while let Some(c @ ('0' | '1')) = peek!() {
+                    value.push(c);
+                    idx += 1;
+                };
+                if value.len() == 2 {
+                    error_accumulator.push(make_error!(diagnostics::E0003.0, false, "empty binary literal", Span::new(file, n, idx + 1)));
+                    value.push('0');
+                };
+                Some(Token { span: Span::new(file, n, idx + 1), tt: ILiteral { value, kind: IntLiteralType::Binary } })
+            },
+            x @ '0'..='9' => {
+                let mut value = x.to_string();
+                while let Some(c @ '0'..='9') = peek!() {
+                    value.push(c);
+                    idx += 1;
+                };
+                Some(if let Some('.') = peek!() {
+                    idx += 1;
+                    if let Some('0'..='9') = peek!() {
+                        value.push('.');
+                        while let Some(c @ '0'..='9') = peek!() {
+                            value.push(c);
+                            idx += 1;
+                        };
+                        Token {
+                            span: Span::new(file, n, idx + 1),
+                            tt: FLiteral(value)
+                        }
+                    } else {
+                        idx -= 1;
+                        Token {
+                            span: Span::new(file, n, idx + 1),
+                            tt: ILiteral { value, kind: IntLiteralType::Decimal }
+                        }
+                    }
+                } else {
+                    Token {
+                        span: Span::new(file, n, idx + 1),
+                        tt: ILiteral { value, kind: IntLiteralType::Decimal }
+                    }
+                })
+            },
             x if x == '_' || x.is_xid_start() => {
                 let mut text = x.to_string();
                 while peek!().is_some_and(|x| x.is_xid_continue()) {
@@ -186,11 +257,11 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                     }),
                 }
             },
-            _ => {
+            any => {
                 error_accumulator.push(make_error!(
                     diagnostics::E0001.0,
                     false,
-                    format!("unrecognized character: {}", next),
+                    if any == '"' { format!("unrecognized character: {} (note: use single quotes for string or char literals)", next) } else { format!("unrecognized character: {}", next) },
                     Span::new(file, idx, idx + 1)
                 ));
                 None

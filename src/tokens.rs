@@ -1,9 +1,17 @@
 use crate::loader::Span;
 
+#[derive(Debug, Clone, Copy)]
+pub enum IntLiteralType {
+    Hexadecimal,
+    Decimal,
+    Octal,
+    Binary,
+}
+
 #[derive(Debug, Clone)]
 pub enum TokenType {
-    ILiteral,
-    FLiteral,
+    ILiteral { value: String, kind: IntLiteralType },
+    FLiteral(String),
     SLiteral,
     Let,
     Eq,
