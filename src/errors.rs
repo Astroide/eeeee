@@ -32,6 +32,14 @@ pub mod codes {
         E0008,
         "todo: add explanation for this error (invalid Unicode sequence)"
     );
+    d!(
+        E0009,
+        "todo: add explanation for this error (invalid type hint)"
+    );
+    d!(
+        E0010,
+        "todo: add explanation for this error (unexpected identifier)"
+    );
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -76,6 +84,6 @@ pub fn print_error(error: &Error, sources: &Loader) {
     for i in 0..error.pieces.len() {
         eprintln!("\x1B[34m{}\x1B[0m", error.pieces[i]);
         let (left, mid, right) = sources.span_content_with_margins(error.spans[i], 5, 5);
-        eprintln!("{}\x1B[35m{}\x1B[0m{}", left, mid, right);
+        eprintln!("{}\x1B[36m{}\x1B[0m{}", left, mid, right);
     }
 }

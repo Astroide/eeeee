@@ -3,10 +3,12 @@ use unicode_xid::UnicodeXID;
 use crate::{
     errors::{codes, make_error, Error, Severity::*},
     loader::Span,
-    tokens::{IntLiteralType, Token, TokenType},
+    tokens::{
+        FLiteralTypeHint, ILiteralTypeHint, IntLiteralType, SLiteralTypeHint, Token, TokenType,
+    },
 };
 
-static HEX_CHAR_TO_STR: [&'static str; 103] = [
+static HEX_CHAR_TO_STR: [&str; 103] = [
     "\x00", "\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\x07", "\x08", "\x09", "\x0a", "\x0b",
     "\x0c", "\x0d", "\x0e", "\x0f", "\x10", "\x11", "\x12", "\x13", "\x14", "\x15", "\x16", "\x17",
     "\x18", "\x19", "\x1a", "\x1b", "\x1c", "\x1d", "\x1e", "\x1f", "\x20", "\x21", "\x22", "\x23",
@@ -85,6 +87,61 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                     tt: BLiteral($val),
                 })
             };
+        }
+
+        macro_rules! invalid_type_hint {
+            ($possibilities:expr, $t:expr, $type_:literal, $ths:expr) => {
+                error_accumulator.push(make_error!(
+                    codes::E0009.0,
+                    Error,
+                    &format!(
+                        "{} is not a valid type hint for {{{}}} (valid ones are {})",
+                        $t,
+                        $type_,
+                        $possibilities.iter().skip(1).fold(
+                            $possibilities[0].to_string(),
+                            |mut acc, item| {
+                                acc.push_str(", ");
+                                acc.push_str(item);
+                                acc
+                            }
+                        )
+                    )[..],
+                    Span::new(file, $ths + 1, idx + 1)
+                ))
+            };
+        }
+
+        macro_rules! read_type_hint {
+            () => {&{
+                let mut hint = String::new();
+                while let Some(c @ ('a'..='z' | '0'..='9')) = peek!() { // numbers should be OK, this should be called after the lexer's out of numbers
+                    idx += 1;
+                    hint.push(c);
+                };
+                hint
+            }[..]}
+        }
+
+        macro_rules! rth {
+            ($possibilities:expr, $kind:literal, $none:path, $($in_:literal: $out:expr),*) => {
+                {
+                    let mut invalid = false;
+                    let type_hint_start = idx;
+                    let type_hint = match read_type_hint!() {
+                        "" => $none,
+                        $(
+                            $in_ => $out,
+                        )*
+                        any => {
+                            invalid_type_hint!($possibilities, any, $kind, type_hint_start);
+                            invalid = true;
+                            $none
+                        },
+                    };
+                    (type_hint, invalid)
+                }
+            }
         }
 
         let next = chars[idx];
@@ -179,72 +236,89 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
             },
             '0' if matches!(peek!(), Some('x')) => {
                 idx += 1;
-                let mut value = "0x".to_owned();
-                while let Some(c @ ('0'..='9' | 'a'..='f' | 'A'..='F')) = peek!() {
-                    value.push(c);
+                let mut value = "".to_owned();
+                while let Some(c @ ('0'..='9' | 'a'..='f' | 'A'..='F' | '_')) = peek!() {
+                    if c != '_' {
+                        value.push(c);
+                    };
                     idx += 1;
                 };
-                if value.len() == 2 {
+                if value.is_empty() {
                     error_accumulator.push(make_error!(codes::E0003.0, Error, "empty hexadecimal literal", Span::new(file, n, idx + 1)));
                     value.push('0');
                 };
-                Some(Token { span: Span::new(file, n, idx + 1), tt: ILiteral { value, kind: IntLiteralType::Hexadecimal } })
+                let (type_hint, _is_invalid) = rth!(["u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64"], "integer", ILiteralTypeHint::None, "u8": ILiteralTypeHint::U8, "i8": ILiteralTypeHint::I8, "u16": ILiteralTypeHint::U16, "i16": ILiteralTypeHint::I16, "u32": ILiteralTypeHint::U32, "i32": ILiteralTypeHint::I32, "u64": ILiteralTypeHint::U64, "i64": ILiteralTypeHint::I64);
+                Some(Token { span: Span::new(file, n, idx + 1), tt: ILiteral { value, kind: IntLiteralType::Hexadecimal, type_hint } })
             },
             '0' if matches!(peek!(), Some('o')) => {
                 idx += 1;
-                let mut value = "0o".to_owned();
-                while let Some(c @ '0'..='7') = peek!() {
-                    value.push(c);
+                let mut value = "".to_owned();
+                while let Some(c @ ('0'..='7' | '_')) = peek!() {
+                    if c != '_' {
+                        value.push(c);
+                    };
                     idx += 1;
                 };
-                if value.len() == 2 {
+                if value.is_empty() {
                     error_accumulator.push(make_error!(codes::E0003.0, Error, "empty octal literal", Span::new(file, n, idx + 1)));
                     value.push('0');
                 };
-                Some(Token { span: Span::new(file, n, idx + 1), tt: ILiteral { value, kind: IntLiteralType::Octal } })
+                let (type_hint, _is_invalid) = rth!(["u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64"], "integer", ILiteralTypeHint::None, "u8": ILiteralTypeHint::U8, "i8": ILiteralTypeHint::I8, "u16": ILiteralTypeHint::U16, "i16": ILiteralTypeHint::I16, "u32": ILiteralTypeHint::U32, "i32": ILiteralTypeHint::I32, "u64": ILiteralTypeHint::U64, "i64": ILiteralTypeHint::I64);
+                Some(Token { span: Span::new(file, n, idx + 1), tt: ILiteral { value, kind: IntLiteralType::Octal, type_hint } })
             },
             '0' if matches!(peek!(), Some('b')) => {
                 idx += 1;
-                let mut value = "0b".to_owned();
-                while let Some(c @ ('0' | '1')) = peek!() {
-                    value.push(c);
+                let mut value = "".to_owned();
+                while let Some(c @ ('0' | '1' | '_')) = peek!() {
+                    if c != '_' {
+                        value.push(c);
+                    };
                     idx += 1;
                 };
-                if value.len() == 2 {
+                if value.is_empty() {
                     error_accumulator.push(make_error!(codes::E0003.0, Error, "empty binary literal", Span::new(file, n, idx + 1)));
                     value.push('0');
                 };
-                Some(Token { span: Span::new(file, n, idx + 1), tt: ILiteral { value, kind: IntLiteralType::Binary } })
+                let (type_hint, _is_invalid) = rth!(["u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64"], "integer", ILiteralTypeHint::None, "u8": ILiteralTypeHint::U8, "i8": ILiteralTypeHint::I8, "u16": ILiteralTypeHint::U16, "i16": ILiteralTypeHint::I16, "u32": ILiteralTypeHint::U32, "i32": ILiteralTypeHint::I32, "u64": ILiteralTypeHint::U64, "i64": ILiteralTypeHint::I64);
+                Some(Token { span: Span::new(file, n, idx + 1), tt: ILiteral { value, kind: IntLiteralType::Binary, type_hint } })
             },
             x @ '0'..='9' => {
                 let mut value = x.to_string();
-                while let Some(c @ '0'..='9') = peek!() {
-                    value.push(c);
+                while let Some(c @ ('0'..='9' | '_')) = peek!() {
+                    if c != '_' {
+                        value.push(c);
+                    };
                     idx += 1;
                 };
                 Some(if let Some('.') = peek!() {
                     idx += 1;
                     if let Some('0'..='9') = peek!() {
                         value.push('.');
-                        while let Some(c @ '0'..='9') = peek!() {
-                            value.push(c);
+                        while let Some(c @ ('0'..='9' | '_')) = peek!() {
+                            if c != '_' {
+                                value.push(c);
+                            };
                             idx += 1;
                         };
+                        let (type_hint, _is_invalid) = rth!(["f32", "f64"], "float", FLiteralTypeHint::None, "f32": FLiteralTypeHint::F32, "f64": FLiteralTypeHint::F64);
                         Token {
                             span: Span::new(file, n, idx + 1),
-                            tt: FLiteral(value)
+                            tt: FLiteral{ value, type_hint}
                         }
                     } else {
                         idx -= 1;
+                        let (type_hint, _is_invalid) = rth!(["u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64"], "integer", ILiteralTypeHint::None, "u8": ILiteralTypeHint::U8, "i8": ILiteralTypeHint::I8, "u16": ILiteralTypeHint::U16, "i16": ILiteralTypeHint::I16, "u32": ILiteralTypeHint::U32, "i32": ILiteralTypeHint::I32, "u64": ILiteralTypeHint::U64, "i64": ILiteralTypeHint::I64);
+
                         Token {
                             span: Span::new(file, n, idx + 1),
-                            tt: ILiteral { value, kind: IntLiteralType::Decimal }
+                            tt: ILiteral { value, kind: IntLiteralType::Decimal, type_hint }
                         }
                     }
                 } else {
+                    let (type_hint, _is_invalid) = rth!(["u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64"], "integer", ILiteralTypeHint::None, "u8": ILiteralTypeHint::U8, "i8": ILiteralTypeHint::I8, "u16": ILiteralTypeHint::U16, "i16": ILiteralTypeHint::I16, "u32": ILiteralTypeHint::U32, "i32": ILiteralTypeHint::I32, "u64": ILiteralTypeHint::U64, "i64": ILiteralTypeHint::I64);
                     Token {
                         span: Span::new(file, n, idx + 1),
-                        tt: ILiteral { value, kind: IntLiteralType::Decimal }
+                        tt: ILiteral { value, kind: IntLiteralType::Decimal, type_hint }
                     }
                 })
             },
@@ -321,24 +395,22 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                                             if let Some(c @ ('0'..='9' | 'a'..='f' | 'A'..='F')) = next {
                                                 value *= 16;
                                                 value += u32::from_str_radix(HEX_CHAR_TO_STR[c as usize], 16).expect("this SHOULD be ok");
+                                            } else if let Some(c) = next {
+                                                error_accumulator.push(make_error!(
+                                                    codes::E0006.0,
+                                                    Error,
+                                                    &format!("expected a hexadecimal digit, got {}", c)[..],
+                                                    Span::new(file, idx + 1, idx + 2)
+                                                ));
+                                                break 'block '\0'
                                             } else {
-                                                if let Some(c) = next {
-                                                    error_accumulator.push(make_error!(
-                                                        codes::E0006.0,
-                                                        Error,
-                                                        &format!("expected a hexadecimal digit, got {}", c)[..],
-                                                        Span::new(file, idx + 1, idx + 2)
-                                                    ));
-                                                    break 'block '\0'
-                                                } else {
-                                                    error_accumulator.push(make_error!(
-                                                        codes::E0006.0,
-                                                        FatalError,
-                                                        "expected an hexadecimal digit, got <EOF>",
-                                                        Span::new(file, idx, idx + 1)
-                                                    ));
-                                                    early_exit!()
-                                                }
+                                                error_accumulator.push(make_error!(
+                                                    codes::E0006.0,
+                                                    FatalError,
+                                                    "expected an hexadecimal digit, got <EOF>",
+                                                    Span::new(file, idx, idx + 1)
+                                                ));
+                                                early_exit!()
                                             }
                                             idx += 1;
                                         }};
@@ -377,7 +449,7 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                                                         codes::E0008.0,
                                                         FatalError,
                                                         "expected an hexadecimal digit, got <EOF>",
-                                                        Span::new(file, idx + 0, idx + 1)
+                                                        Span::new(file, idx, idx + 1)
                                                     ));
                                                     early_exit!()
                                                 }
@@ -456,7 +528,24 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                         early_exit!()
                     }
                 };
-                Some(Token { span: Span::new(file, n, idx + 1), tt: SLiteral(string_contents) })
+                let idx_there = idx;
+                let there_was_an_underscore = if let Some('_') = peek!() {
+                    idx += 1;
+                    true
+                } else {
+                    false
+                };
+                let (type_hint, is_invalid) = rth!(["char", "str"], "string-like", SLiteralTypeHint::None, "char": SLiteralTypeHint::Char, "str": SLiteralTypeHint::String);
+                if type_hint == SLiteralTypeHint::None && !is_invalid && there_was_an_underscore {
+                    error_accumulator.push(make_error!(
+                        codes::E0010.0,
+                        Error,
+                        "unexpected identifier '_' after {string-like}",
+                        Span::new(file, idx, idx + 1)
+                    ));
+                    idx = idx_there;
+                };
+                Some(Token { span: Span::new(file, n, idx + 1), tt: SLiteral{ value: string_contents, type_hint } })
             },
             any => {
                 error_accumulator.push(make_error!(

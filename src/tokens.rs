@@ -1,6 +1,6 @@
 use crate::loader::Span;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum IntLiteralType {
     Hexadecimal,
     Decimal,
@@ -8,11 +8,50 @@ pub enum IntLiteralType {
     Binary,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum SLiteralTypeHint {
+    None,
+    Char,
+    String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ILiteralTypeHint {
+    None,
+    U8,
+    I8,
+    U16,
+    I16,
+    U32,
+    I32,
+    U64,
+    I64,
+    // U128,
+    // I128, (not for now)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum FLiteralTypeHint {
+    None,
+    F32,
+    F64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
-    ILiteral { value: String, kind: IntLiteralType },
-    FLiteral(String),
-    SLiteral(String),
+    ILiteral {
+        value: String,
+        kind: IntLiteralType,
+        type_hint: ILiteralTypeHint,
+    },
+    FLiteral {
+        value: String,
+        type_hint: FLiteralTypeHint,
+    },
+    SLiteral {
+        value: String,
+        type_hint: SLiteralTypeHint,
+    },
     Let,
     Eq,
     LParen,

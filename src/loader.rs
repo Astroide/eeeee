@@ -101,13 +101,13 @@ impl Loader {
         if left > start {
             start = 0;
         } else {
-            start = start - left;
+            start -= left;
         }
         let mut end = span.end as usize;
         if end + right > self.files[span.file].string.len() {
             end = self.files[span.file].string.len();
         } else {
-            end = end + right;
+            end += right;
         }
         (
             &self.files[span.file].string[start..span.start as usize],
