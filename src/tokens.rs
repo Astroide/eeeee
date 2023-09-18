@@ -12,7 +12,7 @@ pub enum IntLiteralType {
 pub enum TokenType {
     ILiteral { value: String, kind: IntLiteralType },
     FLiteral(String),
-    SLiteral,
+    SLiteral(String),
     Let,
     Eq,
     LParen,

@@ -91,12 +91,7 @@ impl Loader {
         &self.files[span.file].string[span.start as usize..span.end as usize]
     }
 
-    pub fn span_content_with_margins(
-        &self,
-        span: Span,
-        left: usize,
-        right: usize,
-    ) -> (&str, &str, &str) {
+    pub fn span_content_with_margins(&self, span: Span, left: usize, right: usize) -> (&str, &str, &str) {
         let mut start = span.start as usize;
         if left > start {
             start = 0;
