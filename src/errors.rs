@@ -6,14 +6,32 @@ pub mod codes {
             pub const $no: (&'static str, &'static str) = (stringify!($no), $message);
         };
     }
-    d!(E0001, "todo: add explanation for this error (unrecognized character)");
+    d!(
+        E0001,
+        "todo: add explanation for this error (unrecognized character)"
+    );
     d!(E0002, "todo: add explanation for this error (unmatched /*)");
-    d!(E0003, "todo: add explanation for this error (empty hex/octal literal)");
+    d!(
+        E0003,
+        "todo: add explanation for this error (empty hex/octal literal)"
+    );
     d!(E0004, "todo: add explanation for this error (unmatched ')");
-    d!(E0005, "todo: add explanation for this error (unknown escape sequence)");
-    d!(E0006, "todo: add explanation for this error (expected hexadecimal digit, got <something-else>)");
-    d!(E0007, "todo: add explanation for this error (Unicode sequences, expected { or })");
-    d!(E0008, "todo: add explanation for this error (invalid Unicode sequence)");
+    d!(
+        E0005,
+        "todo: add explanation for this error (unknown escape sequence)"
+    );
+    d!(
+        E0006,
+        "todo: add explanation for this error (expected hexadecimal digit, got <something-else>)"
+    );
+    d!(
+        E0007,
+        "todo: add explanation for this error (Unicode sequences, expected { or })"
+    );
+    d!(
+        E0008,
+        "todo: add explanation for this error (invalid Unicode sequence)"
+    );
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -46,11 +64,15 @@ pub(crate) use make_error;
 
 /// temporary implementation, to be improved.
 pub fn print_error(error: &Error, sources: &Loader) {
-    eprint!("{} ({}):\x1B[0m ", match error.severity {
-        Severity::Warning => "\x1B[33mwarning",
-        Severity::Error => "\x1B[31merror",
-        Severity::FatalError => "\x1B[31mfatal error",
-    }, error.code);
+    eprint!(
+        "{} ({}):\x1B[0m ",
+        match error.severity {
+            Severity::Warning => "\x1B[33mwarning",
+            Severity::Error => "\x1B[31merror",
+            Severity::FatalError => "\x1B[31mfatal error",
+        },
+        error.code
+    );
     for i in 0..error.pieces.len() {
         eprintln!("\x1B[34m{}\x1B[0m", error.pieces[i]);
         let (left, mid, right) = sources.span_content_with_margins(error.spans[i], 5, 5);
