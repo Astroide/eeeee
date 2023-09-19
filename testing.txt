@@ -39,3 +39,6 @@ eee
 eeee
 eeeee
 eeeeee
+ 'a
+multiline
+string'

@@ -231,16 +231,14 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                     } else {
                         two_char_token!(Exp)
                     }
+                } else if let Some('=') = peek!() {
+                    idx += 1;
+                    Some(Token {
+                        span: Span::new(file, n, idx + 1),
+                        tt: StarEq,
+                    })
                 } else {
-                    if let Some('=') = peek!() {
-                        idx += 1;
-                        Some(Token {
-                            span: Span::new(file, n, idx + 1),
-                            tt: StarEq,
-                        })
-                    } else {
-                        simple_token!(Star)
-                    }
+                    simple_token!(Star)
                 }
             },
             '0' if matches!(peek!(), Some('x')) => {

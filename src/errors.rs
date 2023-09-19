@@ -72,7 +72,7 @@ impl Error {
 
     pub fn push<T: Into<Option<String>>>(&mut self, piece: T, span: Span) -> &mut Self {
         self.pieces.push(piece.into());
-        self.spans.push(span.into());
+        self.spans.push(span);
         self
     }
 }
@@ -239,17 +239,24 @@ pub fn print_error_(error: &Error, sources: &Loader) {
                 if start_line == i && !one_liner {
                     eprint_line_start(i);
                     let line_x = width + 1 + stack.len();
-                    eprint!("{}", " ".repeat(start_col - 1));
-                    eprint!("\x1B[36mv");
-                    eprint!("{}", "-".repeat((line_x - start_col).saturating_sub(1)));
-                    eprintln!("\\\x1B[0m");
+                    eprint!("{}", " ".repeat(start_col.saturating_sub(1)));
+                    eprint!("\x1B[36m╭"); //v
+                    eprint!(
+                        "{}",
+                        "─".repeat((line_x - start_col).saturating_sub(if start_col == 0 {
+                            2
+                        } else {
+                            1
+                        }))
+                    ); //-
+                    eprintln!("╮\x1B[0m"); // \
                     stack.push(span_index);
                 }
             }
             let line_end = format!(
                 "{}\x1B[36m{}\x1B[0m\n",
                 " ".repeat(width - line_item.chars().count()),
-                "|".repeat(stack.len())
+                "│".repeat(stack.len()) // |
             );
             eprint_line(
                 src,
@@ -272,11 +279,11 @@ pub fn print_error_(error: &Error, sources: &Loader) {
                 if end_line == i && one_liner {
                     eprint_line_start(i);
                     eprint!("{}", " ".repeat(start_col));
-                    eprint!("\x1B[36m^");
+                    eprint!("\x1B[36m╰");
                     if end_col - start_col > 1 {
-                        eprint!("{}", "-".repeat((end_col - start_col).saturating_sub(2)));
+                        eprint!("{}", "─".repeat((end_col - start_col).saturating_sub(2))); //-
                         if end_col - start_col >= 2 {
-                            eprint!("^");
+                            eprint!("╯"); //^
                         }
                     }
                     eprint!(
@@ -299,20 +306,22 @@ pub fn print_error_(error: &Error, sources: &Loader) {
                     eprint_line_start(i);
                     eprint!("{}\x1B[36m", " ".repeat(width));
                     for _ in 0..position {
-                        eprint!(":");
+                        eprint!("╎");
                     }
-                    eprint!("|");
+                    eprint!("│");
                     for _ in (position + 1)..stack.len() {
-                        eprint!(":");
+                        eprint!("╎");
                     }
                     eprintln!("\x1B[0m");
-                    stack.remove(position);
+                    let idx = stack.remove(position);
                     eprint_line_start(i);
                     let line_x = width + position;
                     eprint!("{}", " ".repeat(end_col));
-                    eprint!("\x1B[36m^");
-                    eprint!("{}", "-".repeat((line_x - end_col).saturating_sub(1)));
-                    eprintln!("/\x1B[0m");
+                    eprint!("\x1B[36m╰"); //^
+                    eprint!("{}", "─".repeat((line_x - end_col).saturating_sub(1))); // -
+                    eprintln!("╯\x1B[0m"); // /
+                    eprint_line_start(i);
+                    eprintln!("\x1B[36m{}\x1B[0m", unwrap_or_else_this_particular_case!(error.pieces[relevant_spans[idx].4], "here")); // /
                 }
             }
         }
