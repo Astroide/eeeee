@@ -25,7 +25,7 @@ comment */
 'q'_char // this is a comment /* */
 + - * / ** = ! < >
 += -= *= /= **= == != <= >=
-'a'_ string
+'a'_str
 0x1235ABC
 0o27
 0b11
@@ -33,3 +33,9 @@ comment */
 42
 0_i32
 0xFF
+'a'
+ee
+eee
+eeee
+eeeee
+eeeeee

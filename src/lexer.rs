@@ -92,9 +92,7 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
         macro_rules! invalid_type_hint {
             ($possibilities:expr, $t:expr, $type_:literal, $ths:expr) => {
                 error_accumulator.push(make_error!(
-                    codes::E0009.0,
-                    Error,
-                    &format!(
+                    format!(
                         "{} is not a valid type hint for {{{}}} (valid ones are {})",
                         $t,
                         $type_,
@@ -106,8 +104,10 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                                 acc
                             }
                         )
-                    )[..],
-                    Span::new(file, $ths + 1, idx + 1)
+                    ),
+                    codes::E0009.0,
+                    Error,
+                    None => Span::new(file, $ths + 1, idx)
                 ))
             };
         }
@@ -186,7 +186,7 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                         }
                     } else {
                         error_accumulator.push(make_error!(
-                            codes::E0002.0, FatalError, "unmatched /*", Span::new(file, starts[starts.len() - 1], starts[starts.len() - 1] + 2 )
+                            "unmatched /*", codes::E0002.0, FatalError, None => Span::new(file, starts[starts.len() - 1], starts[starts.len() - 1] + 2 )
                         ));
                         early_exit!()
                     }
@@ -244,7 +244,7 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                     idx += 1;
                 };
                 if value.is_empty() {
-                    error_accumulator.push(make_error!(codes::E0003.0, Error, "empty hexadecimal literal", Span::new(file, n, idx + 1)));
+                    error_accumulator.push(make_error!("empty hexadecimal literal", codes::E0003.0, Error, None => Span::new(file, n, idx + 1)));
                     value.push('0');
                 };
                 let (type_hint, _is_invalid) = rth!(["u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64"], "integer", ILiteralTypeHint::None, "u8": ILiteralTypeHint::U8, "i8": ILiteralTypeHint::I8, "u16": ILiteralTypeHint::U16, "i16": ILiteralTypeHint::I16, "u32": ILiteralTypeHint::U32, "i32": ILiteralTypeHint::I32, "u64": ILiteralTypeHint::U64, "i64": ILiteralTypeHint::I64);
@@ -260,7 +260,7 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                     idx += 1;
                 };
                 if value.is_empty() {
-                    error_accumulator.push(make_error!(codes::E0003.0, Error, "empty octal literal", Span::new(file, n, idx + 1)));
+                    error_accumulator.push(make_error!("empty octal literal", codes::E0003.0, Error, None => Span::new(file, n, idx + 1)));
                     value.push('0');
                 };
                 let (type_hint, _is_invalid) = rth!(["u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64"], "integer", ILiteralTypeHint::None, "u8": ILiteralTypeHint::U8, "i8": ILiteralTypeHint::I8, "u16": ILiteralTypeHint::U16, "i16": ILiteralTypeHint::I16, "u32": ILiteralTypeHint::U32, "i32": ILiteralTypeHint::I32, "u64": ILiteralTypeHint::U64, "i64": ILiteralTypeHint::I64);
@@ -276,7 +276,7 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                     idx += 1;
                 };
                 if value.is_empty() {
-                    error_accumulator.push(make_error!(codes::E0003.0, Error, "empty binary literal", Span::new(file, n, idx + 1)));
+                    error_accumulator.push(make_error!("empty binary literal", codes::E0003.0, Error, None => Span::new(file, n, idx + 1)));
                     value.push('0');
                 };
                 let (type_hint, _is_invalid) = rth!(["u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64"], "integer", ILiteralTypeHint::None, "u8": ILiteralTypeHint::U8, "i8": ILiteralTypeHint::I8, "u16": ILiteralTypeHint::U16, "i16": ILiteralTypeHint::I16, "u32": ILiteralTypeHint::U32, "i32": ILiteralTypeHint::I32, "u64": ILiteralTypeHint::U64, "i64": ILiteralTypeHint::I64);
@@ -397,18 +397,18 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                                                 value += u32::from_str_radix(HEX_CHAR_TO_STR[c as usize], 16).expect("this SHOULD be ok");
                                             } else if let Some(c) = next {
                                                 error_accumulator.push(make_error!(
+                                                    format!("expected a hexadecimal digit, got {}", c),
                                                     codes::E0006.0,
                                                     Error,
-                                                    &format!("expected a hexadecimal digit, got {}", c)[..],
-                                                    Span::new(file, idx + 1, idx + 2)
+                                                    None => Span::new(file, idx + 1, idx + 2)
                                                 ));
                                                 break 'block '\0'
                                             } else {
                                                 error_accumulator.push(make_error!(
+                                                    "expected an hexadecimal digit, got <EOF>",
                                                     codes::E0006.0,
                                                     FatalError,
-                                                    "expected an hexadecimal digit, got <EOF>",
-                                                    Span::new(file, idx, idx + 1)
+                                                    None => Span::new(file, idx, idx + 1)
                                                 ));
                                                 early_exit!()
                                             }
@@ -439,17 +439,17 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                                                     break
                                                 } else if let Some(c) = next {
                                                     error_accumulator.push(make_error!(
+                                                        format!("invalid character in escape sequence: {}", c),
                                                         codes::E0008.0,
                                                         Error,
-                                                        &format!("invalid character in escape sequence: {}", c)[..],
-                                                        Span::new(file, idx + 1, idx + 2)
+                                                        None => Span::new(file, idx + 1, idx + 2)
                                                     ))
                                                 } else {
                                                     error_accumulator.push(make_error!(
+                                                        "expected an hexadecimal digit, got <EOF>",
                                                         codes::E0008.0,
                                                         FatalError,
-                                                        "expected an hexadecimal digit, got <EOF>",
-                                                        Span::new(file, idx, idx + 1)
+                                                        None => Span::new(file, idx, idx + 1)
                                                     ));
                                                     early_exit!()
                                                 }
@@ -458,37 +458,37 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                                             };
                                             if iteration_count == 0 {
                                                 error_accumulator.push(make_error!(
+                                                    "\\u Unicode escapes should contain at least 1 hexadecimal digit",
                                                     codes::E0008.0,
                                                     Warning,
-                                                    "\\u Unicode escapes should contain at least 1 hexadecimal digit",
-                                                    Span::new(file, value_start, idx + 1)
+                                                    None => Span::new(file, value_start, idx + 1)
                                                 ));
                                             };
                                             if let Some(c) = char::from_u32(value) {
                                                 c
                                             } else {
                                                 error_accumulator.push(make_error!(
+                                                    "invalid escape sequence",
                                                     codes::E0008.0,
                                                     Error,
-                                                    "invalid escape sequence",
-                                                    Span::new(file, value_start, idx)
+                                                    None => Span::new(file, value_start, idx)
                                                 ));
                                                 '\0'
                                             }
                                         } else {
                                             if let Some(c) = peek!() {
                                                 error_accumulator.push(make_error!(
+                                                    format!("expected {{ after \\u, got {}", c),
                                                     codes::E0007.0,
                                                     Error,
-                                                    &format!("expected {{ after \\u, got {}", c)[..],
-                                                    Span::new(file, idx + 1, idx + 2)
+                                                    None => Span::new(file, idx + 1, idx + 2)
                                                 ))
                                             } else {
                                                 error_accumulator.push(make_error!(
+                                                    "expected { after \\u, got <EOF>",
                                                     codes::E0007.0,
                                                     FatalError,
-                                                    "expected { after \\u, got <EOF>",
-                                                    Span::new(file, idx, idx + 1)
+                                                    None => Span::new(file, idx, idx + 1)
                                                 ));
                                                 early_exit!()
                                             }
@@ -498,19 +498,18 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                                     idx += 1
                                 }
                                 Some(any) => error_accumulator.push(make_error!(
+                                    format!("unknown backslash escape: {}", any),
                                     codes::E0005.0,
                                     Error,
-                                    &format!("unknown backslash escape: {}", any)[..],
-                                    Span::new(file, idx + 1, idx + 2)
+                                    None => Span::new(file, idx + 1, idx + 2)
                                 )),
                                 _ => {
                                     error_accumulator.push(make_error!(
+                                        "expected a character after \\, got EOF",
                                         codes::E0005.0,
                                         FatalError,
-                                        "expected a character after \\, got EOF",
-                                        Span::new(file, idx, idx + 1),
-                                        "unterminated string started here",
-                                        Span::new(file, n, n + 1)
+                                        None => Span::new(file, idx, idx + 1),
+                                        "unterminated string started here" => Span::new(file, n, n + 1)
                                     ));
                                     early_exit!()
                                 }
@@ -520,10 +519,10 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                         }
                     } else {
                         error_accumulator.push(make_error!(
+                            "expected a closing single quote, got <EOF>",
                             codes::E0004.0,
                             FatalError,
-                            "expected a closing single quote, got <EOF>",
-                            Span::new(file, n, n + 1)
+                            None => Span::new(file, n, n + 1)
                         ));
                         early_exit!()
                     }
@@ -538,10 +537,10 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                 let (type_hint, is_invalid) = rth!(["char", "str"], "string-like", SLiteralTypeHint::None, "char": SLiteralTypeHint::Char, "str": SLiteralTypeHint::String);
                 if type_hint == SLiteralTypeHint::None && !is_invalid && there_was_an_underscore {
                     error_accumulator.push(make_error!(
+                        "unexpected identifier '_' after {string-like}",
                         codes::E0010.0,
                         Error,
-                        "unexpected identifier '_' after {string-like}",
-                        Span::new(file, idx, idx + 1)
+                        None => Span::new(file, idx, idx + 1)
                     ));
                     idx = idx_there;
                 };
@@ -549,8 +548,6 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
             },
             any => {
                 error_accumulator.push(make_error!(
-                    codes::E0001.0,
-                    Error,
                     if any == '"' {
                         format!("unrecognized character: {} {}",
                         next,
@@ -558,7 +555,9 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                     } else {
                         format!("unrecognized character: {}", next)
                     },
-                    Span::new(file, idx, idx + 1)
+                    codes::E0001.0,
+                    Error,
+                    None => Span::new(file, idx, idx + 1)
                 ));
                 None
             }

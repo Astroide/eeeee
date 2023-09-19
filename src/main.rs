@@ -7,7 +7,8 @@ fn main() {
     eprintln!("{:?}", res.0);
     if let Err(errors) = res.1 {
         for error in errors.iter() {
-            escurieux::errors::print_error(error, &loader)
+            escurieux::errors::print_error_(error, &loader);
+            // escurieux::errors::print_error(error, &loader)
         }
     }
 }
