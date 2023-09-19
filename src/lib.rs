@@ -4,6 +4,7 @@ pub mod errors;
 pub(crate) mod ice; // must be first due to how macros work
 pub mod lexer;
 pub mod loader;
+pub mod token_debugger;
 pub mod tokens;
 
 pub mod failure {

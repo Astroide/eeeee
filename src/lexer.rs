@@ -221,8 +221,9 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
             '>' => simple_token!(Gt),
             '*' => {
                 if let Some('*') = peek!() {
+                    idx += 1;
                     if let Some('=') = peek!() {
-                        idx += 2;
+                        idx += 1;
                         Some(Token {
                             span: Span::new(file, n, idx + 1),
                             tt: ExpEq,
@@ -231,7 +232,15 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                         two_char_token!(Exp)
                     }
                 } else {
-                    simple_token!(Star)
+                    if let Some('=') = peek!() {
+                        idx += 1;
+                        Some(Token {
+                            span: Span::new(file, n, idx + 1),
+                            tt: StarEq,
+                        })
+                    } else {
+                        simple_token!(Star)
+                    }
                 }
             },
             '0' if matches!(peek!(), Some('x')) => {
@@ -522,7 +531,7 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                             "expected a closing single quote, got <EOF>",
                             codes::E0004.0,
                             FatalError,
-                            None => Span::new(file, n, n + 1)
+                            "opening quote was here" => Span::new(file, n, n + 1)
                         ));
                         early_exit!()
                     }

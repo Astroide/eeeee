@@ -44,6 +44,7 @@ pub mod codes {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Severity {
+    Info,
     Warning,
     Error,
     FatalError,
@@ -56,6 +57,24 @@ pub struct Error {
     pub(crate) spans: Vec<Span>,
     pub(crate) severity: Severity,
     pub(crate) code: &'static str,
+}
+
+impl Error {
+    pub fn new(message: String, code: &'static str, severity: Severity) -> Self {
+        Self {
+            message,
+            pieces: vec![],
+            spans: vec![],
+            code,
+            severity,
+        }
+    }
+
+    pub fn push<T: Into<Option<String>>>(&mut self, piece: T, span: Span) -> &mut Self {
+        self.pieces.push(piece.into());
+        self.spans.push(span.into());
+        self
+    }
 }
 
 macro_rules! make_error {
@@ -78,7 +97,7 @@ fn find_line_col(source: &Source, position: u32) -> (usize, usize) {
     let mut line = 0;
     let mut chr = 0;
     for (index, c) in source.string().chars().enumerate() {
-        if index > position - 1 {
+        if index >= position {
             break;
         }
         if c == '\n' {
@@ -168,6 +187,7 @@ pub fn print_error_(error: &Error, sources: &Loader) {
             Severity::Warning => "\x1B[33mwarning",
             Severity::Error => "\x1B[31merror",
             Severity::FatalError => "\x1B[31mfatal error",
+            Severity::Info => "\x1B[36minfo",
         },
         error.code,
         error.message
@@ -207,7 +227,7 @@ pub fn print_error_(error: &Error, sources: &Loader) {
             .iter()
             .fold(0, |len, string| len.max(string.chars().count()));
         let mut stack = Vec::<usize>::new();
-        for i in start_line..end_line {
+        for (i, line_item) in lines.iter().enumerate().take(end_line).skip(start_line) {
             // println!("line #{}", i + 1);
             for (span_index, (_, (start_line, start_col), _, one_liner, _)) in
                 relevant_spans.iter().enumerate()
@@ -228,7 +248,7 @@ pub fn print_error_(error: &Error, sources: &Loader) {
             }
             let line_end = format!(
                 "{}\x1B[36m{}\x1B[0m\n",
-                " ".repeat(width - lines[i].chars().count()),
+                " ".repeat(width - line_item.chars().count()),
                 "|".repeat(stack.len())
             );
             eprint_line(
@@ -254,8 +274,8 @@ pub fn print_error_(error: &Error, sources: &Loader) {
                     eprint!("{}", " ".repeat(start_col));
                     eprint!("\x1B[36m^");
                     if end_col - start_col > 1 {
-                        eprint!("{}", "-".repeat((end_col - start_col).saturating_sub(1)));
-                        if end_col - start_col > 2 {
+                        eprint!("{}", "-".repeat((end_col - start_col).saturating_sub(2)));
+                        if end_col - start_col >= 2 {
                             eprint!("^");
                         }
                     }
@@ -307,6 +327,7 @@ pub fn print_error(error: &Error, sources: &Loader) {
             Severity::Warning => "\x1B[33mwarning",
             Severity::Error => "\x1B[31merror",
             Severity::FatalError => "\x1B[31mfatal error",
+            Severity::Info => "\x1B[36minfo",
         },
         error.code
     );
