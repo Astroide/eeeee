@@ -60,11 +60,11 @@ fn parse_impl(
     }
 
     macro_rules! expect {
-        ($x:ty, $fatal:literal) => {
+        ($x:pat, $fatal:literal) => {
             {
                 let token = next!();
-                if !matches!(token, Some($x)) {
-                    if matches!(None, token) {
+                if !matches!(token, Some(Token { tt: $x, .. })) {
+                    if matches!(token, None) {
                         exit_with!(make_error!(
                             format!("expected {}, got EOF", stringify!($x)),
                             codes::E0012.0,
@@ -103,9 +103,44 @@ fn parse_impl(
             None => Span::new(file, 0, 0)
         ))
     };
+
+    macro_rules! has_expression {
+        () => {
+            match peek!() {
+                Some(Token { tt: 
+                TokenType::SLiteral { .. }
+              | TokenType::ILiteral { .. }
+              | TokenType::FLiteral { .. }
+              | TokenType::Break
+              | TokenType::LParen
+              | TokenType::LCBrace
+              | TokenType::Not
+              | TokenType::Minus
+              | TokenType::If
+              | TokenType::Loop
+              | TokenType::While
+              | TokenType::Let
+              | TokenType::Ident { .. }, .. }) => true,
+              _ => false,
+            }
+        }
+    }
+
     let mut lhs: Box<Expression>;
     match &token.tt {
         tt @ TokenType::SLiteral { .. } => {
+            lhs = Box::new(Expression {
+                et: expressions::Expr::Literal { src: tt.clone() },
+                span: token.span,
+            });
+        }
+        tt @ TokenType::ILiteral { .. } => {
+            lhs = Box::new(Expression {
+                et: expressions::Expr::Literal { src: tt.clone() },
+                span: token.span,
+            });
+        }
+        tt @ TokenType::FLiteral { .. } => {
             lhs = Box::new(Expression {
                 et: expressions::Expr::Literal { src: tt.clone() },
                 span: token.span,
@@ -132,6 +167,51 @@ fn parse_impl(
                 },
                 span: token.span.merge(right_span),
             })
+        }
+        TokenType::Break => {
+            let mut maybe_right: Option<Box<Expression>> = None;
+            let mut span = token.span;
+            if has_expression!() {
+                let expr = parse_impl(input, precedence::BREAK_ASSIGN, pointer, accumulator, file)?;
+                span = span.merge(expr.span);
+                maybe_right = Some(expr);
+            }
+            lhs = Box::new(Expression { et: expressions::Expr::Break { with: maybe_right }, span })
+        }
+        TokenType::Continue => {
+            lhs = Box::new(Expression { et: expressions::Expr::Continue, span: token.span })
+        }
+        TokenType::Loop => {
+            let pointer_to_opening = *pointer;
+            expect!(TokenType::LCBrace, false);
+            let mut maybe_inside: Option<Box<Expression>> = None;
+            if has_expression!() {
+                maybe_inside = Some(parse_impl(input, 0, pointer, accumulator, file)?);
+            }
+            let mut closing_span: Span;
+            if let Some(Token { span, tt }) = next!() {
+                if !matches!(tt, TokenType::RCBrace) {
+                    exit_with!(
+                        make_error!(
+                            format!("expected a closing }}, got {}", tt.name_for_errors()),
+                            codes::E0012.0,
+                            Severity::FatalError,
+                            "expected } here" => *span
+                        ).push("opening { was here".to_string(), input[pointer_to_opening].span)
+                    );
+                } else {
+                    closing_span = *span
+                }
+            } else {
+                exit_with!(make_error!(
+                    "expected a closing }, got EOF",
+                    codes::E0012.0,
+                    Severity::FatalError,
+                    "expected } here" => Span { file, start: input[*pointer - 2].span.end, end: input[*pointer - 2].span.end },
+                    "opening { was here" => input[pointer_to_opening].span
+                ))
+            }
+            lhs = Box::new(Expression { et: expressions::Expr::Loop { inside: maybe_inside }, span: token.span.merge(closing_span) })
         }
         TokenType::LParen => {
             lhs = parse_impl(input, 0, pointer, accumulator, file)?;
@@ -232,6 +312,22 @@ fn parse_impl(
             TokenType::Geq   => infix!(token, BinaryOp::Geq),
             TokenType::Gt    => infix!(token, BinaryOp::Gt),
             TokenType::Neq   => infix!(token, BinaryOp::Neq),
+            TokenType::Semicolon => {
+                let rhs = parse_impl(
+                    input,
+                    precedence::SEMICOLON,
+                    pointer,
+                    accumulator,
+                    file,
+                )?;
+                lhs = Box::new(Expression {
+                    span: lhs.span.merge(rhs.span),
+                    et: expressions::Expr::Semicolon {
+                        left: lhs,
+                        right: rhs,
+                    },
+                })
+            }
             _ => {
                 ice!(
                     "normally, infix_precedence! should prevent this from happening. token: {:?}",

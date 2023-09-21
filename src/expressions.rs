@@ -1,6 +1,6 @@
 use crate::{
     loader::Span,
-    tokens::{SLiteralTypeHint, TokenType},
+    tokens::TokenType,
 };
 
 #[derive(Debug)]
@@ -34,13 +34,20 @@ pub enum Expr {
         callee: AnyExpr,
         args: Vec<AnyExpr>, /* Vec of Box doesn't sound like a good idea */
     },
-    ReadProperty {
+    Property {
         object: AnyExpr,
         name: String,
     },
+    Break {
+        with: Option<AnyExpr>,
+    },
+    Continue,
     Use {
         imports: Vec<String>,
     },
+    Loop {
+        inside: Option<Box<Expression>>,
+    }
 }
 
 #[derive(Debug)]

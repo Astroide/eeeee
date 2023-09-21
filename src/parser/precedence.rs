@@ -23,16 +23,17 @@ macro_rules! prec {
 
 pub fn get_precedence(t: &Option<&Token>) -> u8 {
     prec!(t,
-        TokenType::Neq   = LOGICAL,
-        TokenType::EqEq  = LOGICAL,
-        TokenType::Leq   = LOGICAL,
-        TokenType::Geq   = LOGICAL,
-        TokenType::Lt    = LOGICAL,
-        TokenType::Gt    = LOGICAL,
-        TokenType::Plus  = ADD_SUB,
-        TokenType::Minus = ADD_SUB,
-        TokenType::Star  = MUL_DIV_EXP,
-        TokenType::Slash = MUL_DIV_EXP,
-        TokenType::Exp   = MUL_DIV_EXP
+        TokenType::Neq       = LOGICAL,
+        TokenType::EqEq      = LOGICAL,
+        TokenType::Leq       = LOGICAL,
+        TokenType::Geq       = LOGICAL,
+        TokenType::Lt        = LOGICAL,
+        TokenType::Gt        = LOGICAL,
+        TokenType::Plus      = ADD_SUB,
+        TokenType::Minus     = ADD_SUB,
+        TokenType::Star      = MUL_DIV_EXP,
+        TokenType::Slash     = MUL_DIV_EXP,
+        TokenType::Exp       = MUL_DIV_EXP,
+        TokenType::Semicolon = SEMICOLON
     )
 }

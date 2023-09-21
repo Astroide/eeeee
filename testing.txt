@@ -1,8 +1,8 @@
 ({!
 -
-'e' * '3' + '2'=='4'
+'e' * 3 + 0xFF==1.5;'4';(loop{break 1; break; loop{}})
 })
-;use a.{
+use a.{
     b.*,
     c.{ d, e },
     f,
