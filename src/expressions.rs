@@ -50,6 +50,12 @@ pub enum BinaryOp {
     Mul,
     Div,
     Exp,
+    Eq,
+    Lt,
+    Gt,
+    Leq,
+    Geq,
+    Neq,
 }
 
 #[derive(Debug)]

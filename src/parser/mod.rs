@@ -26,8 +26,8 @@ fn parse_impl(
 ) -> Result<Box<Expression>, ()> {
     macro_rules! peek {
         () => {
-            if *pointer + 1 < input.len() {
-                Some(&input[*pointer + 1])
+            if *pointer < input.len() {
+                Some(&input[*pointer])
             } else {
                 None
             }
@@ -96,10 +96,12 @@ fn parse_impl(
     let token = if let Some(t) = next!() {
         t
     } else {
-        panic!();
-        exit_with!(
-            make_error!("expected an expression, got EOF", codes::E0011.0, Severity::FatalError, None => Span::new(file, 0, 0))
-        )
+        exit_with!(make_error!(
+            "expected an expression, got EOF",
+            codes::E0011.0,
+            Severity::FatalError,
+            None => Span::new(file, 0, 0)
+        ))
     };
     let mut lhs: Box<Expression>;
     match &token.tt {
@@ -136,13 +138,14 @@ fn parse_impl(
             let maybe_token = next!();
             if let Some(Token { span, tt }) = maybe_token {
                 if !matches!(tt, TokenType::RParen) {
-                    exit_with!(make_error!(
-                        format!("expected a closing parenthesis, got {}", tt.name_for_errors()),
-                        codes::E0012.0,
-                        Severity::FatalError,
-                        "expected ) here" => *span
-                    )
-                    .push("opening parenthesis was here".to_string(), token.span));
+                    exit_with!(
+                        make_error!(
+                            format!("expected a closing parenthesis, got {}", tt.name_for_errors()),
+                            codes::E0012.0,
+                            Severity::FatalError,
+                            "expected ) here" => *span
+                        ).push("opening parenthesis was here".to_string(), token.span)
+                    );
                 }
             } else {
                 exit_with!(make_error!(
@@ -159,13 +162,14 @@ fn parse_impl(
             let maybe_token = next!();
             if let Some(Token { span, tt }) = maybe_token {
                 if !matches!(tt, TokenType::RCBrace) {
-                    exit_with!(make_error!(
-                        format!("expected a closing '}}', got {}", tt.name_for_errors()),
-                        codes::E0012.0,
-                        Severity::FatalError,
-                        "expected } here" => *span
-                    )
-                    .push("opening '{' was here".to_string(), token.span));
+                    exit_with!(
+                        make_error!(
+                            format!("expected a closing '}}', got {}", tt.name_for_errors()),
+                            codes::E0012.0,
+                            Severity::FatalError,
+                            "expected } here" => *span
+                        ).push("opening '{' was here".to_string(), token.span)
+                    );
                 } else {
                     lhs = Box::new(Expression {
                         et: expressions::Expr::Block(inside),
@@ -182,17 +186,52 @@ fn parse_impl(
                 ))
             }
         }
-        _ => exit_with!(
-            make_error!(format!("expected an expression, got {}", token.tt.name_for_errors()), codes::E0011.0, Severity::FatalError, None => token.span)
-        ),
+        _ => exit_with!(make_error!(
+            format!("expected an expression, got {}", token.tt.name_for_errors()),
+            codes::E0011.0,
+            Severity::FatalError,
+            None => token.span
+        )),
     };
+
     while level < infix_precedence!() {
+        macro_rules! infix {
+            ($token:expr, $op:expr) => {{
+                let rhs = parse_impl(
+                    input,
+                    precedence::get_precedence(&Some(&$token)),
+                    pointer,
+                    accumulator,
+                    file,
+                )?;
+                lhs = Box::new(Expression {
+                    span: lhs.span.merge(rhs.span),
+                    et: expressions::Expr::Binary {
+                        op: $op,
+                        left: lhs,
+                        right: rhs,
+                    },
+                })
+            }};
+        }
         let token = if let Some(t) = next!() {
             t
         } else {
             ice!("expected infix/postfix, got EOF; infix_precedence should prevent this from happening...")
         };
+        use expressions::BinaryOp;
         match &token.tt {
+            TokenType::Plus  => infix!(token, BinaryOp::Add),
+            TokenType::Minus => infix!(token, BinaryOp::Sub),
+            TokenType::Star  => infix!(token, BinaryOp::Mul),
+            TokenType::Slash => infix!(token, BinaryOp::Div),
+            TokenType::Exp   => infix!(token, BinaryOp::Exp),
+            TokenType::Lt    => infix!(token, BinaryOp::Lt),
+            TokenType::Leq   => infix!(token, BinaryOp::Leq),
+            TokenType::EqEq  => infix!(token, BinaryOp::Eq),
+            TokenType::Geq   => infix!(token, BinaryOp::Geq),
+            TokenType::Gt    => infix!(token, BinaryOp::Gt),
+            TokenType::Neq   => infix!(token, BinaryOp::Neq),
             _ => {
                 ice!(
                     "normally, infix_precedence! should prevent this from happening. token: {:?}",
