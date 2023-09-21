@@ -7,7 +7,7 @@ use crate::{
 pub fn print_tokens(tokens: &[Token], sources: &Loader) {
     let mut errorlike = Error::new("tokens".to_owned(), "debug", crate::errors::Severity::Info);
     for token in tokens {
-        errorlike.push(format!("{:?}", token.tt), token.span);
+        errorlike = errorlike.push(format!("{:?}", token.tt), token.span);
     }
     errors::print_error(&errorlike, sources);
 }

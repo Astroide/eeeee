@@ -44,6 +44,10 @@ pub mod codes {
         E0011,
         "todo: add explanation for this error (expected expression)"
     );
+    d!(
+        E0012,
+        "todo: add explanation for this error (catchall for 'expected X, got Y' in parsing)"
+    );
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -74,7 +78,7 @@ impl Error {
         }
     }
 
-    pub fn push<T: Into<Option<String>>>(&mut self, piece: T, span: Span) -> &mut Self {
+    pub fn push<T: Into<Option<String>>>(mut self, piece: T, span: Span) -> Self {
         self.pieces.push(piece.into());
         self.spans.push(span);
         self
@@ -119,7 +123,7 @@ fn find_line_col(source: &Source, position: u32) -> (usize, usize) {
 }
 
 fn lines(file: &Source) -> usize {
-    file.string().chars().filter(|x| x == &'\n').count()
+    file.string().lines().count()
 }
 
 fn fuse(spans: &[(usize, usize, usize)]) -> Vec<(usize, usize, usize, Vec<usize>)> {
@@ -162,8 +166,10 @@ fn eprint_line(source: &str, line: usize, end: &str) {
     line_text.push_str(&lineno);
     eprint!("\x1B[34m{} | \x1B[0m", line_text);
     loop {
-        eprint!("{}", chars[pointer]);
-        pointer += 1;
+        if chars[pointer] != '\n' {
+            eprint!("{}", chars[pointer]);
+            pointer += 1;
+        };
         if pointer == chars.len() || chars[pointer] == '\n' {
             eprint!("{}", end);
             return;
@@ -209,7 +215,7 @@ pub fn print_error(error: &Error, sources: &Loader) {
             let start = find_line_col(file, x.start).0;
             let end = find_line_col(file, x.end).0;
             let start = start.saturating_sub(2);
-            let end = (end + 3).min(total_lines + 1);
+            let end = (end + 3).min(total_lines);
             (x.file, start, end)
         })
         .collect::<Vec<_>>();

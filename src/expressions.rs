@@ -16,6 +16,10 @@ pub enum Expr {
     Literal {
         src: TokenType,
     },
+    Unary {
+        op: UnaryOp,
+        right: AnyExpr,
+    },
     Binary {
         op: BinaryOp,
         left: AnyExpr,
@@ -46,4 +50,10 @@ pub enum BinaryOp {
     Mul,
     Div,
     Exp,
+}
+
+#[derive(Debug)]
+pub enum UnaryOp {
+    Not,
+    Neg,
 }

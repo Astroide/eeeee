@@ -16,7 +16,7 @@ fn main() {
         }
     }
     if !has_had_fatal {
-        // eeeee::token_debugger::print_tokens(&res.0, &loader);
+        eeeee::token_debugger::print_tokens(&res.0, &loader);
         let result = eeeee::parser::parse(&res.0, index);
         match result {
             Err(errors) => {
