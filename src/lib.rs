@@ -1,9 +1,11 @@
 #![forbid(missing_debug_implementations, nonstandard_style)]
 
 pub mod errors;
+pub mod expressions;
 pub(crate) mod ice; // must be first due to how macros work
 pub mod lexer;
 pub mod loader;
+pub mod parser;
 pub mod token_debugger;
 pub mod tokens;
 

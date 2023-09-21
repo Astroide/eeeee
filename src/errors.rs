@@ -40,6 +40,10 @@ pub mod codes {
         E0010,
         "todo: add explanation for this error (unexpected identifier)"
     );
+    d!(
+        E0011,
+        "todo: add explanation for this error (expected expression)"
+    );
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -75,12 +79,16 @@ impl Error {
         self.spans.push(span);
         self
     }
+
+    pub fn fatal(&self) -> bool {
+        self.severity == Severity::FatalError
+    }
 }
 
 macro_rules! make_error {
     ($message:expr,$code:expr,$severity:expr,$($string:expr => $span:expr),+) => {{
         let mut pieces: Vec<Option<String>> = vec![];
-        let mut spans: Vec<Span> = vec![];
+        let mut spans: Vec<$crate::loader::Span> = vec![];
         $({
             let string: Option<&str> = $string.into();
             let string = string.map(|x| x.to_owned());
@@ -180,7 +188,7 @@ macro_rules! unwrap_or_else_this_particular_case {
     }};
 }
 
-pub fn print_error_(error: &Error, sources: &Loader) {
+pub fn print_error(error: &Error, sources: &Loader) {
     eprintln!(
         "{} ({}):\x1B[0m {}",
         match error.severity {
@@ -321,41 +329,15 @@ pub fn print_error_(error: &Error, sources: &Loader) {
                     eprint!("{}", "─".repeat((line_x - end_col).saturating_sub(1))); // -
                     eprintln!("╯\x1B[0m"); // /
                     eprint_line_start(i);
-                    eprintln!("\x1B[36m{}\x1B[0m", unwrap_or_else_this_particular_case!(error.pieces[relevant_spans[idx].4], "here")); // /
+                    eprintln!(
+                        "\x1B[36m{}\x1B[0m",
+                        unwrap_or_else_this_particular_case!(
+                            error.pieces[relevant_spans[idx].4],
+                            "here"
+                        )
+                    ); // /
                 }
             }
         }
-    }
-}
-
-/// temporary implementation, to be improved.
-pub fn print_error(error: &Error, sources: &Loader) {
-    eprint!(
-        "{} ({}):\x1B[0m ",
-        match error.severity {
-            Severity::Warning => "\x1B[33mwarning",
-            Severity::Error => "\x1B[31merror",
-            Severity::FatalError => "\x1B[31mfatal error",
-            Severity::Info => "\x1B[36minfo",
-        },
-        error.code
-    );
-    for i in 0..error.pieces.len() {
-        let line_col = find_line_col(sources.get_file(error.spans[i].file), error.spans[i].start);
-        eprintln!(
-            "\x1B[34m{}\x1B[0m",
-            unwrap_or_else_this_particular_case!(error.pieces[i], "here")
-        );
-        eprintln!(
-            "--> \x1B[34m{}\x1B[0m:\x1B[34m{}\x1B[0m:\x1B[34m{}\x1B[0m",
-            sources
-                .get_file(error.spans[i].file)
-                .src()
-                .unwrap_or("<unknown>"),
-            line_col.0 + 1,
-            line_col.1 + 1
-        );
-        let (left, mid, right) = sources.span_content_with_margins(error.spans[i], 5, 5);
-        eprintln!("{}\x1B[36m{}\x1B[0m{}", left, mid, right);
     }
 }

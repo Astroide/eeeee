@@ -1,9 +1,9 @@
 macro_rules! ice {
     ($string:literal) => {
-        { eprintln!(concat!("\x1B[31mICE\x1B[0m ({}:{}): ", $string), file!(), line!()); panic!("internal compiler error") }
+        { eprintln!(concat!("\x1B[31minternal compiler error\x1B[0m ({}:{}): ", $string), file!(), line!()); panic!("internal compiler error") }
     };
     ($string:literal, $($args:tt)*) => {
-        { eprintln!(concat!("\x1B[31mICE\x1B[0m ({}:{}): ", $string), $($args)*, file!(), line!()); panic!("internal compiler error") }
+        { eprintln!(concat!("\x1B[31minternal compiler error\x1B[0m ({}:{}): ", $string), file!(), line!(), $($args)*); panic!("internal compiler error") }
     };
 }
 pub(crate) use ice;

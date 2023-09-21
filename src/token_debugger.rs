@@ -9,5 +9,5 @@ pub fn print_tokens(tokens: &[Token], sources: &Loader) {
     for token in tokens {
         errorlike.push(format!("{:?}", token.tt), token.span);
     }
-    errors::print_error_(&errorlike, sources);
+    errors::print_error(&errorlike, sources);
 }

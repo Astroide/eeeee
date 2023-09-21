@@ -100,6 +100,63 @@ pub enum TokenType {
     Mut,
 }
 
+impl TokenType {
+    pub fn name_for_errors(&self) -> &'static str {
+        use TokenType::*;
+        match self {
+            ILiteral { .. } => "<int literal>",
+            SLiteral { .. } => "<string-like literal>",
+            FLiteral { .. } => "<float literal>",
+            Let => "'let'",
+            Eq => "'='",
+            LParen => "'('",
+            RParen => "')'",
+            LBracket => "'['",
+            RBracket => "']'",
+            Lt => "'<'",
+            Gt => "'>'",
+            Leq => "'<='",
+            Geq => "'>='",
+            EqEq => "'=='",
+            LCBrace => "'{'",
+            RCBrace => "'}'",
+            Ident(_) => "<identifier>",
+            If => "'if'",
+            Neq => "'!='",
+            Minus => "'-'",
+            Plus => "'+'",
+            Star => "'*'",
+            Slash => "'/'",
+            Ret => "'->'",
+            Return => "'return'",
+            Exp => "'**'",
+            Semicolon => "';'",
+            Dot => "'.'",
+            Not => "'!'",
+            Colon => "':'",
+            Fn => "'fn'",
+            Else => "'else'",
+            Match => "'match'",
+            Type => "'type'",
+            Const => "'const'",
+            Continue => "'continue'",
+            Break => "'break'",
+            MinusEq => "'-='",
+            PlusEq => "'+='",
+            StarEq => "'*='",
+            SlashEq => "'/='",
+            ExpEq => "'**='",
+            BLiteral(_) => "<boolean literal>",
+            Comma => "','",
+            Loop => "'loop'",
+            While => "'while'",
+            Use => "'use'",
+            As => "'as'",
+            Mut => "'mut'",
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Token {
     pub span: Span,

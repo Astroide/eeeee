@@ -204,6 +204,7 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
             '.' => simple_token!(Dot),
             ':' => simple_token!(Colon),
             ',' => simple_token!(Comma),
+            '→' => simple_token!(Ret),
             '-' if matches!(peek!(), Some('>')) => two_char_token!(Ret),
             '-' if matches!(peek!(), Some('=')) => two_char_token!(MinusEq),
             '+' if matches!(peek!(), Some('=')) => two_char_token!(PlusEq),
