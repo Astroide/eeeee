@@ -53,7 +53,7 @@ fn parse_impl(
             if *pointer > input.len() {
                 None
             } else {
-                eprintln!("next => {:?}", input[*pointer - 1]);
+                // eprintln!("next => {:?}", input[*pointer - 1]);
                 Some(&input[*pointer - 1])
             }
         }};
@@ -153,6 +153,12 @@ fn parse_impl(
                 span: token.span,
             });
         }
+        TokenType::Ident(ident) => {
+            lhs = Box::new(Expression {
+                et: expressions::Expr::Identifier { id: ident.clone() },
+                span: token.span,
+            })
+        }
         TokenType::Not => {
             let right = parse_impl(input, precedence::UNARY, pointer, accumulator, file)?;
             let right_span = right.span;
@@ -179,7 +185,7 @@ fn parse_impl(
             let mut maybe_right: Option<Box<Expression>> = None;
             let mut span = token.span;
             if has_expression!() {
-                let expr = parse_impl(input, precedence::BREAK_ASSIGN, pointer, accumulator, file)?;
+                let expr = parse_impl(input, precedence::BREAK, pointer, accumulator, file)?;
                 span = span.merge(expr.span);
                 maybe_right = Some(expr);
             }
@@ -276,7 +282,7 @@ fn parse_impl(
         )),
     };
 
-    while level < infix_precedence!() {
+    while (level == precedence::ASSIGN && level <= infix_precedence!()) || level < infix_precedence!() {
         macro_rules! infix {
             ($token:expr, $op:expr) => {{
                 let rhs = parse_impl(
@@ -296,6 +302,26 @@ fn parse_impl(
                 })
             }};
         }
+
+        macro_rules! infix_assign {
+            ($op:expr) => {{
+                let rhs = parse_impl(
+                    input,
+                    precedence::ASSIGN,
+                    pointer,
+                    accumulator,
+                    file,
+                )?;
+                lhs = Box::new(Expression {
+                    span: lhs.span.merge(rhs.span),
+                    et: expressions::Expr::AssignOp {
+                        left: lhs,
+                        right: rhs,
+                        op: $op
+                    },
+                })
+            }}
+        }
         let token = if let Some(t) = next!() {
             t
         } else {
@@ -303,17 +329,38 @@ fn parse_impl(
         };
         use expressions::BinaryOp;
         match &token.tt {
-            TokenType::Plus  => infix!(token, BinaryOp::Add),
-            TokenType::Minus => infix!(token, BinaryOp::Sub),
-            TokenType::Star  => infix!(token, BinaryOp::Mul),
-            TokenType::Slash => infix!(token, BinaryOp::Div),
-            TokenType::Exp   => infix!(token, BinaryOp::Exp),
-            TokenType::Lt    => infix!(token, BinaryOp::Lt),
-            TokenType::Leq   => infix!(token, BinaryOp::Leq),
-            TokenType::EqEq  => infix!(token, BinaryOp::Eq),
-            TokenType::Geq   => infix!(token, BinaryOp::Geq),
-            TokenType::Gt    => infix!(token, BinaryOp::Gt),
-            TokenType::Neq   => infix!(token, BinaryOp::Neq),
+            TokenType::Plus    => infix!(token, BinaryOp::Add),
+            TokenType::Minus   => infix!(token, BinaryOp::Sub),
+            TokenType::Star    => infix!(token, BinaryOp::Mul),
+            TokenType::Slash   => infix!(token, BinaryOp::Div),
+            TokenType::Exp     => infix!(token, BinaryOp::Exp),
+            TokenType::Lt      => infix!(token, BinaryOp::Lt ),
+            TokenType::Leq     => infix!(token, BinaryOp::Leq),
+            TokenType::EqEq    => infix!(token, BinaryOp::Eq ),
+            TokenType::Geq     => infix!(token, BinaryOp::Geq),
+            TokenType::Gt      => infix!(token, BinaryOp::Gt ),
+            TokenType::Neq     => infix!(token, BinaryOp::Neq),
+            TokenType::StarEq  => infix_assign!(BinaryOp::Mul),
+            TokenType::SlashEq => infix_assign!(BinaryOp::Div),
+            TokenType::ExpEq   => infix_assign!(BinaryOp::Exp),
+            TokenType::PlusEq  => infix_assign!(BinaryOp::Add),
+            TokenType::MinusEq => infix_assign!(BinaryOp::Sub),
+            TokenType::Eq      => {
+                let rhs = parse_impl(
+                    input,
+                    precedence::ASSIGN,
+                    pointer,
+                    accumulator,
+                    file,
+                )?;
+                lhs = Box::new(Expression {
+                    span: lhs.span.merge(rhs.span),
+                    et: expressions::Expr::Assign {
+                        left: lhs,
+                        right: rhs,
+                    },
+                })
+            }
             TokenType::Semicolon => {
                 let rhs = parse_impl(
                     input,

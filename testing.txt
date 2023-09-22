@@ -1,4 +1,5 @@
-if false {({!
+e = g *= 3
+;if false {({!
 -
 'e' * 3 + 0xFF==1.5;'4';(loop{break 1; break; loop{}})
 })

@@ -46,12 +46,24 @@ pub enum Expr {
         imports: Vec<String>,
     },
     Loop {
-        inside: Box<Expression>,
+        inside: AnyExpr,
     },
     If {
-        condition: Box<Expression>,
-        then: Box<Expression>,
-        else_: Option<Box<Expression>>,
+        condition: AnyExpr,
+        then     : AnyExpr,
+        else_    : Option<AnyExpr>,
+    },
+    Assign {
+        left : AnyExpr,
+        right: AnyExpr
+    },
+    AssignOp {
+        left : AnyExpr,
+        right: AnyExpr,
+        op   : BinaryOp,
+    },
+    Identifier {
+        id: String,
     }
 }
 
