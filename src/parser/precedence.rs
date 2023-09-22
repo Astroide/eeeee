@@ -8,7 +8,7 @@ pub const ADD_SUB: u8 = 20;
 pub const MUL_DIV_EXP: u8 = 30;
 pub const UNARY: u8 = 40;
 pub const CALL: u8 = 50;
-pub const LITERAL: u8 = 100;
+pub const ONE: u8 = 255;
 
 macro_rules! prec {
     ($token:ident, $($in:pat = $out:expr),*) => {

@@ -29,7 +29,7 @@ pub enum Expr {
         left: AnyExpr,
         right: AnyExpr,
     },
-    Block(AnyExpr),
+    Block(Option<AnyExpr>),
     Call {
         callee: AnyExpr,
         args: Vec<AnyExpr>, /* Vec of Box doesn't sound like a good idea */
@@ -46,7 +46,12 @@ pub enum Expr {
         imports: Vec<String>,
     },
     Loop {
-        inside: Option<Box<Expression>>,
+        inside: Box<Expression>,
+    },
+    If {
+        condition: Box<Expression>,
+        then: Box<Expression>,
+        else_: Option<Box<Expression>>,
     }
 }
 

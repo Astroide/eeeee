@@ -49,8 +49,8 @@ fn parse_impl(
 
     macro_rules! next {
         () => {{
-            *pointer = *pointer + 1;
-            if *pointer >= input.len() + 1 {
+            *pointer += 1;
+            if *pointer > input.len() {
                 None
             } else {
                 eprintln!("next => {:?}", input[*pointer - 1]);
@@ -60,13 +60,13 @@ fn parse_impl(
     }
 
     macro_rules! expect {
-        ($x:pat, $fatal:literal) => {
+        ($x:pat, $fatal:literal, $extra:literal) => {
             {
                 let token = next!();
                 if !matches!(token, Some(Token { tt: $x, .. })) {
                     if matches!(token, None) {
                         exit_with!(make_error!(
-                            format!("expected {}, got EOF", stringify!($x)),
+                            format!("expected {}{}, got EOF", stringify!($x), $extra),
                             codes::E0012.0,
                             Severity::FatalError,
                             None => Span { file, start: input[*pointer - 2].span.end, end: input[*pointer - 2].span.end }
@@ -74,14 +74,14 @@ fn parse_impl(
                     } else if let Some(token) = token {
                         if $fatal {
                             exit_with!(make_error!(
-                            format!("expected {}, got {}", stringify!($x), token.tt.name_for_errors()),
+                            format!("expected {}{}, got {}", stringify!($x), $extra, token.tt.name_for_errors()),
                             codes::E0012.0,
                             Severity::FatalError,
                             None => token.span
                         ))
                     } else {
                         accumulator.push(make_error!(
-                            format!("expected {}, got {}", stringify!($x), token.tt.name_for_errors()),
+                            format!("expected {}{}, got {}", stringify!($x), $extra, token.tt.name_for_errors()),
                             codes::E0012.0,
                             Severity::Error,
                             None => token.span
@@ -111,6 +111,7 @@ fn parse_impl(
                 TokenType::SLiteral { .. }
               | TokenType::ILiteral { .. }
               | TokenType::FLiteral { .. }
+              | TokenType::BLiteral { .. }
               | TokenType::Break
               | TokenType::LParen
               | TokenType::LCBrace
@@ -141,6 +142,12 @@ fn parse_impl(
             });
         }
         tt @ TokenType::FLiteral { .. } => {
+            lhs = Box::new(Expression {
+                et: expressions::Expr::Literal { src: tt.clone() },
+                span: token.span,
+            });
+        }
+        tt @ TokenType::BLiteral { .. } => {
             lhs = Box::new(Expression {
                 et: expressions::Expr::Literal { src: tt.clone() },
                 span: token.span,
@@ -182,36 +189,11 @@ fn parse_impl(
             lhs = Box::new(Expression { et: expressions::Expr::Continue, span: token.span })
         }
         TokenType::Loop => {
-            let pointer_to_opening = *pointer;
-            expect!(TokenType::LCBrace, false);
-            let mut maybe_inside: Option<Box<Expression>> = None;
-            if has_expression!() {
-                maybe_inside = Some(parse_impl(input, 0, pointer, accumulator, file)?);
-            }
-            let mut closing_span: Span;
-            if let Some(Token { span, tt }) = next!() {
-                if !matches!(tt, TokenType::RCBrace) {
-                    exit_with!(
-                        make_error!(
-                            format!("expected a closing }}, got {}", tt.name_for_errors()),
-                            codes::E0012.0,
-                            Severity::FatalError,
-                            "expected } here" => *span
-                        ).push("opening { was here".to_string(), input[pointer_to_opening].span)
-                    );
-                } else {
-                    closing_span = *span
-                }
-            } else {
-                exit_with!(make_error!(
-                    "expected a closing }, got EOF",
-                    codes::E0012.0,
-                    Severity::FatalError,
-                    "expected } here" => Span { file, start: input[*pointer - 2].span.end, end: input[*pointer - 2].span.end },
-                    "opening { was here" => input[pointer_to_opening].span
-                ))
-            }
-            lhs = Box::new(Expression { et: expressions::Expr::Loop { inside: maybe_inside }, span: token.span.merge(closing_span) })
+            expect!(TokenType::LCBrace, true, " after 'loop'");
+            *pointer -= 1;
+            let inside = parse_impl(input, precedence::ONE, pointer, accumulator, file)?;
+            let inside_span = inside.span;
+            lhs = Box::new(Expression { et: expressions::Expr::Loop { inside }, span: token.span.merge(inside_span) })
         }
         TokenType::LParen => {
             lhs = parse_impl(input, 0, pointer, accumulator, file)?;
@@ -237,8 +219,28 @@ fn parse_impl(
                 ))
             }
         }
+        TokenType::If => {
+            let condition = parse_impl(input, 0, pointer, accumulator, file)?;
+            expect!(TokenType::LCBrace, true, " after if condition");
+            *pointer -= 1;
+            let then = parse_impl(input, precedence::ONE, pointer, accumulator, file)?;
+            let then_span = then.span;
+            let mut else_: Option<Box<Expression>> = None;
+            if matches!(peek!(), Some(Token { tt: TokenType::Else, .. })) {
+                next!();
+                if matches!(peek!(), Some(Token { tt: TokenType::If, .. })) {
+                    else_ = Some(parse_impl(input, precedence::ONE, pointer, accumulator, file)?);
+                } else {
+                    expect!(TokenType::LCBrace, true, " or 'if' after 'else'");
+                    *pointer -= 1;
+                    else_ = Some(parse_impl(input, precedence::ONE, pointer, accumulator, file)?);
+                }
+                *pointer -= 1;
+            }
+            lhs = Box::new(Expression { et: expressions::Expr::If { condition, then, else_ }, span: token.span.merge(then_span) })
+        }
         TokenType::LCBrace => {
-            let inside = parse_impl(input, 0, pointer, accumulator, file)?;
+            let inside = if has_expression!() { Some(parse_impl(input, 0, pointer, accumulator, file)?) } else { None };
             let maybe_token = next!();
             if let Some(Token { span, tt }) = maybe_token {
                 if !matches!(tt, TokenType::RCBrace) {
@@ -336,7 +338,7 @@ fn parse_impl(
             }
         }
     }
-    if accumulator.len() == 0 {
+    if accumulator.is_empty() {
         Ok(lhs)
     } else {
         Err(())

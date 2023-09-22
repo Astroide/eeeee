@@ -1,8 +1,8 @@
-({!
+if false {({!
 -
 'e' * 3 + 0xFF==1.5;'4';(loop{break 1; break; loop{}})
 })
-use a.{
+} else if true { 1 } else { true } use a.{
     b.*,
     c.{ d, e },
     f,
