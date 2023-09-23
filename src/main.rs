@@ -24,7 +24,10 @@ fn main() {
                     eeeee::errors::print_error(error, &loader);
                 }
             }
-            Ok(expr) => eprintln!("parsed: {:?}", expr),
+            Ok(expr) => {
+                eeeee::expressions::show_tree(&expr);
+                // eprintln!("parsed: {:?}", expr)
+            },
         }
     }
 }
