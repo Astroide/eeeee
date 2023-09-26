@@ -121,6 +121,7 @@ fn parse_impl(
               | TokenType::Loop
               | TokenType::While
               | TokenType::Let
+              | TokenType::Show
               | TokenType::Ident { .. }, .. }) => true,
               _ => false,
             }
@@ -153,6 +154,87 @@ fn parse_impl(
                 span: token.span,
             });
         }
+        TokenType::Fn => {
+            let fn_name = if let Some(token) = next!() {
+                if let TokenType::Ident(ref name) = token.tt {
+                    name.clone()
+                } else {
+                    exit_with!(make_error!(
+                        "expected a function name",
+                        codes::E0013.0,
+                        Severity::FatalError,
+                        None => token.span
+                    ))
+                }
+            } else {
+                exit_with!(make_error!(
+                    "expected a function name, got EOF",
+                    codes::E0013.0,
+                    Severity::FatalError,
+                    None => Span { file, start: input[*pointer - 2].span.end, end: input[*pointer - 2].span.end }
+                ))
+            };
+            expect!(TokenType::LParen, true, " after function name");
+            let mut arguments: Vec<String> = vec![];
+            loop {
+                if let Some(Token { tt: TokenType::Ident(v), .. }) = peek!() {
+                    next!();
+                    arguments.push(v.clone());
+                } else {
+                    break
+                }
+                if let Some(Token { tt: TokenType::Comma, .. }) = peek!() {
+                    next!();
+                } else {
+                    break
+                }
+            }
+            expect!(TokenType::RParen, true, " after function argument list");
+            expect!(TokenType::LCBrace, true, " after function arguments");
+            *pointer -= 1;
+            let block = parse_impl(input, precedence::ONE, pointer, accumulator, file)?;
+            let block_span = block.span;
+            lhs = Box::new(Expression {
+                et: expressions::Expr::Fn { name: fn_name, body: block, args: arguments },
+                span: token.span.merge(block_span)
+            });
+        }
+        TokenType::Let => {
+            let name_span;
+            let name = if let Some(token) = next!() {
+                if let TokenType::Ident(ref name) = token.tt {
+                    name_span = token.span;
+                    name.clone()
+                } else {
+                    exit_with!(make_error!(
+                        "expected a name",
+                        codes::E0012.0,
+                        Severity::FatalError,
+                        None => token.span
+                    ))
+                }
+            } else {
+                exit_with!(make_error!(
+                    "expected a name, got EOF",
+                    codes::E0012.0,
+                    Severity::FatalError,
+                    None => Span { file, start: input[*pointer - 2].span.end, end: input[*pointer - 2].span.end }
+                ))
+            };
+            let mut span: Option<Span> = None;
+            let value = if let Some(Token { tt: TokenType::Eq, .. }) = peek!() {
+                next!();
+                let value = parse_impl(input, precedence::ASSIGN, pointer, accumulator, file)?;
+                span = Some(value.span);
+                Some(value)
+            } else {
+                None
+            };
+            lhs = Box::new(Expression {
+                et: expressions::Expr::Let { name, value },
+                span: if let Some(s) = span { token.span.merge(s) } else { token.span.merge(name_span) }
+            })
+        }
         TokenType::Ident(ident) => {
             lhs = Box::new(Expression {
                 et: expressions::Expr::Identifier { id: ident.clone() },
@@ -165,6 +247,17 @@ fn parse_impl(
             lhs = Box::new(Expression {
                 et: expressions::Expr::Unary {
                     op: expressions::UnaryOp::Not,
+                    right,
+                },
+                span: token.span.merge(right_span),
+            })
+        }
+        TokenType::Show => {
+            let right = parse_impl(input, precedence::SEMICOLON + 1, pointer, accumulator, file)?;
+            let right_span = right.span;
+            lhs = Box::new(Expression {
+                et: expressions::Expr::Unary {
+                    op: expressions::UnaryOp::Show,
                     right,
                 },
                 span: token.span.merge(right_span),

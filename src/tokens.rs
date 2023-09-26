@@ -98,6 +98,7 @@ pub enum TokenType {
     Use,
     As,
     Mut,
+    Show,
 }
 
 impl TokenType {
@@ -153,6 +154,7 @@ impl TokenType {
             Use             => "'use'",
             As              => "'as'",
             Mut             => "'mut'",
+            Show            => "'show'",
         }
     }
 }

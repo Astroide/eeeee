@@ -354,6 +354,7 @@ pub fn lex(input: &crate::loader::Source) -> (Vec<Token>, Result<(), Vec<Error>>
                     "as" => keyword!(As),
                     "true" => bool!(true),
                     "false" => bool!(false),
+                    "show" => keyword!(Show),
                     _ => Some(Token {
                         span: Span::new(file, n, idx + 1),
                         tt: Ident(text),

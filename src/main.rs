@@ -1,5 +1,8 @@
 use std::path::PathBuf;
 
+// important note : a lot of things are half-implemented or far from a final form because I want to get something running fast.
+// so no patterns for now.
+
 fn main() {
     let mut loader = eeeee::loader::Loader::new();
     let index = loader.load_file(PathBuf::from("testing.txt")).unwrap();
@@ -26,6 +29,12 @@ fn main() {
             }
             Ok(expr) => {
                 eeeee::expressions::show_tree(&expr);
+                let mut builder = eeeee::compiler::ProgramBuilder::default();
+                eeeee::compiler::lower(&expr, &mut builder);
+                let program = builder.finish();
+                eeeee::vm::show_program(&program);
+                let mut vm = eeeee::vm::VM::new(program);
+                vm.run();
                 // eprintln!("parsed: {:?}", expr)
             },
         }

@@ -48,6 +48,7 @@ pub mod codes {
         E0012,
         "todo: add explanation for this error (catchall for 'expected X, got Y' in parsing)"
     );
+    d!(E0013, "todo: add explanation for this error (functions require names)");
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

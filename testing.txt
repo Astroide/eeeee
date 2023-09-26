@@ -1,4 +1,44 @@
-e = g *= 3
+show show 1.0;
+let a = 1.0;
+let b = 1.0;
+loop {
+    let c = a + b;
+    a = b;
+    b = show c
+}
+
+
+
+
+
+
+
+/*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let a;let e = g *= 3
 ;if false {({!
 -
 'e' * 3 + 0xFF==1.5;'4';(loop{break 1; break; loop{}})
@@ -46,4 +86,4 @@ eeeee
 eeeeee
  'a
 multiline
-string'
+string'*/

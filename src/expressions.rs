@@ -64,6 +64,15 @@ pub enum Expr {
     },
     Identifier {
         id: String,
+    },
+    Fn {
+        name: String,
+        body: AnyExpr,
+        args: Vec<String>,
+    },
+    Let {
+        name : String,
+        value: Option<AnyExpr>,
     }
 }
 
@@ -86,6 +95,7 @@ pub enum BinaryOp {
 pub enum UnaryOp {
     Not,
     Neg,
+    Show,
 }
 
 pub fn show_tree(expr: &Expression) {
@@ -108,8 +118,9 @@ fn show_tree_impl(expr: &Expression, depth: usize) {
         Expr::Continue => eprintln!("(continue)"),
         Expr::Unary { op, right } => {
             eprintln!("{}(\x1B[0m{}", bracket_color!(), match op {
-                UnaryOp::Not => '!',
-                UnaryOp::Neg => '-'
+                UnaryOp::Not  => "!",
+                UnaryOp::Neg  => "-",
+                UnaryOp::Show => "show",
             });
             show_tree_impl(right, depth + 1);
             eprintln!("{}{})\x1B[0m", " ".repeat(depth * 2), bracket_color!());
@@ -227,6 +238,21 @@ fn show_tree_impl(expr: &Expression, depth: usize) {
         },
         Expr::Identifier { id } => {
             eprintln!("\x1B[31m#{}\x1B[0m", id);
+        },
+        Expr::Fn { name, body, args } => {
+            eprintln!("({}(\x1B[32mfn \x1B[31m#{}\x1B[0m [{}]", bracket_color!(), name, args.join(", "));
+            show_tree_impl(body, depth + 1);
+            eprintln!("{}{})\x1B[0m", " ".repeat(depth * 2), bracket_color!());
+        },
+        Expr::Let { name, value } => {
+            eprint!("{}(\x1B[32mlet \x1B[31m#{}\x1B[0m", bracket_color!(), name);
+            if let Some(x) = value {
+                eprintln!();
+                show_tree_impl(x, depth + 1);
+                eprintln!("{}{})\x1B[0m", " ".repeat(depth * 2), bracket_color!());
+            } else {
+                eprintln!("{})\x1B[0m", bracket_color!());
+            }
         },
     }
 }
