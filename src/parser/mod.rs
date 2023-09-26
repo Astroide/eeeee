@@ -118,6 +118,7 @@ fn parse_impl(
               | TokenType::Not
               | TokenType::Minus
               | TokenType::If
+              | TokenType::Fn
               | TokenType::Loop
               | TokenType::While
               | TokenType::Let
@@ -328,15 +329,25 @@ fn parse_impl(
             if matches!(peek!(), Some(Token { tt: TokenType::Else, .. })) {
                 next!();
                 if matches!(peek!(), Some(Token { tt: TokenType::If, .. })) {
+                    // eprintln!("else if");
                     else_ = Some(parse_impl(input, precedence::ONE, pointer, accumulator, file)?);
+                    // eprintln!("{:#?}", else_);
                 } else {
                     expect!(TokenType::LCBrace, true, " or 'if' after 'else'");
                     *pointer -= 1;
                     else_ = Some(parse_impl(input, precedence::ONE, pointer, accumulator, file)?);
                 }
-                *pointer -= 1;
+                // *pointer -= 1;
             }
             lhs = Box::new(Expression { et: expressions::Expr::If { condition, then, else_ }, span: token.span.merge(then_span) })
+        }
+        TokenType::While => {
+            let condition = parse_impl(input, 0, pointer, accumulator, file)?;
+            expect!(TokenType::LCBrace, true, " after while condition");
+            *pointer -= 1;
+            let body = parse_impl(input, precedence::ONE, pointer, accumulator, file)?;
+            let body_span = body.span;
+            lhs = Box::new(Expression { et: expressions::Expr::While { condition, body }, span: token.span.merge(body_span) })
         }
         TokenType::LCBrace => {
             let inside = if has_expression!() { Some(parse_impl(input, 0, pointer, accumulator, file)?) } else { None };
@@ -438,6 +449,26 @@ fn parse_impl(
             TokenType::ExpEq   => infix_assign!(BinaryOp::Exp),
             TokenType::PlusEq  => infix_assign!(BinaryOp::Add),
             TokenType::MinusEq => infix_assign!(BinaryOp::Sub),
+            TokenType::LParen  => {
+                let mut arguments: Vec<Box<Expression>> = vec![];
+                loop {
+                    if has_expression!() {
+                        arguments.push(parse_impl(input, 0, pointer, accumulator, file)?);
+                    } else {
+                        break
+                    }
+                    if let Some(Token { tt: TokenType::Comma, .. }) = peek!() {
+                        next!();
+                    } else {
+                        break
+                    }
+                };
+                expect!(TokenType::RParen, true, " after arguments");
+                lhs = Box::new(Expression {
+                    et: expressions::Expr::Call { callee: lhs, args: arguments },
+                    span: token.span.merge(input[*pointer - 2].span)
+                })
+            },
             TokenType::Eq      => {
                 let rhs = parse_impl(
                     input,

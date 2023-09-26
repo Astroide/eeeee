@@ -73,6 +73,10 @@ pub enum Expr {
     Let {
         name : String,
         value: Option<AnyExpr>,
+    },
+    While {
+        condition: AnyExpr,
+        body     : AnyExpr,
     }
 }
 
@@ -185,7 +189,15 @@ fn show_tree_impl(expr: &Expression, depth: usize) {
             show_tree_impl(right, depth + 1);
             eprintln!("{}{})\x1B[0m", " ".repeat(depth * 2), bracket_color!());
         },
-        Expr::Call { callee, args } => todo!(),
+        Expr::Call { callee, args } => {
+            eprintln!("{}(\x1B[32mcall\x1B[0m", bracket_color!());
+            show_tree_impl(callee, depth + 1);
+            eprintln!("{} \x1B[32mwith\x1B[0m", " ".repeat(depth * 2));
+            for arg in args {
+                show_tree_impl(arg, depth + 1);
+            }
+            eprintln!("{}{})\x1B[0m", " ".repeat(depth * 2), bracket_color!());
+        },
         Expr::Property { object, name } => todo!(),
         Expr::Break { with } => {
             if let Some(thing) = with {
@@ -240,7 +252,7 @@ fn show_tree_impl(expr: &Expression, depth: usize) {
             eprintln!("\x1B[31m#{}\x1B[0m", id);
         },
         Expr::Fn { name, body, args } => {
-            eprintln!("({}(\x1B[32mfn \x1B[31m#{}\x1B[0m [{}]", bracket_color!(), name, args.join(", "));
+            eprintln!("{}(\x1B[32mfn \x1B[31m#{}\x1B[0m [{}]", bracket_color!(), name, args.join(", "));
             show_tree_impl(body, depth + 1);
             eprintln!("{}{})\x1B[0m", " ".repeat(depth * 2), bracket_color!());
         },
@@ -253,6 +265,12 @@ fn show_tree_impl(expr: &Expression, depth: usize) {
             } else {
                 eprintln!("{})\x1B[0m", bracket_color!());
             }
+        },
+        Expr::While { condition, body } => {
+            eprintln!("{}(\x1B[32mwhile\x1B[0m", bracket_color!());
+            show_tree_impl(condition, depth + 1);
+            show_tree_impl(body, depth + 1);
+            eprintln!("{}{})\x1B[0m", " ".repeat(depth * 2), bracket_color!());
         },
     }
 }

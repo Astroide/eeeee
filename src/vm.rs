@@ -15,12 +15,16 @@ pub enum Instruction {
     LoadConst(usize),
     Discard,
     PushNothing,
+    Duplicate,
+    PushJumpRef(usize),
+    Swap,
 
     // control flow
     Jump(usize),
     ConditionalJump(usize),
     Terminate,
     Null,
+    Call,
 
     // operations on values
     Negate,
@@ -52,6 +56,7 @@ pub enum Instruction {
     JumpTo(usize),
     ConditionalJumpTo(usize),
     JumpTarget(usize),
+    JumpRefTo(usize),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -59,7 +64,8 @@ pub enum Value {
     Num(f64),
     Str(String),
     Bool(bool),
-    Fn,
+    Fn(usize),
+    JumpRef(usize),
     Nothing,
 }
 
@@ -71,6 +77,7 @@ pub struct Scope {
 #[derive(Debug)]
 pub struct VM {
     ip: usize,
+    n: usize,
     program: Program,
     stack: Vec<Value>,
     scopes: Vec<Scope>,
@@ -78,7 +85,7 @@ pub struct VM {
 
 impl VM {
     pub fn new(program: Program) -> VM {
-        VM { ip: 0, program, stack: vec![], scopes: vec![Scope::default()] }
+        VM { ip: 0, n: 0, program, stack: vec![], scopes: vec![Scope::default()] }
     }
 
     pub fn run(&mut self) {
@@ -95,7 +102,46 @@ impl VM {
                     if let Value::Num(x) = val {
                         x
                     } else {
-                        panic!("expected a number and got {:?}", val)
+                        panic!("expected a number and got {:?} (at {})", val, self.ip)
+                    }
+                }
+            };
+        }
+
+        macro_rules! get_bool {
+            () => {
+                {
+                    let val = self.stack.pop().unwrap_or_else(|| ice!("stack is empty :("));
+                    if let Value::Bool(x) = val {
+                        x
+                    } else {
+                        panic!("expected a bool and got {:?}", val)
+                    }
+                }
+            };
+        }
+
+        macro_rules! get_fn {
+            () => {
+                {
+                    let val = self.stack.pop().unwrap_or_else(|| ice!("stack is empty :("));
+                    if let Value::Fn(x) = val {
+                        x
+                    } else {
+                        panic!("expected a function and got {:?}", val)
+                    }
+                }
+            };
+        }
+
+        macro_rules! get_jumpref {
+            () => {
+                {
+                    let val = self.stack.pop().unwrap_or_else(|| ice!("stack is empty :("));
+                    if let Value::JumpRef(x) = val {
+                        x
+                    } else {
+                        ice!("expected a JumpRef and got {:?}", val)
                     }
                 }
             };
@@ -122,10 +168,25 @@ impl VM {
         }
 
         while self.ip < self.program.instructions.len() {
+            // eprintln!("{:?} with {:#?}", self.program.instructions[self.ip], self.stack);
             match self.program.instructions[self.ip] {
                 Instruction::LoadConst(idx) => self.stack.push(self.program.constants[idx].clone()),
                 Instruction::Discard => { let _ = self.stack.pop(); },
                 Instruction::PushNothing => { self.stack.push(Value::Nothing) }
+                Instruction::Duplicate => {
+                    let v = get!();
+                    self.stack.push(v.clone());
+                    self.stack.push(v)
+                }
+                Instruction::PushJumpRef(n) => {
+                    self.stack.push(Value::JumpRef(n))
+                }
+                Instruction::Swap => {
+                    let a = get!();
+                    let b = get!();
+                    self.stack.push(a);
+                    self.stack.push(b)
+                }
                 Instruction::Jump(to) => self.ip = to,
                 Instruction::ConditionalJump(to) => {
                     let value = self.stack.pop();
@@ -135,11 +196,16 @@ impl VM {
                                 self.ip = to
                             }
                         }
-                        _ => ice!("stack is empty or non-boolean is on the stack"),
+                        _ => ice!("stack is empty or non-boolean is on the stack (at {}) (stack = {:#?}) (value = {:#?})", self.ip, self.stack, value),
                     }
                 },
                 Instruction::Terminate => return,
                 Instruction::Null => (),
+                Instruction::Call => {
+                    let target = get_fn!();
+                    // self.stack.push(Value::JumpRef(self.ip + 1));
+                    self.ip = target
+                },
                 Instruction::Negate => {
                     let val = get_num!();
                     self.stack.push(Value::Num(-val))
@@ -148,8 +214,15 @@ impl VM {
                 Instruction::Subtract => op!(-),
                 Instruction::Multiply => op!(*),
                 Instruction::Divide => op!(/),
-                Instruction::Invert => todo!(),
-                Instruction::RaiseTo => todo!(),
+                Instruction::Invert => {
+                    let val = get_bool!();
+                    self.stack.push(Value::Bool(!val))
+                },
+                Instruction::RaiseTo => {
+                    let rhs = get_num!();
+                    let lhs = get_num!();
+                    self.stack.push(Value::Num(lhs.powf(rhs)))
+                },
                 Instruction::CheckEquality => {
                     let val = get!() == get!();
                     self.stack.push(Value::Bool(val))
@@ -163,20 +236,41 @@ impl VM {
                     self.stack.push(Value::Bool(val))
                 },
                 Instruction::Show => {
+                    // eprintln!("after {}", self.n);
                     let val = get!();
-                    println!("{:?}", val);
+                    let s: String;
+                    println!("{}", match &val {
+                        Value::Fn(n) => {
+                            s = format!("<function @ {}>", n);
+                            &s
+                        },
+                        Value::Nothing => "<nothing>",
+                        Value::Num(n) => {
+                            s = n.to_string();
+                            &s
+                        },
+                        Value::Bool(v) => if *v { "true" } else { "false" }
+                        Value::Str(s) => s,
+                        Value::JumpRef(n) => {
+                            s = format!("<jump ref : {}>", n);
+                            &s
+                        }
+                    });
                     self.stack.push(val)
                 },
                 Instruction::NewScope => self.scopes.push(Scope::default()),
                 Instruction::LoadVar(index) => {
                     let name = self.program.names[index].clone();
-                    // let mut found = false;
+                    let mut found = false;
                     for i in (0..self.scopes.len()).rev() {
                         if self.scopes[i].stuff.contains_key(&name) {
                             self.stack.push(self.scopes[i].stuff.get(&name).unwrap().clone());
-                            // found = true;
+                            found = true;
                             break
                         }
+                    }
+                    if !found {
+                        panic!("{} is not defined in this scope or any of its parents", name)
                     }
                 },
                 Instruction::AssignStore(index) => {
@@ -197,12 +291,17 @@ impl VM {
                 Instruction::EndScope => {
                     let _ = self.scopes.pop();
                 },
-                Instruction::PopJump => todo!(),
+                Instruction::PopJump => {
+                    let to = get_jumpref!();
+                    self.ip = to
+                },
                 Instruction::JumpTo(_) => ice!("this should have been turned into Jump"),
                 Instruction::ConditionalJumpTo(_) => ice!("this should have been turned into ConditionalJump"),
                 Instruction::JumpTarget(_) => ice!("this should have been turned into Null"),
+                Instruction::JumpRefTo(_) => ice!("this should have been turned into PushJumpRef")
             }
-            self.ip += 1
+            self.ip += 1;
+            self.n += 1
         }
     }
 }
@@ -217,8 +316,9 @@ pub fn show_program(program: &Program) {
             Value::Num(x) => x.to_string(),
             Value::Str(text) => format!("'{text}'"),
             Value::Bool(x) => (if *x { "true" } else { "false" }).to_owned(),
-            Value::Fn => "<function>".to_owned(),
-            Value::Nothing => "<nothing>".to_owned()
+            Value::Fn(n) => format!("<function @ {n}>"),
+            Value::Nothing => "<nothing>".to_owned(),
+            Value::JumpRef(n) => format!("<jump ref : {n}>")
         });
     }
     eprintln!("\n\x1B[32mNames:\x1B[0m");
@@ -238,22 +338,27 @@ pub fn show_program(program: &Program) {
                 Value::Num(x) => x.to_string(),
                 Value::Str(text) => format!("'{text}'"),
                 Value::Bool(x) => (if *x { "true" } else { "false" }).to_owned(),
-                Value::Fn => "<function>".to_owned(),
-                Value::Nothing => "<nothing>".to_owned()
+                Value::Fn(x) => format!("<function @ {x}>"),
+                Value::Nothing => "<nothing>".to_owned(),
+                Value::JumpRef(n) => format!("<jump ref : {n}>")
             }, n),
             Instruction::Discard => "discard".to_owned(),
             Instruction::PushNothing => "push-nothing".to_owned(),
+            Instruction::Duplicate => "duplicate".to_owned(),
+            Instruction::PushJumpRef(x) => format!("push-jump-ref\x1B[0m {}", x),
+            Instruction::Swap => "swap".to_owned(),
             Instruction::Jump(to) => format!("jump\x1B[0m {}", to),
             Instruction::ConditionalJump(to) => format!("conditional-jump\x1B[0m {}", to),
             Instruction::Terminate => "---".to_owned(),
             Instruction::Null => "".to_owned(),
+            Instruction::Call => "call".to_owned(),
             Instruction::Negate => "neg".to_owned(),
             Instruction::Add => "add".to_owned(),
             Instruction::Subtract => "sub".to_owned(),
             Instruction::Multiply => "mul".to_owned(),
             Instruction::Divide => "div".to_owned(),
             Instruction::Invert => "invert".to_owned(),
-            Instruction::RaiseTo => "add".to_owned(),
+            Instruction::RaiseTo => "exp".to_owned(),
             Instruction::CheckEquality => "check-eq".to_owned(),
             Instruction::Lesser => "lt".to_owned(),
             Instruction::Greater => "gt".to_owned(),
@@ -270,6 +375,7 @@ pub fn show_program(program: &Program) {
             Instruction::JumpTo(_) => todo!(),
             Instruction::ConditionalJumpTo(_) => todo!(),
             Instruction::JumpTarget(_) => todo!(),
+            Instruction::JumpRefTo(_) => todo!(),
         });
     }
 }

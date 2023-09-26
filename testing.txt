@@ -1,89 +1,14 @@
-show show 1.0;
-let a = 1.0;
-let b = 1.0;
-loop {
-    let c = a + b;
-    a = b;
-    b = show c
+fn fib(x) {
+    if x <= 0 {
+        0
+    } else if x == 1 {
+        1
+    } else {
+        fib(x - 1) + fib(x - 2)
+    }
+};
+let i = 0;
+while i < 100 {
+    show fib(i);
+    i += 1
 }
-
-
-
-
-
-
-
-/*
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-let a;let e = g *= 3
-;if false {({!
--
-'e' * 3 + 0xFF==1.5;'4';(loop{break 1; break; loop{}})
-})
-} else if true { 1 } else { true } use a.{
-    b.*,
-    c.{ d, e },
-    f,
-    g.h,
-    i.j.k,
-    l.m.{ n.o.{p}, q },
-}
-;print(a.b.c.d - 1.2.test * if 1 + (2).sqrt() != 3 {
-    true; loop { false; if math.floor(random()) { break } };
-    some_function('e', 2);
-    3 + (4 / -5) - 1; /* commentaire */
-    5; // autre commentaire
-    loop { break 4 }
-} else if false { 4 } else { 3 }.sqrt()); loop {
-    while 1 > 2 { 3; while true {} };
-    3 >= 4;
-    5 == 6;
-    7 <  8;
-    9 <= 10
-} /*
-comment
-comment
-comment */
-'q'_char // this is a comment /* */
-+ - * / ** = ! < >
-+= -= *= /= **= == != <= >=
-'a'_str
-0x1235ABC
-0o27
-0b11
-0.12
-42
-0_i32
-0xFF
-'a'
-ee
-eee
-eeee
-eeeee
-eeeeee
- 'a
-multiline
-string'*/
