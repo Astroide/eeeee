@@ -158,6 +158,9 @@ impl ProgramBuilder {
                     vm::Instruction::AccessProperty(n) => {
                         vm::Instruction::AccessProperty(*name_map.get(&n).unwrap())
                     },
+                    vm::Instruction::CodegenHelper(n) => {
+                        vm::Instruction::CodegenHelper(*name_map.get(&n).unwrap())
+                    },
                     vm::Instruction::Store(n) => {
                         vm::Instruction::Store(*name_map.get(&n).unwrap())
                     },
