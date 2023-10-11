@@ -1,0 +1,31 @@
+module math {
+    fn mod(value, base) {
+        if value < 0 {
+            panic 'value must be >= 0'
+        };
+        if base <= 0 {
+            panic 'base must be > 0'
+        };
+        while value >= base {
+            value -= base
+        };
+        value
+    };
+
+    fn abs(x) {
+        if x < 0 { -x } else { x }
+    };
+
+    fn sqrt(n) {
+        fn abs(x) {
+            if x < 0 { -x } else { x }
+        };
+        let x = n;
+        let root = n * n;
+        while abs(root - x) > 0.0001 {
+            x = root;
+            root = 0.5 * (x + (n / x))
+        };
+        x
+    }
+}

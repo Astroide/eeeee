@@ -30,6 +30,7 @@ pub enum Expr {
         right: AnyExpr,
     },
     Block(Option<AnyExpr>),
+    Module(Option<AnyExpr>, String),
     Call {
         callee: AnyExpr,
         args: Vec<AnyExpr>, /* Vec of Box doesn't sound like a good idea */
@@ -77,7 +78,7 @@ pub enum Expr {
     While {
         condition: AnyExpr,
         body     : AnyExpr,
-    }
+    },
 }
 
 #[derive(Debug)]
@@ -100,6 +101,7 @@ pub enum UnaryOp {
     Not,
     Neg,
     Show,
+    Panic,
 }
 
 pub fn show_tree(expr: &Expression) {
@@ -122,9 +124,10 @@ fn show_tree_impl(expr: &Expression, depth: usize) {
         Expr::Continue => eprintln!("(continue)"),
         Expr::Unary { op, right } => {
             eprintln!("{}(\x1B[0m{}", bracket_color!(), match op {
-                UnaryOp::Not  => "!",
-                UnaryOp::Neg  => "-",
-                UnaryOp::Show => "show",
+                UnaryOp::Not   => "!",
+                UnaryOp::Neg   => "-",
+                UnaryOp::Show  => "show",
+                UnaryOp::Panic => "panic",
             });
             show_tree_impl(right, depth + 1);
             eprintln!("{}{})\x1B[0m", " ".repeat(depth * 2), bracket_color!());
@@ -138,6 +141,17 @@ fn show_tree_impl(expr: &Expression, depth: usize) {
         }
         Expr::Block(inside) => {
             eprint!("{}{{\x1B[0m", bracket_color!());
+            match inside {
+                None => eprintln!("{}}}\x1B[0m", bracket_color!()),
+                Some(stuff) => {
+                    eprintln!();
+                    show_tree_impl(stuff, depth + 1);
+                    eprintln!("{}{}}}\x1B[0m", " ".repeat(depth * 2), bracket_color!());
+                }
+            }
+        }
+        Expr::Module(inside, name) => {
+            eprint!("{}mod {} {{\x1B[0m", bracket_color!(), name);
             match inside {
                 None => eprintln!("{}}}\x1B[0m", bracket_color!()),
                 Some(stuff) => {
@@ -198,7 +212,11 @@ fn show_tree_impl(expr: &Expression, depth: usize) {
             }
             eprintln!("{}{})\x1B[0m", " ".repeat(depth * 2), bracket_color!());
         },
-        Expr::Property { object, name } => todo!(),
+        Expr::Property { object, name } => {
+            eprintln!("{}(\x1B[32mread\x1B[0m {} \x1B[32mof\x1B[0m", bracket_color!(), name);
+            show_tree_impl(object, depth + 1);
+            eprintln!("{}{})\x1B[0m", " ".repeat(depth * 2), bracket_color!());
+        },
         Expr::Break { with } => {
             if let Some(thing) = with {
                 eprintln!("{}(\x1B[32mbreak\x1B[0m", bracket_color!());

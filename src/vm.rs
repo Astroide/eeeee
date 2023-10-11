@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc, cell::RefCell};
 
 use crate::ice::ice;
 
@@ -23,8 +23,10 @@ pub enum Instruction {
     Jump(usize),
     ConditionalJump(usize),
     Terminate,
+    RequireArguments(usize),
     Null,
     Call,
+    Panic,
 
     // operations on values
     Negate,
@@ -41,6 +43,7 @@ pub enum Instruction {
     GreaterEq,
     CheckInequality,
     Show,
+    AccessProperty(usize),
 
     // scoping & variables
     NewScope,
@@ -48,6 +51,7 @@ pub enum Instruction {
     Store(usize),
     AssignStore(usize),
     EndScope,
+    EndAndNameScope(usize),
 
     // functions
     PopJump,
@@ -57,6 +61,10 @@ pub enum Instruction {
     ConditionalJumpTo(usize),
     JumpTarget(usize),
     JumpRefTo(usize),
+
+    // debug
+    FunctionTag(usize),
+    CodegenHelper(usize),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -67,9 +75,10 @@ pub enum Value {
     Fn(usize),
     JumpRef(usize),
     Nothing,
+    Scope(Rc<RefCell<Scope>>),
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Scope {
     pub stuff: HashMap<String, Value>,
 }
@@ -134,6 +143,19 @@ impl VM {
             };
         }
 
+        macro_rules! get_scope {
+            () => {
+                {
+                    let val = self.stack.pop().unwrap_or_else(|| ice!("stack is empty :("));
+                    if let Value::Scope(x) = val {
+                        x
+                    } else {
+                        panic!("expected a scope and got {:?}", val)
+                    }
+                }
+            };
+        }
+
         macro_rules! get_jumpref {
             () => {
                 {
@@ -141,7 +163,7 @@ impl VM {
                     if let Value::JumpRef(x) = val {
                         x
                     } else {
-                        ice!("expected a JumpRef and got {:?}", val)
+                        ice!("expected a JumpRef and got {:?} {}", val, self.ip)
                     }
                 }
             };
@@ -168,7 +190,8 @@ impl VM {
         }
 
         while self.ip < self.program.instructions.len() {
-            // eprintln!("{:?} with {:#?}", self.program.instructions[self.ip], self.stack);
+            #[cfg(feature = "debug_execution")]
+            eprintln!("{} -- {:?} with {:#?}", self.ip, self.program.instructions[self.ip], self.stack);
             match self.program.instructions[self.ip] {
                 Instruction::LoadConst(idx) => self.stack.push(self.program.constants[idx].clone()),
                 Instruction::Discard => { let _ = self.stack.pop(); },
@@ -200,11 +223,20 @@ impl VM {
                     }
                 },
                 Instruction::Terminate => return,
+                Instruction::RequireArguments(n) => {
+                    let how_many = self.stack.iter().rev().position(|x| matches!(x, Value::JumpRef(_))).unwrap_or_else(|| ice!("there should be a JumpRef here"));
+                    if how_many != n {
+                        panic!("function requires {n} arguments but received {how_many}")
+                    }
+                },
                 Instruction::Null => (),
                 Instruction::Call => {
                     let target = get_fn!();
                     // self.stack.push(Value::JumpRef(self.ip + 1));
                     self.ip = target
+                },
+                Instruction::Panic => {
+                    panic!("\x1B[31merror: {:?}\x1B[0m", get!())
                 },
                 Instruction::Negate => {
                     let val = get_num!();
@@ -254,9 +286,19 @@ impl VM {
                         Value::JumpRef(n) => {
                             s = format!("<jump ref : {}>", n);
                             &s
+                        },
+                        Value::Scope(scope) => {
+                            s = format!("<scope {:?}>", scope);
+                            &s
                         }
                     });
                     self.stack.push(val)
+                },
+                Instruction::AccessProperty(property) => {
+                    let name = self.program.names[property].clone();
+                    let scope = get_scope!();
+                    let borrow = scope.borrow();
+                    self.stack.push(borrow.stuff.get(&name).expect(&name).clone())
                 },
                 Instruction::NewScope => self.scopes.push(Scope::default()),
                 Instruction::LoadVar(index) => {
@@ -291,6 +333,12 @@ impl VM {
                 Instruction::EndScope => {
                     let _ = self.scopes.pop();
                 },
+                Instruction::EndAndNameScope(index) => {
+                    let scope = self.scopes.pop().unwrap_or_else(|| ice!("expected a scope"));
+                    let idx = self.scopes.len() - 1;
+                    let scope = Rc::new(RefCell::new(scope));
+                    let _ = self.scopes[idx].stuff.insert(self.program.names[index].clone(), Value::Scope(scope));
+                },
                 Instruction::PopJump => {
                     let to = get_jumpref!();
                     self.ip = to
@@ -298,7 +346,9 @@ impl VM {
                 Instruction::JumpTo(_) => ice!("this should have been turned into Jump"),
                 Instruction::ConditionalJumpTo(_) => ice!("this should have been turned into ConditionalJump"),
                 Instruction::JumpTarget(_) => ice!("this should have been turned into Null"),
-                Instruction::JumpRefTo(_) => ice!("this should have been turned into PushJumpRef")
+                Instruction::JumpRefTo(_) => ice!("this should have been turned into PushJumpRef"),
+                Instruction::FunctionTag(_) => (),
+                Instruction::CodegenHelper(_) => (),
             }
             self.ip += 1;
             self.n += 1
@@ -318,7 +368,8 @@ pub fn show_program(program: &Program) {
             Value::Bool(x) => (if *x { "true" } else { "false" }).to_owned(),
             Value::Fn(n) => format!("<function @ {n}>"),
             Value::Nothing => "<nothing>".to_owned(),
-            Value::JumpRef(n) => format!("<jump ref : {n}>")
+            Value::JumpRef(n) => format!("<jump ref : {n}>"),
+            Value::Scope(scope) => format!("<scope {:?}>", scope),
         });
     }
     eprintln!("\n\x1B[32mNames:\x1B[0m");
@@ -340,7 +391,8 @@ pub fn show_program(program: &Program) {
                 Value::Bool(x) => (if *x { "true" } else { "false" }).to_owned(),
                 Value::Fn(x) => format!("<function @ {x}>"),
                 Value::Nothing => "<nothing>".to_owned(),
-                Value::JumpRef(n) => format!("<jump ref : {n}>")
+                Value::JumpRef(n) => format!("<jump ref : {n}>"),
+                Value::Scope(scope) => format!("<scope {:?}>", scope),
             }, n),
             Instruction::Discard => "discard".to_owned(),
             Instruction::PushNothing => "push-nothing".to_owned(),
@@ -350,8 +402,10 @@ pub fn show_program(program: &Program) {
             Instruction::Jump(to) => format!("jump\x1B[0m {}", to),
             Instruction::ConditionalJump(to) => format!("conditional-jump\x1B[0m {}", to),
             Instruction::Terminate => "---".to_owned(),
+            Instruction::RequireArguments(n) => format!("require-args\x1B[0m {n}"),
             Instruction::Null => "".to_owned(),
             Instruction::Call => "call".to_owned(),
+            Instruction::Panic => "panic".to_owned(),
             Instruction::Negate => "neg".to_owned(),
             Instruction::Add => "add".to_owned(),
             Instruction::Subtract => "sub".to_owned(),
@@ -366,16 +420,20 @@ pub fn show_program(program: &Program) {
             Instruction::GreaterEq => "geq".to_owned(),
             Instruction::CheckInequality => "check-neq".to_owned(),
             Instruction::Show => "show".to_owned(),
+            Instruction::AccessProperty(v) => format!("read-property\x1B[0m {} \x1B[37m({})", &program.names[*v], v),
             Instruction::NewScope => "new-scope".to_owned(),
             Instruction::LoadVar(v) => format!("load-name\x1B[0m {} \x1B[37m({})", &program.names[*v], v),
             Instruction::Store(v) => format!("store\x1B[0m {} \x1B[37m({})", &program.names[*v], v),
             Instruction::AssignStore(v) => format!("declare-store\x1B[0m {} \x1B[37m({})", &program.names[*v], v),
             Instruction::EndScope => "end-scope".to_owned(),
+            Instruction::EndAndNameScope(v) => format!("end-store-scope\x1B[0m {} \x1B[37m({})", &program.names[*v], v),
             Instruction::PopJump => "pop-jump".to_owned(),
             Instruction::JumpTo(_) => todo!(),
             Instruction::ConditionalJumpTo(_) => todo!(),
             Instruction::JumpTarget(_) => todo!(),
             Instruction::JumpRefTo(_) => todo!(),
+            Instruction::FunctionTag(tag) => format!("\x1B[35m{}:", &program.names[*tag]),
+            Instruction::CodegenHelper(tag) => format!("\x1B[35m-- {}", &program.names[*tag]),
         });
     }
 }

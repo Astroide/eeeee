@@ -3,6 +3,11 @@ name = "eeeee"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+debug_execution = [] # note to self : move to a command line flag/env var in the future
+instruction_sources = []
+
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

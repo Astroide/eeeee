@@ -1,0 +1,4 @@
+module std {
+    include 'std/math.eee';
+    include 'std/logic.eee'
+}

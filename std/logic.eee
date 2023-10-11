@@ -1,0 +1,22 @@
+module logic {
+    fn and(a, b) {
+        if a {
+            if b {
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    };
+    fn or(a, b) {
+        if a {
+            true
+        } else if b {
+            true
+        } else {
+            false
+        }
+    }
+}

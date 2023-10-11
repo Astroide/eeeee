@@ -99,6 +99,9 @@ pub enum TokenType {
     As,
     Mut,
     Show,
+    Panic,
+    Module,
+    Include,
 }
 
 impl TokenType {
@@ -155,6 +158,9 @@ impl TokenType {
             As              => "'as'",
             Mut             => "'mut'",
             Show            => "'show'",
+            Panic           => "'panic'",
+            Module          => "'module'",
+            Include         => "'include'",
         }
     }
 }

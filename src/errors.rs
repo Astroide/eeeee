@@ -49,6 +49,7 @@ pub mod codes {
         "todo: add explanation for this error (catchall for 'expected X, got Y' in parsing)"
     );
     d!(E0013, "todo: add explanation for this error (functions require names)");
+    d!(E0014, "todo: add explanation for this error (failed to find file with include)");
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -205,7 +206,7 @@ pub fn print_error(error: &Error, sources: &Loader) {
             Severity::Info => "\x1B[36minfo",
         },
         error.code,
-        error.message
+        error.message,
     );
     let ranges = error
         .spans
@@ -302,8 +303,11 @@ pub fn print_error(error: &Error, sources: &Loader) {
                         }
                     }
                     eprint!(
-                        " {}",
-                        unwrap_or_else_this_particular_case!(error.pieces[original_index], "here")
+                        " {} -- {}:{}:{}",
+                        unwrap_or_else_this_particular_case!(error.pieces[original_index], "here"),
+                        sources.get_file(error.spans[original_index].file).src().unwrap_or("<text>"),
+                        start_line + 1,
+                        start_col + 1,
                     );
                     eprintln!("\x1B[0m");
                 }

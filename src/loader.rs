@@ -34,7 +34,8 @@ impl Span {
 
     pub fn merge(self, other: Span) -> Span {
         if self.file != other.file {
-            ice!("attempting to merge two spans that aren't from the same file")
+            eprintln!("attempting to merge two spans that aren't from the same file...");
+            return self
         }
         Span {
             file: self.file,
@@ -45,9 +46,15 @@ impl Span {
 }
 
 #[derive(Debug)]
+pub enum FileSource {
+    String(String),
+    PathBuf(PathBuf),
+}
+
+#[derive(Debug)]
 pub struct Source {
     string: String,
-    src: PathBuf,
+    src: FileSource,
     pub index: usize,
 }
 
@@ -57,7 +64,10 @@ impl Source {
     }
 
     pub fn src(&self) -> Option<&str> {
-        self.src.as_os_str().to_str()
+        match self.src {
+            FileSource::String(ref s) => Some(s),
+            FileSource::PathBuf(ref s) => s.as_os_str().to_str()
+        }
     }
 }
 
@@ -71,13 +81,22 @@ impl Loader {
         Loader { files: vec![] }
     }
 
+    pub fn load_from_memory(&mut self, src: String, filename: String) -> usize {
+        self.files.push(Source {
+            index: self.files.len(),
+            src: FileSource::String(filename),
+            string: src
+        });
+        self.files.len() - 1
+    }
+
     pub fn load_file<P: AsRef<Path>>(&mut self, path: P) -> Result<usize, Failure> {
         let path = path.as_ref();
         let bytes = ok!(std::fs::read(path), Failure::IOError);
         let utf8 = ok!(String::from_utf8(bytes), Failure::Utf8Error);
         self.files.push(Source {
             index: self.files.len(),
-            src: path.to_owned(),
+            src: FileSource::PathBuf(path.to_owned()),
             string: utf8,
         });
         Ok(self.files.len() - 1)

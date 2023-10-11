@@ -4,14 +4,14 @@ use crate::{
     errors::{codes, make_error, Error, Severity},
     expressions::{self, Expression},
     ice::ice,
-    loader::Span,
+    loader::{Span, Loader},
     tokens::{Token, TokenType},
 };
 
-pub fn parse(input: &[Token], file: usize) -> Result<Box<Expression>, Vec<Error>> {
+pub fn parse(input: &[Token], file: usize, loader: &mut Loader) -> Result<Box<Expression>, Vec<Error>> {
     let mut errors: Vec<Error> = vec![];
     let mut pointer = 0usize;
-    match parse_impl(input, 0, &mut pointer, &mut errors, file) {
+    match parse_impl(input, 0, &mut pointer, &mut errors, file, loader) {
         Err(_) => Err(errors),
         Ok(val) => Ok(val),
     }
@@ -23,6 +23,7 @@ fn parse_impl(
     pointer: &mut usize,
     accumulator: &mut Vec<Error>,
     file: usize,
+    loader: &mut Loader,
 ) -> Result<Box<Expression>, ()> {
     macro_rules! peek {
         () => {
@@ -123,6 +124,9 @@ fn parse_impl(
               | TokenType::While
               | TokenType::Let
               | TokenType::Show
+              | TokenType::Panic
+              | TokenType::Include
+              | TokenType::Module
               | TokenType::Ident { .. }, .. }) => true,
               _ => false,
             }
@@ -193,7 +197,7 @@ fn parse_impl(
             expect!(TokenType::RParen, true, " after function argument list");
             expect!(TokenType::LCBrace, true, " after function arguments");
             *pointer -= 1;
-            let block = parse_impl(input, precedence::ONE, pointer, accumulator, file)?;
+            let block = parse_impl(input, precedence::ONE, pointer, accumulator, file, loader)?;
             let block_span = block.span;
             lhs = Box::new(Expression {
                 et: expressions::Expr::Fn { name: fn_name, body: block, args: arguments },
@@ -225,7 +229,7 @@ fn parse_impl(
             let mut span: Option<Span> = None;
             let value = if let Some(Token { tt: TokenType::Eq, .. }) = peek!() {
                 next!();
-                let value = parse_impl(input, precedence::ASSIGN, pointer, accumulator, file)?;
+                let value = parse_impl(input, precedence::ASSIGN, pointer, accumulator, file, loader)?;
                 span = Some(value.span);
                 Some(value)
             } else {
@@ -243,7 +247,7 @@ fn parse_impl(
             })
         }
         TokenType::Not => {
-            let right = parse_impl(input, precedence::UNARY, pointer, accumulator, file)?;
+            let right = parse_impl(input, precedence::UNARY, pointer, accumulator, file, loader)?;
             let right_span = right.span;
             lhs = Box::new(Expression {
                 et: expressions::Expr::Unary {
@@ -254,7 +258,7 @@ fn parse_impl(
             })
         }
         TokenType::Show => {
-            let right = parse_impl(input, precedence::SEMICOLON + 1, pointer, accumulator, file)?;
+            let right = parse_impl(input, precedence::SEMICOLON + 1, pointer, accumulator, file, loader)?;
             let right_span = right.span;
             lhs = Box::new(Expression {
                 et: expressions::Expr::Unary {
@@ -264,8 +268,61 @@ fn parse_impl(
                 span: token.span.merge(right_span),
             })
         }
+        TokenType::Panic => {
+            let right = parse_impl(input, precedence::SEMICOLON + 1, pointer, accumulator, file, loader)?;
+            let right_span = right.span;
+            lhs = Box::new(Expression {
+                et: expressions::Expr::Unary {
+                    op: expressions::UnaryOp::Panic,
+                    right,
+                },
+                span: token.span.merge(right_span),
+            })
+        }
+        TokenType::Include => {
+            expect!(TokenType::SLiteral { .. }, true, " after 'include'");
+            *pointer -= 1;
+            if let Token { tt: TokenType::SLiteral { ref value, .. }, span, .. } = next!().unwrap_or_else(|| ice!("unreachable")) {
+                match loader.load_file(value) {
+                    Ok(file_index) => {
+                        let res = crate::lexer::lex(loader.get_file(file_index));
+                        let mut has_had_fatal = false;
+                        let mut has_had_errors = false;
+                        if let Err(errors) = res.1 {
+                            has_had_errors = true;
+                            for error in errors.iter() {
+                                crate::errors::print_error(error, &loader);
+                                if error.fatal() {
+                                    has_had_fatal = true;
+                                }
+                            }
+                        }
+                        if has_had_fatal {
+                            exit_with!(make_error!(format!("failed to load {} due to compilation errors", value), codes::E0014.0, Severity::Info, None => span.merge(token.span)))
+                        } else {
+                            let result = parse(&res.0, file_index, loader);
+                            match result {
+                                Err(errors) => {
+                                    for error in errors.iter() {
+                                        crate::errors::print_error(error, &loader);
+                                    }
+                                    exit_with!(make_error!(format!("failed to load {} due to compilation errors", value), codes::E0014.0, Severity::Info, None => span.merge(token.span)))
+                                }
+                                Ok(expr) => {
+                                    if has_had_errors {
+                                        exit_with!(make_error!(format!("failed to load {} due to compilation errors", value), codes::E0014.0, Severity::Info, None => span.merge(token.span)))
+                                    };
+                                    lhs = expr
+                                },
+                            }
+                        }
+                    },
+                    Err(e) => exit_with!(make_error!(format!("failed to load {} ({:?})", value, e), codes::E0014.0, Severity::FatalError, None => span.merge(token.span))) // this could be made non-fatal but ...
+                }
+            } else { ice!("what.") }
+        }
         TokenType::Minus => {
-            let right = parse_impl(input, precedence::UNARY, pointer, accumulator, file)?;
+            let right = parse_impl(input, precedence::UNARY, pointer, accumulator, file, loader)?;
             let right_span = right.span;
             lhs = Box::new(Expression {
                 et: expressions::Expr::Unary {
@@ -279,7 +336,7 @@ fn parse_impl(
             let mut maybe_right: Option<Box<Expression>> = None;
             let mut span = token.span;
             if has_expression!() {
-                let expr = parse_impl(input, precedence::BREAK, pointer, accumulator, file)?;
+                let expr = parse_impl(input, precedence::BREAK, pointer, accumulator, file, loader)?;
                 span = span.merge(expr.span);
                 maybe_right = Some(expr);
             }
@@ -291,12 +348,12 @@ fn parse_impl(
         TokenType::Loop => {
             expect!(TokenType::LCBrace, true, " after 'loop'");
             *pointer -= 1;
-            let inside = parse_impl(input, precedence::ONE, pointer, accumulator, file)?;
+            let inside = parse_impl(input, precedence::ONE, pointer, accumulator, file, loader)?;
             let inside_span = inside.span;
             lhs = Box::new(Expression { et: expressions::Expr::Loop { inside }, span: token.span.merge(inside_span) })
         }
         TokenType::LParen => {
-            lhs = parse_impl(input, 0, pointer, accumulator, file)?;
+            lhs = parse_impl(input, 0, pointer, accumulator, file, loader)?;
             let maybe_token = next!();
             if let Some(Token { span, tt }) = maybe_token {
                 if !matches!(tt, TokenType::RParen) {
@@ -320,37 +377,37 @@ fn parse_impl(
             }
         }
         TokenType::If => {
-            let condition = parse_impl(input, 0, pointer, accumulator, file)?;
+            let condition = parse_impl(input, 0, pointer, accumulator, file, loader)?;
             expect!(TokenType::LCBrace, true, " after if condition");
             *pointer -= 1;
-            let then = parse_impl(input, precedence::ONE, pointer, accumulator, file)?;
+            let then = parse_impl(input, precedence::ONE, pointer, accumulator, file, loader)?;
             let then_span = then.span;
             let mut else_: Option<Box<Expression>> = None;
             if matches!(peek!(), Some(Token { tt: TokenType::Else, .. })) {
                 next!();
                 if matches!(peek!(), Some(Token { tt: TokenType::If, .. })) {
                     // eprintln!("else if");
-                    else_ = Some(parse_impl(input, precedence::ONE, pointer, accumulator, file)?);
+                    else_ = Some(parse_impl(input, precedence::ONE, pointer, accumulator, file, loader)?);
                     // eprintln!("{:#?}", else_);
                 } else {
                     expect!(TokenType::LCBrace, true, " or 'if' after 'else'");
                     *pointer -= 1;
-                    else_ = Some(parse_impl(input, precedence::ONE, pointer, accumulator, file)?);
+                    else_ = Some(parse_impl(input, precedence::ONE, pointer, accumulator, file, loader)?);
                 }
                 // *pointer -= 1;
             }
             lhs = Box::new(Expression { et: expressions::Expr::If { condition, then, else_ }, span: token.span.merge(then_span) })
         }
         TokenType::While => {
-            let condition = parse_impl(input, 0, pointer, accumulator, file)?;
+            let condition = parse_impl(input, 0, pointer, accumulator, file, loader)?;
             expect!(TokenType::LCBrace, true, " after while condition");
             *pointer -= 1;
-            let body = parse_impl(input, precedence::ONE, pointer, accumulator, file)?;
+            let body = parse_impl(input, precedence::ONE, pointer, accumulator, file, loader)?;
             let body_span = body.span;
             lhs = Box::new(Expression { et: expressions::Expr::While { condition, body }, span: token.span.merge(body_span) })
         }
         TokenType::LCBrace => {
-            let inside = if has_expression!() { Some(parse_impl(input, 0, pointer, accumulator, file)?) } else { None };
+            let inside = if has_expression!() { Some(parse_impl(input, 0, pointer, accumulator, file, loader)?) } else { None };
             let maybe_token = next!();
             if let Some(Token { span, tt }) = maybe_token {
                 if !matches!(tt, TokenType::RCBrace) {
@@ -370,11 +427,62 @@ fn parse_impl(
                 }
             } else {
                 exit_with!(make_error!(
-                    "expected a closing parenthesis, got EOF",
+                    "expected a closing }, got EOF",
                     codes::E0012.0,
                     Severity::FatalError,
                     "expected } here" => Span { file, start: input[*pointer - 2].span.end, end: input[*pointer - 2].span.end },
                     "opening '{' was here" => token.span
+                ))
+            }
+        }
+        TokenType::Module => {
+            let maybe_token = next!();
+            if let Some(Token { span, tt }) = maybe_token {
+                if let TokenType::Ident(name) = tt {
+                    expect!(TokenType::LCBrace, true, " after module name");
+                    let inside = if has_expression!() { Some(parse_impl(input, 0, pointer, accumulator, file, loader)?) } else { None };
+                    let maybe_token = next!();
+                    if let Some(Token { span, tt }) = maybe_token {
+                        if !matches!(tt, TokenType::RCBrace) {
+                            exit_with!(
+                                make_error!(
+                                    format!("expected a closing '}}', got {}", tt.name_for_errors()),
+                                    codes::E0012.0,
+                                    Severity::FatalError,
+                                    "expected } here" => *span
+                                ).push("opening '{' was here".to_string(), token.span)
+                            );
+                        } else {
+                            lhs = Box::new(Expression {
+                                et: expressions::Expr::Module(inside, name.clone()),
+                                span: *span,
+                            });
+                        }
+                    } else {
+                        exit_with!(make_error!(
+                            "expected a closing }, got EOF",
+                            codes::E0012.0,
+                            Severity::FatalError,
+                            "expected } here" => Span { file, start: input[*pointer - 2].span.end, end: input[*pointer - 2].span.end },
+                            "opening '{' was here" => token.span
+                        ))
+                    }
+                } else {
+                    exit_with!(
+                        make_error!(
+                            format!("expected a module name, got {}", tt.name_for_errors()),
+                            codes::E0012.0,
+                            Severity::FatalError,
+                            "expected an identifier here" => *span
+                        )
+                    );
+                }
+            } else {
+                exit_with!(make_error!(
+                    "expected a module name, got EOF",
+                    codes::E0012.0,
+                    Severity::FatalError,
+                    "expected an identifier here" => Span { file, start: input[*pointer - 2].span.end, end: input[*pointer - 2].span.end }
                 ))
             }
         }
@@ -395,6 +503,7 @@ fn parse_impl(
                     pointer,
                     accumulator,
                     file,
+                    loader,
                 )?;
                 lhs = Box::new(Expression {
                     span: lhs.span.merge(rhs.span),
@@ -415,6 +524,7 @@ fn parse_impl(
                     pointer,
                     accumulator,
                     file,
+                    loader,
                 )?;
                 lhs = Box::new(Expression {
                     span: lhs.span.merge(rhs.span),
@@ -449,11 +559,27 @@ fn parse_impl(
             TokenType::ExpEq   => infix_assign!(BinaryOp::Exp),
             TokenType::PlusEq  => infix_assign!(BinaryOp::Add),
             TokenType::MinusEq => infix_assign!(BinaryOp::Sub),
+            TokenType::Dot     => {
+                let maybe_token = next!();
+                let lhs_span = lhs.span;
+                if let Some(Token { tt: TokenType::Ident(name), span }) = maybe_token {
+                    lhs = Box::new(Expression {
+                        et: expressions::Expr::Property {
+                            object: lhs,
+                            name: name.clone(),
+                        },
+                        span: lhs_span.merge(*span)
+                    })
+                } else {
+                    *pointer -= 1;
+                    expect!(TokenType::Ident(_), true, " after dot");
+                }
+            },
             TokenType::LParen  => {
                 let mut arguments: Vec<Box<Expression>> = vec![];
                 loop {
                     if has_expression!() {
-                        arguments.push(parse_impl(input, 0, pointer, accumulator, file)?);
+                        arguments.push(parse_impl(input, 0, pointer, accumulator, file, loader)?);
                     } else {
                         break
                     }
@@ -476,6 +602,7 @@ fn parse_impl(
                     pointer,
                     accumulator,
                     file,
+                    loader,
                 )?;
                 lhs = Box::new(Expression {
                     span: lhs.span.merge(rhs.span),
@@ -492,6 +619,7 @@ fn parse_impl(
                     pointer,
                     accumulator,
                     file,
+                    loader,
                 )?;
                 lhs = Box::new(Expression {
                     span: lhs.span.merge(rhs.span),

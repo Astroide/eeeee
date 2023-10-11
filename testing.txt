@@ -1,4 +1,33 @@
-fn fib(x) {
+include 'std/mod.eee';
+let math = std.math;
+let and = std.logic.and;
+fn prime(x) {
+    if x == 2 {
+        true
+    } else if x < 2 {
+        false
+    } else {
+        let k = 2;
+        let max = math.sqrt(k) + 1;
+        let has_div = false;
+        while and(k < max, !has_div) {
+            if math.mod(x, k) == 0 {
+                has_div = true
+            };
+            k += 1
+        };
+        !has_div
+    }
+};
+let i = 0;
+while i < 10000 {
+    i += 1;
+    if prime(i) {
+        show i
+    }
+}
+
+/*fn fib(x) {
     if x <= 0 {
         0
     } else if x == 1 {
@@ -11,4 +40,4 @@ let i = 0;
 while i < 100 {
     show fib(i);
     i += 1
-}
+}*/
