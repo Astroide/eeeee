@@ -55,10 +55,9 @@ impl ProgramBuilder {
     pub fn emit(&mut self, instruction: vm::Instruction) {
         #[cfg(feature = "instruction_sources")]
         {
-            let name = self.src_stack.pop().unwrap();
+            let name = self.src_stack.join(">");
             let index = self.add_name(&name);
-            self.src_stack.push(name);
-            self.instructions.push(vm::Instruction::CodegenHelper(index))
+            self.instructions.push(vm::Instruction::CodegenHelper(index));
         }
         self.instructions.push(instruction)
     }
@@ -79,7 +78,7 @@ impl ProgramBuilder {
     }
 
     pub fn stack_padding(&mut self) {
-        self.instructions.push(vm::Instruction::PushNothing)
+        self.emit(vm::Instruction::PushNothing)
     }
 
     pub fn flattened(mut self) -> Self {
@@ -423,10 +422,14 @@ pub fn lower(expression: &Expression, builder: &mut ProgramBuilder) {
                 builder.add_reserved(end_of_all);
             } else {
                 let target = builder.reserve_target();
+                // let end = builder.reserve_target();
                 builder.emit(vm::Instruction::Invert);
                 builder.emit(vm::Instruction::ConditionalJumpTo(target.0));
                 lower(then, builder);
+                builder.emit(vm::Instruction::Discard);
+                // builder.emit(vm::Instruction::JumpTo(end.0));
                 builder.add_reserved(target);
+                // builder.add_reserved(end);
                 builder.stack_padding();
             }
             #[cfg(feature = "instruction_sources")]

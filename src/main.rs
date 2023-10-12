@@ -38,12 +38,15 @@ fn main() {
             }
             Ok(expr) => {
                 eeeee::expressions::show_tree(&expr);
+                eprintln!("PARSED");
                 let mut builder = eeeee::compiler::ProgramBuilder::new(true);
                 eeeee::compiler::lower(&expr, &mut builder);
+                eprintln!("COMPILED");
                 let program = builder.finish();
                 eeeee::vm::show_program(&program);
                 let mut vm = eeeee::vm::VM::new(program);
                 vm.run();
+                eprintln!("EXECUTED");
                 // eprintln!("parsed: {:?}", expr)
             },
         }

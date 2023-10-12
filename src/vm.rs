@@ -163,7 +163,7 @@ impl VM {
                     if let Value::JumpRef(x) = val {
                         x
                     } else {
-                        ice!("expected a JumpRef and got {:?} {}", val, self.ip)
+                        ice!("expected a JumpRef and got {:?} @ {}", val, self.ip)
                     }
                 }
             };
@@ -191,7 +191,7 @@ impl VM {
 
         while self.ip < self.program.instructions.len() {
             #[cfg(feature = "debug_execution")]
-            eprintln!("{} -- {:?} with {:#?}", self.ip, self.program.instructions[self.ip], self.stack);
+            println!("{} -- {:?} with {:?}", self.ip, self.program.instructions[self.ip], self.stack);
             match self.program.instructions[self.ip] {
                 Instruction::LoadConst(idx) => self.stack.push(self.program.constants[idx].clone()),
                 Instruction::Discard => { let _ = self.stack.pop(); },

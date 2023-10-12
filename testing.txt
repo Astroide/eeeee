@@ -8,7 +8,7 @@ fn prime(x) {
         false
     } else {
         let k = 2;
-        let max = math.sqrt(k) + 1;
+        let max = math.sqrt(x) + 1;
         let has_div = false;
         while and(k < max, !has_div) {
             if math.mod(x, k) == 0 {
