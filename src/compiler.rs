@@ -115,13 +115,10 @@ impl ProgramBuilder {
             let mut constant_map = HashMap::<usize, usize>::new();
             let mut name_map = HashMap::<usize, usize>::new();
             for instruction in element.instructions.iter() {
-                match instruction {
-                    vm::Instruction::JumpTarget(n) => {
-                        self.target_no += 1;
-                        let new_n = self.target_no - 1;
-                        jump_map.insert(*n, new_n);
-                    },
-                    _ => ()
+                if let vm::Instruction::JumpTarget(n) = instruction {
+                    self.target_no += 1;
+                    let new_n = self.target_no - 1;
+                    jump_map.insert(*n, new_n);
                 }
             }
             for (in_, val) in element.constants.iter().enumerate() {
@@ -194,11 +191,10 @@ impl ProgramBuilder {
     fn finish_(mut self) -> vm::Program {
         let mut new_instructions = Vec::<vm::Instruction>::with_capacity(self.instructions.len());
         self.instructions.reverse();
-        while self.instructions.len() > 0 {
-            let instruction = self.instructions.pop().unwrap();
+        while let Some(instruction) = self.instructions.pop() {
             #[cfg(not(feature = "instruction_sources"))]
             if matches!(instruction, vm::Instruction::PushNothing) {
-                if self.instructions.len() > 0 {
+                if !self.instructions.is_empty() {
                     if matches!(self.instructions[self.instructions.len() - 1], vm::Instruction::Discard) {
                         self.instructions.pop();
                         continue
@@ -337,7 +333,7 @@ pub fn lower(expression: &Expression, builder: &mut ProgramBuilder) {
             #[cfg(feature = "instruction_sources")]
             builder.start_src("block");
             builder.emit(vm::Instruction::NewScope);
-            lower(&inside, builder);
+            lower(inside, builder);
             builder.emit(vm::Instruction::EndScope);
             #[cfg(feature = "instruction_sources")]
             builder.end_src()
@@ -352,7 +348,7 @@ pub fn lower(expression: &Expression, builder: &mut ProgramBuilder) {
             #[cfg(feature = "instruction_sources")]
             builder.start_src("module");
             builder.emit(vm::Instruction::NewScope);
-            lower(&inside, builder);
+            lower(inside, builder);
             let name_index = builder.add_name(name);
             builder.emit(vm::Instruction::EndAndNameScope(name_index));
             #[cfg(feature = "instruction_sources")]

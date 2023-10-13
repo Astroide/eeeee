@@ -65,7 +65,7 @@ fn parse_impl(
             {
                 let token = next!();
                 if !matches!(token, Some(Token { tt: $x, .. })) {
-                    if matches!(token, None) {
+                    if token.is_none() {
                         exit_with!(make_error!(
                             format!("expected {}{}, got EOF", stringify!($x), $extra),
                             codes::E0012.0,
@@ -291,7 +291,7 @@ fn parse_impl(
                         if let Err(errors) = res.1 {
                             has_had_errors = true;
                             for error in errors.iter() {
-                                crate::errors::print_error(error, &loader);
+                                crate::errors::print_error(error, loader);
                                 if error.fatal() {
                                     has_had_fatal = true;
                                 }
@@ -304,7 +304,7 @@ fn parse_impl(
                             match result {
                                 Err(errors) => {
                                     for error in errors.iter() {
-                                        crate::errors::print_error(error, &loader);
+                                        crate::errors::print_error(error, loader);
                                     }
                                     exit_with!(make_error!(format!("failed to load {} due to compilation errors", value), codes::E0014.0, Severity::Info, None => span.merge(token.span)))
                                 }
