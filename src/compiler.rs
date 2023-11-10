@@ -386,9 +386,9 @@ pub fn lower(expression: &Expression, builder: &mut ProgramBuilder) {
             #[cfg(feature = "instruction_sources")]
             builder.end_src();
         },
-        Expr::Break { with } => todo!(),
+        Expr::Break { .. } => todo!(),
         Expr::Continue => todo!(),
-        Expr::Use { imports } => todo!(),
+        Expr::Use { .. } => todo!(),
         Expr::Loop { inside } => {
             #[cfg(feature = "instruction_sources")]
             builder.start_src("loop");
