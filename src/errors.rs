@@ -303,11 +303,11 @@ pub fn print_error(error: &Error, sources: &Loader) {
                         }
                     }
                     eprint!(
-                        " {} -- {}:{}:{}",
+                        " {}", //-  -- {}:{}:{}
                         unwrap_or_else_this_particular_case!(error.pieces[original_index], "here"),
-                        sources.get_file(error.spans[original_index].file).src().unwrap_or("<text>"),
-                        start_line + 1,
-                        start_col + 1,
+                        // sources.get_file(error.spans[original_index].file).src().unwrap_or("<text>"),
+                        // start_line + 1,
+                        // start_col + 1,
                     );
                     eprintln!("\x1B[0m");
                 }

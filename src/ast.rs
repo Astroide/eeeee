@@ -9,7 +9,25 @@ pub struct Expression {
     pub span: Span,
 }
 
+pub type Type = ();
+
+fn stringify_type(_x: Type) -> String {
+    "()".to_string()
+}
+
 type AnyExpr = Box<Expression>;
+
+#[derive(Debug)]
+pub struct EnumVariant {
+    name: String,
+    payload: EnumPayload
+}
+
+#[derive(Debug)]
+pub enum EnumPayload {
+    Tuple(Vec<Type>),
+    Struct(Vec<(String, Type)>),
+}
 
 #[derive(Debug)]
 pub enum Expr {
@@ -79,6 +97,10 @@ pub enum Expr {
         condition: AnyExpr,
         body     : AnyExpr,
     },
+    EnumDecl {
+        name    : String,
+        variants: Vec<EnumVariant>,
+    }
 }
 
 #[derive(Debug)]
@@ -148,6 +170,21 @@ fn show_tree_impl(expr: &Expression, depth: usize) {
                     show_tree_impl(stuff, depth + 1);
                     eprintln!("{}{}}}\x1B[0m", " ".repeat(depth * 2), bracket_color!());
                 }
+            }
+        }
+        Expr::EnumDecl { name, variants } => {
+            eprint!("{}enum {} {{\x1B[0m", bracket_color!(), name);
+            if variants.len() == 0 {
+                eprintln!("{}}}\x1B[0m", bracket_color!());
+            } else {
+                eprintln!();
+                for variant in variants {
+                    eprintln!("{}{} {}", " ".repeat(depth * 2 + 2), variant.name, match &variant.payload {
+                        EnumPayload::Tuple(types) => format!("({})", types.iter().map(|x| stringify_type(*x)).collect::<Vec<_>>().join(", ")),
+                        EnumPayload::Struct(fields) => format!("{{{}}}", fields.iter().map(|(name, r#type)| format!("{}: {}", name, stringify_type(*r#type))).collect::<Vec<_>>().join(", ")),
+                    })
+                }
+                eprintln!("{}{}}}\x1B[0m", " ".repeat(depth * 2), bracket_color!());
             }
         }
         Expr::Module(inside, name) => {

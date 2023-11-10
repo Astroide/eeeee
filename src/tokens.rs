@@ -102,6 +102,9 @@ pub enum TokenType {
     Panic,
     Module,
     Include,
+    Enum,
+    Struct,
+    Compound,
 }
 
 impl TokenType {
@@ -161,6 +164,9 @@ impl TokenType {
             Panic           => "'panic'",
             Module          => "'module'",
             Include         => "'include'",
+            Enum            => "'enum'",
+            Struct          => "'struct'",
+            Compound        => "'compound'",
         }
     }
 }

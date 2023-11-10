@@ -2,7 +2,7 @@ mod precedence;
 
 use crate::{
     errors::{codes, make_error, Error, Severity},
-    expressions::{self, Expression},
+    ast::{self, Expression},
     ice::ice,
     loader::{Span, Loader},
     tokens::{Token, TokenType},
@@ -137,28 +137,31 @@ fn parse_impl(
     match &token.tt {
         tt @ TokenType::SLiteral { .. } => {
             lhs = Box::new(Expression {
-                et: expressions::Expr::Literal { src: tt.clone() },
+                et: ast::Expr::Literal { src: tt.clone() },
                 span: token.span,
             });
         }
         tt @ TokenType::ILiteral { .. } => {
             lhs = Box::new(Expression {
-                et: expressions::Expr::Literal { src: tt.clone() },
+                et: ast::Expr::Literal { src: tt.clone() },
                 span: token.span,
             });
         }
         tt @ TokenType::FLiteral { .. } => {
             lhs = Box::new(Expression {
-                et: expressions::Expr::Literal { src: tt.clone() },
+                et: ast::Expr::Literal { src: tt.clone() },
                 span: token.span,
             });
         }
         tt @ TokenType::BLiteral { .. } => {
             lhs = Box::new(Expression {
-                et: expressions::Expr::Literal { src: tt.clone() },
+                et: ast::Expr::Literal { src: tt.clone() },
                 span: token.span,
             });
         }
+        TokenType::Enum => {
+            panic!("unimplemented");
+        },
         TokenType::Fn => {
             let fn_name = if let Some(token) = next!() {
                 if let TokenType::Ident(ref name) = token.tt {
@@ -200,7 +203,7 @@ fn parse_impl(
             let block = parse_impl(input, precedence::ONE, pointer, accumulator, file, loader)?;
             let block_span = block.span;
             lhs = Box::new(Expression {
-                et: expressions::Expr::Fn { name: fn_name, body: block, args: arguments },
+                et: ast::Expr::Fn { name: fn_name, body: block, args: arguments },
                 span: token.span.merge(block_span)
             });
         }
@@ -236,13 +239,13 @@ fn parse_impl(
                 None
             };
             lhs = Box::new(Expression {
-                et: expressions::Expr::Let { name, value },
+                et: ast::Expr::Let { name, value },
                 span: if let Some(s) = span { token.span.merge(s) } else { token.span.merge(name_span) }
             })
         }
         TokenType::Ident(ident) => {
             lhs = Box::new(Expression {
-                et: expressions::Expr::Identifier { id: ident.clone() },
+                et: ast::Expr::Identifier { id: ident.clone() },
                 span: token.span,
             })
         }
@@ -250,8 +253,8 @@ fn parse_impl(
             let right = parse_impl(input, precedence::UNARY, pointer, accumulator, file, loader)?;
             let right_span = right.span;
             lhs = Box::new(Expression {
-                et: expressions::Expr::Unary {
-                    op: expressions::UnaryOp::Not,
+                et: ast::Expr::Unary {
+                    op: ast::UnaryOp::Not,
                     right,
                 },
                 span: token.span.merge(right_span),
@@ -261,8 +264,8 @@ fn parse_impl(
             let right = parse_impl(input, precedence::SEMICOLON + 1, pointer, accumulator, file, loader)?;
             let right_span = right.span;
             lhs = Box::new(Expression {
-                et: expressions::Expr::Unary {
-                    op: expressions::UnaryOp::Show,
+                et: ast::Expr::Unary {
+                    op: ast::UnaryOp::Show,
                     right,
                 },
                 span: token.span.merge(right_span),
@@ -272,8 +275,8 @@ fn parse_impl(
             let right = parse_impl(input, precedence::SEMICOLON + 1, pointer, accumulator, file, loader)?;
             let right_span = right.span;
             lhs = Box::new(Expression {
-                et: expressions::Expr::Unary {
-                    op: expressions::UnaryOp::Panic,
+                et: ast::Expr::Unary {
+                    op: ast::UnaryOp::Panic,
                     right,
                 },
                 span: token.span.merge(right_span),
@@ -325,8 +328,8 @@ fn parse_impl(
             let right = parse_impl(input, precedence::UNARY, pointer, accumulator, file, loader)?;
             let right_span = right.span;
             lhs = Box::new(Expression {
-                et: expressions::Expr::Unary {
-                    op: expressions::UnaryOp::Neg,
+                et: ast::Expr::Unary {
+                    op: ast::UnaryOp::Neg,
                     right,
                 },
                 span: token.span.merge(right_span),
@@ -340,17 +343,17 @@ fn parse_impl(
                 span = span.merge(expr.span);
                 maybe_right = Some(expr);
             }
-            lhs = Box::new(Expression { et: expressions::Expr::Break { with: maybe_right }, span })
+            lhs = Box::new(Expression { et: ast::Expr::Break { with: maybe_right }, span })
         }
         TokenType::Continue => {
-            lhs = Box::new(Expression { et: expressions::Expr::Continue, span: token.span })
+            lhs = Box::new(Expression { et: ast::Expr::Continue, span: token.span })
         }
         TokenType::Loop => {
             expect!(TokenType::LCBrace, true, " after 'loop'");
             *pointer -= 1;
             let inside = parse_impl(input, precedence::ONE, pointer, accumulator, file, loader)?;
             let inside_span = inside.span;
-            lhs = Box::new(Expression { et: expressions::Expr::Loop { inside }, span: token.span.merge(inside_span) })
+            lhs = Box::new(Expression { et: ast::Expr::Loop { inside }, span: token.span.merge(inside_span) })
         }
         TokenType::LParen => {
             lhs = parse_impl(input, 0, pointer, accumulator, file, loader)?;
@@ -396,7 +399,7 @@ fn parse_impl(
                 }
                 // *pointer -= 1;
             }
-            lhs = Box::new(Expression { et: expressions::Expr::If { condition, then, else_ }, span: token.span.merge(then_span) })
+            lhs = Box::new(Expression { et: ast::Expr::If { condition, then, else_ }, span: token.span.merge(then_span) })
         }
         TokenType::While => {
             let condition = parse_impl(input, 0, pointer, accumulator, file, loader)?;
@@ -404,7 +407,7 @@ fn parse_impl(
             *pointer -= 1;
             let body = parse_impl(input, precedence::ONE, pointer, accumulator, file, loader)?;
             let body_span = body.span;
-            lhs = Box::new(Expression { et: expressions::Expr::While { condition, body }, span: token.span.merge(body_span) })
+            lhs = Box::new(Expression { et: ast::Expr::While { condition, body }, span: token.span.merge(body_span) })
         }
         TokenType::LCBrace => {
             let inside = if has_expression!() { Some(parse_impl(input, 0, pointer, accumulator, file, loader)?) } else { None };
@@ -421,7 +424,7 @@ fn parse_impl(
                     );
                 } else {
                     lhs = Box::new(Expression {
-                        et: expressions::Expr::Block(inside),
+                        et: ast::Expr::Block(inside),
                         span: *span,
                     });
                 }
@@ -454,7 +457,7 @@ fn parse_impl(
                             );
                         } else {
                             lhs = Box::new(Expression {
-                                et: expressions::Expr::Module(inside, name.clone()),
+                                et: ast::Expr::Module(inside, name.clone()),
                                 span: *span,
                             });
                         }
@@ -507,7 +510,7 @@ fn parse_impl(
                 )?;
                 lhs = Box::new(Expression {
                     span: lhs.span.merge(rhs.span),
-                    et: expressions::Expr::Binary {
+                    et: ast::Expr::Binary {
                         op: $op,
                         left: lhs,
                         right: rhs,
@@ -528,7 +531,7 @@ fn parse_impl(
                 )?;
                 lhs = Box::new(Expression {
                     span: lhs.span.merge(rhs.span),
-                    et: expressions::Expr::AssignOp {
+                    et: ast::Expr::AssignOp {
                         left: lhs,
                         right: rhs,
                         op: $op
@@ -541,7 +544,7 @@ fn parse_impl(
         } else {
             ice!("expected infix/postfix, got EOF; infix_precedence should prevent this from happening...")
         };
-        use expressions::BinaryOp;
+        use ast::BinaryOp;
         match &token.tt {
             TokenType::Plus    => infix!(token, BinaryOp::Add),
             TokenType::Minus   => infix!(token, BinaryOp::Sub),
@@ -564,7 +567,7 @@ fn parse_impl(
                 let lhs_span = lhs.span;
                 if let Some(Token { tt: TokenType::Ident(name), span }) = maybe_token {
                     lhs = Box::new(Expression {
-                        et: expressions::Expr::Property {
+                        et: ast::Expr::Property {
                             object: lhs,
                             name: name.clone(),
                         },
@@ -591,7 +594,7 @@ fn parse_impl(
                 };
                 expect!(TokenType::RParen, true, " after arguments");
                 lhs = Box::new(Expression {
-                    et: expressions::Expr::Call { callee: lhs, args: arguments },
+                    et: ast::Expr::Call { callee: lhs, args: arguments },
                     span: token.span.merge(input[*pointer - 2].span)
                 })
             },
@@ -606,7 +609,7 @@ fn parse_impl(
                 )?;
                 lhs = Box::new(Expression {
                     span: lhs.span.merge(rhs.span),
-                    et: expressions::Expr::Assign {
+                    et: ast::Expr::Assign {
                         left: lhs,
                         right: rhs,
                     },
@@ -623,7 +626,7 @@ fn parse_impl(
                 )?;
                 lhs = Box::new(Expression {
                     span: lhs.span.merge(rhs.span),
-                    et: expressions::Expr::Semicolon {
+                    et: ast::Expr::Semicolon {
                         left: lhs,
                         right: rhs,
                     },

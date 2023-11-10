@@ -1,7 +1,7 @@
 #![forbid(missing_debug_implementations, nonstandard_style)]
 
 pub mod errors;
-pub mod expressions;
+pub mod ast;
 pub(crate) mod ice; // must be first due to how macros work
 pub mod lexer;
 pub mod loader;

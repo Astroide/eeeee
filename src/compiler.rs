@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{expressions::{Expression, Expr, UnaryOp, BinaryOp}, vm, ice::ice, tokens::IntLiteralType};
+use crate::{ast::{Expression, Expr, UnaryOp, BinaryOp}, vm, ice::ice, tokens::IntLiteralType};
 
 #[derive(Debug)]
 #[must_use]
@@ -536,6 +536,7 @@ pub fn lower(expression: &Expression, builder: &mut ProgramBuilder) {
             builder.stack_padding();
             #[cfg(feature = "instruction_sources")]
             builder.end_src();
-        }
+        },
+        _ => todo!()
     }
 }

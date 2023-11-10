@@ -37,7 +37,7 @@ fn main() {
                 }
             }
             Ok(expr) => {
-                eeeee::expressions::show_tree(&expr);
+                eeeee::ast::show_tree(&expr);
                 eprintln!("PARSED");
                 let mut builder = eeeee::compiler::ProgramBuilder::new(true);
                 eeeee::compiler::lower(&expr, &mut builder);

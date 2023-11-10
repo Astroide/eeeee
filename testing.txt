@@ -1,3 +1,23 @@
+enum E {
+    A(i32),
+    B(i64),
+    C(i128),
+}
+
+struct X {
+    a: i32,
+    b: i32,
+    c: i32,
+}
+
+compound Shape {
+    Circle { radius: f64 },
+    Rect { width: f64 :: 0 < $, height: f64 :: 0 < $ }
+} + {
+    x: f64,
+    y: f64,
+};
+
 include 'std/mod.eee';
 let math = std.math;
 let and = std.logic.and;
