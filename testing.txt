@@ -1,4 +1,4 @@
-enum E {
+/*enum E {
     A(i32),
     B(i64),
     C(i128),
@@ -16,7 +16,7 @@ compound Shape {
 } + {
     x: f64,
     y: f64,
-};
+};*/
 
 include 'std/mod.eee';
 let math = std.math;

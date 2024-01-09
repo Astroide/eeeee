@@ -5,4 +5,4 @@ out.ansi
 
 # Added by cargo
 
-/target
+**/target

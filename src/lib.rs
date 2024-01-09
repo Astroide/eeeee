@@ -10,6 +10,7 @@ pub mod token_debugger;
 pub mod tokens;
 pub mod vm;
 pub mod compiler;
+pub mod typing;
 
 pub mod failure {
     use std::{io::Error, string::FromUtf8Error};

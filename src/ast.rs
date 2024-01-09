@@ -1,19 +1,17 @@
 use crate::{
     loader::Span,
     tokens::{TokenType, IntLiteralType}, ice::ice,
+    typing::TypeId,
 };
 
 #[derive(Debug)]
 pub struct Expression {
     pub et: Expr,
     pub span: Span,
+    pub ty: TypeId,
 }
 
-pub type Type = ();
-
-fn stringify_type(_x: Type) -> String {
-    "()".to_string()
-}
+type Scope = ();
 
 type AnyExpr = Box<Expression>;
 
@@ -124,6 +122,16 @@ pub enum UnaryOp {
     Neg,
     Show,
     Panic,
+}
+
+pub fn is_scope_barrier(expr: &Expression) -> bool {
+    matches!(expr.et, Expr::Block(_) | Expr::Module(_, _) | Expr::Loop { .. } | Expr::Fn { .. })
+}
+
+pub fn get_scope(expr: &Expression) -> Scope {
+    match expr.et {
+        
+    }
 }
 
 pub fn show_tree(expr: &Expression) {
